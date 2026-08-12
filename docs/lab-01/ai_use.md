@@ -1,7 +1,7 @@
 # Lab 1 — AI Use and Reflection
 
 I used **Claude Code** with **Claude Opus 5** as the coding agent, run from Claude Desktop app. 
-Two behaviour plugins were active: caveman, and one ("ponytail") that pushes it toward the smallest solution that works instead of scaffolding for features Lab 1 does not have.
+Two behaviour plugins were active: caveman, and ponytail that pushes it toward the smallest solution that works instead of scaffolding for features Lab 1 does not have.
 
 ## Selected Key Prompts
 
@@ -26,12 +26,3 @@ Two behaviour plugins were active: caveman, and one ("ponytail") that pushes it 
 
 My prompts got shorter as the lab went on, and that was the point. The early effort went into one detailed planning prompt with the labsheet attached; after that, "I have checked out to
 `feature/N-x`" was enough.
-
-Three things I would carry into Lab 2:
-
-1. **Paste raw errors, not diagnoses.** Both times I explained what I thought was wrong, I was
-   wrong — port conflict, not bad credentials; stopped container, not broken code.
-2. **Ask for evidence.** "Tests pass" is weaker than a row count that stays at 4 after three seed
-   runs, or a browser tree showing the four categories rendered.
-3. **State the constraint, not just the goal.** "Leave the credentials as placeholder" and "we are
-   on branch X" prevented more mistakes than any amount of describing what I wanted built.
