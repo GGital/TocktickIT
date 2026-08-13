@@ -48,11 +48,3 @@ cd client && npm test
  Test Files  3 passed (3)
       Tests  3 passed (3)
 ```
-
-## Notes
-
-- `UI-02` holds the `fetch` promises pending until the test releases them, so the loading state is
-  asserted while it is genuinely on screen instead of relying on timing.
-- `UI-03` stubs `fetch` with a rejection to simulate an unreachable backend.
-- Manual check beyond the suites: stopping the database container makes `/api/categories` return 500
-  and the page show `System Status: Offline` with `Unable to connect to TokTickIT API`.
