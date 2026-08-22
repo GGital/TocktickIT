@@ -10,5 +10,94 @@ datasource db {
 model Category {
   id        Int      @id @default(autoincrement())
   name      String   @unique
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+
+  tickets Ticket[]
+}
+
+model RelatedSystem {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tickets Ticket[]
+}
+
+enum RequestedPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// Lab 2 has exactly one status (BR-02); later labs extend this enum by migration.
+enum TicketStatus {
+  NEW
+}
+
+model RequesterUser {
+  id         Int      @id @default(autoincrement())
+  fullName   String
+  email      String   @unique
+  department String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tickets             Ticket[]
+  uploadedAttachments Attachment[] @relation("AttachmentUploadedBy")
+  removedAttachments  Attachment[] @relation("AttachmentRemovedBy")
+}
+
+model Ticket {
+  id                Int               @id @default(autoincrement())
+  ticketNumber      String            @unique
+  requesterId       Int
+  categoryId        Int
+  relatedSystemId   Int
+  summary           String            @db.VarChar(120)
+  description       String            @db.Text
+  requestedPriority RequestedPriority
+  status            TicketStatus      @default(NEW)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  requester     RequesterUser @relation(fields: [requesterId], references: [id], onDelete: Restrict)
+  category      Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  relatedSystem RelatedSystem @relation(fields: [relatedSystemId], references: [id], onDelete: Restrict)
+  attachments   Attachment[]
+
+  @@index([requesterId, createdAt])
+  @@index([requesterId, categoryId])
+  @@index([requesterId, relatedSystemId])
+  @@index([requesterId, requestedPriority])
+}
+
+model Attachment {
+  id               Int       @id @default(autoincrement())
+  ticketId         Int
+  originalFilename String
+  storedFilename   String    @unique
+  mimeType         String
+  sizeBytes        Int
+  uploadedById     Int
+  uploadedAt       DateTime  @default(now())
+  // Null removedAt means active — one column encodes whether and when (spec §7.4).
+  removedAt        DateTime?
+  removalReason    String?
+  removedById      Int?
+
+  ticket     Ticket         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploadedBy RequesterUser  @relation("AttachmentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+  removedBy  RequesterUser? @relation("AttachmentRemovedBy", fields: [removedById], references: [id], onDelete: Restrict)
+
+  @@index([ticketId, removedAt])
+}
+
+// One row per year; incremented atomically to issue TKT-YYYY-NNNNNN sequences (BR-03).
+model TicketNumberCounter {
+  year      Int @id
+  lastValue Int
 }
