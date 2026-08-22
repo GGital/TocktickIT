@@ -199,14 +199,14 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| STYLE-01 | UI style | AC-46, ui-spec §1.1 | Theme tokens resolve | `--zen-primary` is `#006B3C`, `--zen-secondary` `#0B7A46`, `--zen-pale` `#EAF6EF`, `--zen-page-bg` `#F5F7F6` | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
+| STYLE-01 | UI style | AC-46, ui-spec §1.1 | Theme tokens resolve | `--zen-primary` is `#006B3C`, `--zen-secondary` `#0B7A46`, `--zen-pale` `#EAF6EF`, `--zen-page-bg` `#F5F7F6` | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
 | STYLE-02 | UI style | AC-46 | Read-only vs editable fields on Create Ticket | Ticket Number, Ticket Date, Requester, Status carry the read-only class and the `readonly` attribute; editable fields do not | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
 | STYLE-03 | UI style | ui-spec §2.2 | Required-field marking | Every required control has a visible asterisk **and** `aria-required="true"`; the "Fields marked * are required" legend appears exactly once | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
 | STYLE-04 | UI style | BR-18 | Validation message placement | Each message is a sibling of its own field and is referenced by that field's `aria-describedby` | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
-| STYLE-05 | UI style | ui-spec §2.3 | Button hierarchy | Submit is primary, Cancel secondary, Remove attachment destructive; each uses the documented class | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
-| STYLE-06 | UI style | ui-spec §2.1 | Disabled and busy controls | Disabled controls carry the `disabled` attribute and cannot be activated; the busy button carries `aria-busy="true"` and a spinner | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
-| STYLE-07 | UI style | AC-48 | Priority and status badges for all five values | Each renders its own text and the documented class; text alone identifies the value with colour removed | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
-| STYLE-08 | UI style | AC-46 | No hard-coded colours | No component source file outside `zen-theme.css` contains a hex colour literal | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
+| STYLE-05 | UI style | ui-spec §2.3 | Button hierarchy | Submit is primary, Cancel secondary, Remove attachment destructive; each uses the documented class | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
+| STYLE-06 | UI style | ui-spec §2.1 | Disabled and busy controls | Disabled controls carry the `disabled` attribute and cannot be activated; the busy button carries `aria-busy="true"` and a spinner | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
+| STYLE-07 | UI style | AC-48 | Priority and status badges for all five values | Each renders its own text and the documented class; text alone identifies the value with colour removed | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
+| STYLE-08 | UI style | AC-46 | No hard-coded colours | No component source file outside `zen-theme.css` contains a hex colour literal | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
 
 ### 2.9 Responsive tests
 
