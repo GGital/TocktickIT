@@ -1,10 +1,19 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import App from './App.tsx'
+import './styles/zen-theme.css'
+import AppRoutes from './AppRoutes.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <a className="visually-hidden-focusable" href="#main">
+        Skip to main content
+      </a>
+      <main id="main" className="container py-4">
+        <AppRoutes />
+      </main>
+    </BrowserRouter>
   </StrictMode>,
 )

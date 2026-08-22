@@ -11,6 +11,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // STYLE-01 asserts the real token values, so stylesheets must be applied in jsdom.
+    css: true,
     globals: true,
     setupFiles: './tests/setup.ts',
     include: ['tests/**/*.test.tsx'],

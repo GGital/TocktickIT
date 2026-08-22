@@ -1,0 +1,247 @@
+/*
+ * Zen Green Theme — ui-spec.md §1. This is the ONLY file in the client that may
+ * contain a literal colour value (AC-46, STYLE-08). Components reference tokens,
+ * Bootstrap classes, or the zen-* classes declared below.
+ */
+
+:root {
+  /* --- Colour tokens (ui-spec §1.1) --- */
+  --zen-primary: #006B3C;
+  --zen-primary-hover: #005730;
+  --zen-secondary: #0B7A46;
+  --zen-pale: #EAF6EF;
+  --zen-page-bg: #F5F7F6;
+  --zen-surface: #FFFFFF;
+  --zen-border: #D7E0DA;
+  --zen-text: #1C2B24;
+  --zen-text-muted: #5A6B62;
+  --zen-field-bg: #FFFFFF;
+  --zen-readonly-bg: #EEF2EF;
+  --zen-error: #B3261E;
+  --zen-error-bg: #FDECEA;
+  --zen-warning: #B26A00;
+  --zen-warning-bg: #FFF4E5;
+  --zen-success: #0B7A46;
+  --zen-success-bg: #EAF6EF;
+  --zen-neutral: #5A6B62;
+  --zen-focus-ring: rgba(11, 122, 70, 0.35);
+
+  /* --- Spacing, radius, and control metrics (ui-spec §1.3, §2.1) --- */
+  --zen-radius-card: 10px;
+  --zen-radius-control: 8px;
+  --zen-control-height: 42px;
+  --zen-shadow: 0 1px 2px rgba(28, 43, 36, 0.06);
+
+  /* --- Bootstrap mapping (ui-spec §1.1) --- */
+  --bs-primary: var(--zen-primary);
+  --bs-body-bg: var(--zen-page-bg);
+  --bs-body-color: var(--zen-text);
+  --bs-border-color: var(--zen-border);
+  --bs-link-color: var(--zen-secondary);
+  --bs-link-hover-color: var(--zen-primary-hover);
+  --bs-focus-ring-color: var(--zen-focus-ring);
+  --bs-danger: var(--zen-error);
+  --bs-success: var(--zen-success);
+  --bs-warning: var(--zen-warning);
+  --bs-border-radius: var(--zen-radius-control);
+  --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif;
+  --bs-body-font-size: 1rem;
+  --bs-body-line-height: 1.55;
+}
+
+body {
+  background-color: var(--zen-page-bg);
+  color: var(--zen-text);
+  font-family: var(--bs-font-sans-serif);
+}
+
+/* --- Typography (ui-spec §1.2) --- */
+h1 { font-size: 1.75rem; font-weight: 600; }
+h2 { font-size: 1.25rem; font-weight: 600; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+
+.zen-mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.zen-muted { color: var(--zen-text-muted); font-size: 0.875rem; }
+
+/*
+ * Button hierarchy (ui-spec §2.3). Bootstrap 5.3 buttons read --bs-btn-*, so the
+ * theme is applied by remapping those instead of writing new button rules.
+ * primary = .btn-primary, secondary = .btn-outline-primary,
+ * tertiary = .btn-link, destructive = .btn-outline-danger.
+ */
+.btn { --bs-btn-border-radius: var(--zen-radius-control); font-weight: 600; }
+
+.btn-primary {
+  --bs-btn-bg: var(--zen-primary);
+  --bs-btn-border-color: var(--zen-primary);
+  --bs-btn-hover-bg: var(--zen-primary-hover);
+  --bs-btn-hover-border-color: var(--zen-primary-hover);
+  --bs-btn-active-bg: var(--zen-primary-hover);
+  --bs-btn-active-border-color: var(--zen-primary-hover);
+  --bs-btn-disabled-bg: var(--zen-primary);
+  --bs-btn-disabled-border-color: var(--zen-primary);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--zen-primary);
+  --bs-btn-border-color: var(--zen-primary);
+  --bs-btn-hover-bg: var(--zen-primary);
+  --bs-btn-hover-border-color: var(--zen-primary);
+  --bs-btn-active-bg: var(--zen-primary-hover);
+  --bs-btn-active-border-color: var(--zen-primary-hover);
+  --bs-btn-disabled-color: var(--zen-primary);
+  --bs-btn-disabled-border-color: var(--zen-primary);
+}
+
+.btn-outline-danger {
+  --bs-btn-color: var(--zen-error);
+  --bs-btn-border-color: var(--zen-error);
+  --bs-btn-hover-bg: var(--zen-error);
+  --bs-btn-hover-border-color: var(--zen-error);
+  --bs-btn-active-bg: var(--zen-error);
+  --bs-btn-active-border-color: var(--zen-error);
+  --bs-btn-disabled-color: var(--zen-error);
+  --bs-btn-disabled-border-color: var(--zen-error);
+}
+
+.btn-link {
+  --bs-btn-color: var(--zen-secondary);
+  --bs-btn-hover-color: var(--zen-primary-hover);
+  text-decoration: none;
+}
+
+.btn-link:hover { text-decoration: underline; }
+
+/* Disabled and busy (ui-spec §2.1) */
+.btn:disabled, .btn.disabled { opacity: 0.6; cursor: not-allowed; }
+
+.zen-spinner {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 8px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: zen-spin 0.75s linear infinite;
+  vertical-align: -0.1em;
+}
+
+@keyframes zen-spin { to { transform: rotate(360deg); } }
+
+/* --- Fields (ui-spec §2.1, §2.2) --- */
+.zen-label { display: block; font-size: 0.9375rem; font-weight: 600; margin-bottom: 8px; color: var(--zen-text); }
+.zen-required { color: var(--zen-error); margin-left: 2px; }
+.zen-field { margin-bottom: 20px; }
+.zen-legend { font-size: 0.875rem; color: var(--zen-text-muted); margin-bottom: 16px; }
+
+.zen-control {
+  width: 100%;
+  min-height: var(--zen-control-height);
+  padding: 8px 12px;
+  background-color: var(--zen-field-bg);
+  color: var(--zen-text);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-control);
+}
+
+.zen-control:focus-visible,
+.btn:focus-visible,
+a:focus-visible {
+  border-color: var(--zen-secondary);
+  outline: 3px solid var(--zen-focus-ring);
+  outline-offset: 1px;
+}
+
+.zen-control[aria-invalid="true"] { border-color: var(--zen-error); }
+.zen-control[readonly] { background-color: var(--zen-readonly-bg); }
+.zen-control:disabled { background-color: var(--zen-readonly-bg); opacity: 0.6; cursor: not-allowed; }
+
+.zen-textarea { min-height: 9rem; resize: vertical; max-height: 60vh; }
+.zen-help { font-size: 0.875rem; color: var(--zen-text-muted); margin-top: 4px; }
+.zen-error-text { font-size: 0.875rem; font-weight: 500; color: var(--zen-error); margin-top: 4px; }
+
+/* --- Badges (ui-spec §2.4) --- */
+.zen-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.zen-badge-low { background-color: var(--zen-readonly-bg); color: var(--zen-neutral); }
+.zen-badge-medium { background-color: var(--zen-pale); color: var(--zen-primary); }
+.zen-badge-high { background-color: var(--zen-warning-bg); color: var(--zen-warning); }
+.zen-badge-urgent { background-color: var(--zen-error-bg); color: var(--zen-error); }
+.zen-badge-new { background-color: var(--zen-primary); color: var(--zen-surface); }
+.zen-badge-removed { background-color: var(--zen-readonly-bg); color: var(--zen-text-muted); }
+
+/* --- Callouts (ui-spec §2.5) --- */
+.zen-callout {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-card);
+  background-color: var(--zen-surface);
+}
+
+.zen-callout-success { border-color: var(--zen-success); background-color: var(--zen-success-bg); }
+.zen-callout-error { border-color: var(--zen-error); background-color: var(--zen-error-bg); }
+.zen-callout-warning { border-color: var(--zen-warning); background-color: var(--zen-warning-bg); }
+.zen-callout-info { border-color: var(--zen-border); background-color: var(--zen-pale); }
+
+/* --- Cards, skeletons, empty state (ui-spec §1.3, §2.5) --- */
+.zen-card {
+  background-color: var(--zen-surface);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-card);
+  box-shadow: var(--zen-shadow);
+  padding: 24px;
+}
+
+.zen-skeleton {
+  background-color: var(--zen-readonly-bg);
+  border-radius: var(--zen-radius-control);
+  animation: zen-pulse 1.2s ease-in-out infinite;
+}
+
+.zen-skeleton-row { height: 20px; margin-bottom: 12px; }
+
+@keyframes zen-pulse { 50% { opacity: 0.55; } }
+
+.zen-empty { text-align: center; }
+.zen-empty p { color: var(--zen-text-muted); }
+
+/* --- Pagination (ui-spec §6.4) --- */
+.zen-pagination { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.zen-page-range { color: var(--zen-text-muted); font-size: 0.875rem; margin-right: auto; }
+.zen-page[aria-current="page"] { background-color: var(--zen-pale); border-color: var(--zen-primary); color: var(--zen-primary); }
+
+/* --- Dialog (ui-spec §7.3) --- */
+.zen-dialog {
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-card);
+  background-color: var(--zen-surface);
+  color: var(--zen-text);
+  padding: 24px;
+  max-width: 480px;
+  width: calc(100% - 32px);
+}
+
+.zen-dialog::backdrop { background-color: rgba(28, 43, 36, 0.45); }
+
+/* Mobile: touch targets stay at least 44px (ui-spec §8, §9) */
+@media (max-width: 767.98px) {
+  :root { --zen-control-height: 44px; }
+  .btn { min-height: 44px; }
+  .zen-card { padding: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zen-skeleton, .zen-spinner { animation: none; }
+}
