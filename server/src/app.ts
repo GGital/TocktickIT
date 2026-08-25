@@ -2,6 +2,7 @@ import express, { type ErrorRequestHandler } from 'express'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
 import { requesterContext } from './requesterContext.js'
+import { createTicket } from './tickets.js'
 
 const app = express()
 
@@ -53,6 +54,8 @@ app.get('/api/requesters', async (_req, res) => {
 // --- Requester-scoped routes (api-spec §1.1). One middleware guards the whole
 // prefix, so every route added under it inherits the check (BR-15, BR-48). ---
 app.use(['/api/tickets', '/api/attachments'], requesterContext)
+
+app.post('/api/tickets', createTicket)
 
 // Express 5 forwards rejected promises here, so handlers need no try/catch.
 const handleUnexpectedError: ErrorRequestHandler = (error, _req, res, _next) => {
