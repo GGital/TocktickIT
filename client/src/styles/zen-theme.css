@@ -245,3 +245,51 @@ a:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .zen-skeleton, .zen-spinner { animation: none; }
 }
+
+/* --- Application shell (ui-spec §3) --- */
+.zen-header {
+  background-color: var(--zen-primary);
+  color: var(--zen-surface);
+  min-height: 60px;
+}
+
+.zen-wordmark {
+  color: var(--zen-surface);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.zen-nav-link {
+  color: var(--zen-surface);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 3px solid transparent;
+}
+
+/* The underline is the non-colour indicator of the active route. */
+.zen-nav-link-active {
+  font-weight: 600;
+  border-bottom-color: var(--zen-surface);
+}
+
+.zen-nav-toggle {
+  color: var(--zen-surface);
+  border: 1px solid var(--zen-surface);
+}
+
+.zen-requester { font-size: 0.9375rem; }
+.zen-requester-department { opacity: 0.85; font-size: 0.875rem; }
+
+/* Secondary button sitting on the green bar. */
+.zen-on-primary {
+  --bs-btn-color: var(--zen-surface);
+  --bs-btn-border-color: var(--zen-surface);
+  --bs-btn-hover-bg: var(--zen-surface);
+  --bs-btn-hover-color: var(--zen-primary);
+  --bs-btn-hover-border-color: var(--zen-surface);
+}
+
+@media (max-width: 767.98px) {
+  .zen-header { min-height: 56px; }
+}
