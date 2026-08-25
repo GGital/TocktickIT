@@ -91,14 +91,14 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| API-01 | API | AC-10, BR-45 | `GET /api/categories` | `200`; four seeded categories in id order; inactive rows absent | `server/tests/lab-02/reference-data.api.test.ts` | Pending |
-| API-02 | API | AC-10, BR-45 | `GET /api/related-systems` | `200`; ≥ 7 systems, alphabetical, active only | `server/tests/lab-02/reference-data.api.test.ts` | Pending |
-| API-03 | API | AC-01, BR-09, BR-47 | `GET /api/requesters` | `200`; ≥ 4 active requesters; the seeded inactive requester is absent; no `isActive` field leaked | `server/tests/lab-02/requesters.api.test.ts` | Pending |
+| API-01 | API | AC-10, BR-45 | `GET /api/categories` | `200`; four seeded categories in id order; inactive rows absent | `server/tests/lab-02/reference-data.api.test.ts` | Pass |
+| API-02 | API | AC-10, BR-45 | `GET /api/related-systems` | `200`; ≥ 7 systems, alphabetical, active only | `server/tests/lab-02/reference-data.api.test.ts` | Pass |
+| API-03 | API | AC-01, BR-09, BR-47 | `GET /api/requesters` | `200`; ≥ 4 active requesters; the seeded inactive requester is absent; no `isActive` field leaked | `server/tests/lab-02/requesters.api.test.ts` | Pass |
 | API-04 | API | BR-46 | Seed run twice, then requesters and categories re-queried | Same row count and same ids — idempotent | `server/tests/lab-02/seed.api.test.ts` | Pass |
-| API-05 | API | BR-11 | Requester-scoped route with no `X-Requester-Id` | `400` `REQUESTER_CONTEXT_MISSING` | `server/tests/lab-02/requester-context.api.test.ts` | Pending |
-| API-06 | API | BR-11 | Header `X-Requester-Id: abc` and `X-Requester-Id: -1` | `400` `REQUESTER_CONTEXT_MISSING` for both | `server/tests/lab-02/requester-context.api.test.ts` | Pending |
-| API-07 | API | AC-07, BR-47 | Header with an unknown id, then with the inactive requester's id | `403` `REQUESTER_CONTEXT_INVALID` for both | `server/tests/lab-02/requester-context.api.test.ts` | Pending |
-| API-08 | API | BR-08, BR-50 | No Lab 2 endpoint ever answers `401`, across the whole failure matrix | No response has status `401` | `server/tests/lab-02/requester-context.api.test.ts` | Pending |
+| API-05 | API | BR-11 | Requester-scoped route with no `X-Requester-Id` | `400` `REQUESTER_CONTEXT_MISSING` | `server/tests/lab-02/requester-context.api.test.ts` | Pass |
+| API-06 | API | BR-11 | Header `X-Requester-Id: abc` and `X-Requester-Id: -1` | `400` `REQUESTER_CONTEXT_MISSING` for both | `server/tests/lab-02/requester-context.api.test.ts` | Pass |
+| API-07 | API | AC-07, BR-47 | Header with an unknown id, then with the inactive requester's id | `403` `REQUESTER_CONTEXT_INVALID` for both | `server/tests/lab-02/requester-context.api.test.ts` | Pass |
+| API-08 | API | BR-08, BR-50 | No Lab 2 endpoint ever answers `401`, across the whole failure matrix | No response has status `401` | `server/tests/lab-02/requester-context.api.test.ts` | Pass |
 
 ### 2.3 API tests — Create Ticket
 

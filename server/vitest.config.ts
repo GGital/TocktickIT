@@ -6,5 +6,8 @@ process.loadEnvFile('.env')
 export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
+    // All suites share one database, so files run one at a time: a test that
+    // creates or seeds rows must not race another file counting them.
+    fileParallelism: false,
   },
 })
