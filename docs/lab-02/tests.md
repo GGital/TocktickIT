@@ -74,9 +74,9 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| UNIT-01 | Unit | BR-03, AC-09 | Ticket-number formatter with counter value 41, year 2026 | Returns `TKT-2026-000041` (6-digit zero pad) | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pending |
-| UNIT-02 | Unit | BR-03 | Formatter boundaries: 1 and 999999 | `TKT-2026-000001`, `TKT-2026-999999` | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pending |
-| UNIT-03 | Unit | BR-03, A-10 | Year resolution uses `Asia/Bangkok`, not UTC, for a UTC instant of 31 Dec 17:30Z | Year is the following year | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pending |
+| UNIT-01 | Unit | BR-03, AC-09 | Ticket-number formatter with counter value 41, year 2026 | Returns `TKT-2026-000041` (6-digit zero pad) | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pass |
+| UNIT-02 | Unit | BR-03 | Formatter boundaries: 1 and 999999 | `TKT-2026-000001`, `TKT-2026-999999` | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pass |
+| UNIT-03 | Unit | BR-03, A-10 | Year resolution uses `Asia/Bangkok`, not UTC, for a UTC instant of 31 Dec 17:30Z | Year is the following year | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pass |
 | UNIT-04 | Unit | BR-23 | Magic-byte detector on real JPEG/PNG/WEBP/PDF buffers | Returns the matching MIME type for each | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pending |
 | UNIT-05 | Unit | BR-23, AC-19 | Detector on a PDF renamed `.png` and on an EXE buffer | Rejected — declared extension and signature must agree | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pending |
 | UNIT-06 | Unit | BR-24 | Size guard at 5 MB exactly and 5 MB + 1 byte | Accepted / rejected respectively | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pending |
@@ -104,18 +104,18 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| API-09 | API | AC-08, AC-09 | Create a valid ticket | `201`; one saved Ticket; `ticketNumber` matches `/^TKT-\d{4}-\d{6}$/`; `status` `NEW`; `requesterId` = header context; `Location` header set | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-10 | API | BR-01, BR-03 | Two consecutive creations | Ticket numbers are unique and strictly increasing within the year | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-11 | API | BR-01, BR-04 | Payload attempting to set `ticketNumber`, `status`, `createdAt` | Client values ignored; server values used | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-12 | API | AC-17, BR-05 | Payload carrying a foreign `requesterId` | Saved Ticket belongs to the header-context Requester | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-13 | API | AC-13, BR-18 | Empty body posted | `400` `VALIDATION_FAILED`; `fields` names **all five** required fields, not just the first; nothing persisted | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-14 | API | AC-12, BR-17 | Summary at 9 and 10 characters; Description at 19 and 20 | `400` at 9/19, `201` at 10/20 | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-15 | API | BR-16 | Summary of 120 valid characters padded with surrounding whitespace | `201`; stored value trimmed | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-16 | API | BR-17, BR-45 | Unknown `categoryId`, and an id that exists but is inactive | `400` `VALIDATION_FAILED` with the identical message for both | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-17 | API | BR-06 | Missing `requestedPriority`, and `requestedPriority: "CRITICAL"` | `400` — the server never defaults a missing priority | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-18 | API | AC-15, BR-19 | Identical summary + description posted twice in a row by the same Requester | Second call `409` `DUPLICATE_SUBMISSION`; exactly one Ticket exists | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-19 | API | BR-19 | The same identical payload posted by a **different** Requester | `201` — the window is per-requester | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
-| API-20 | API | BR-22 | Forced database failure during creation | `500` `INTERNAL_ERROR`; body contains no stack trace, SQL, path, or the word `prisma` | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
+| API-09 | API | AC-08, AC-09 | Create a valid ticket | `201`; one saved Ticket; `ticketNumber` matches `/^TKT-\d{4}-\d{6}$/`; `status` `NEW`; `requesterId` = header context; `Location` header set | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-10 | API | BR-01, BR-03 | Two consecutive creations | Ticket numbers are unique and strictly increasing within the year | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-11 | API | BR-01, BR-04 | Payload attempting to set `ticketNumber`, `status`, `createdAt` | Client values ignored; server values used | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-12 | API | AC-17, BR-05 | Payload carrying a foreign `requesterId` | Saved Ticket belongs to the header-context Requester | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-13 | API | AC-13, BR-18 | Empty body posted | `400` `VALIDATION_FAILED`; `fields` names **all five** required fields, not just the first; nothing persisted | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-14 | API | AC-12, BR-17 | Summary at 9 and 10 characters; Description at 19 and 20 | `400` at 9/19, `201` at 10/20 | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-15 | API | BR-16 | Summary of 120 valid characters padded with surrounding whitespace | `201`; stored value trimmed | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-16 | API | BR-17, BR-45 | Unknown `categoryId`, and an id that exists but is inactive | `400` `VALIDATION_FAILED` with the identical message for both | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-17 | API | BR-06 | Missing `requestedPriority`, and `requestedPriority: "CRITICAL"` | `400` — the server never defaults a missing priority | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-18 | API | AC-15, BR-19 | Identical summary + description posted twice in a row by the same Requester | Second call `409` `DUPLICATE_SUBMISSION`; exactly one Ticket exists | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-19 | API | BR-19 | The same identical payload posted by a **different** Requester | `201` — the window is per-requester | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
+| API-20 | API | BR-22 | Forced database failure during creation | `500` `INTERNAL_ERROR`; body contains no stack trace, SQL, path, or the word `prisma` | `server/tests/lab-02/create-ticket.api.test.ts` | Pass |
 
 ### 2.4 API tests — My Tickets list
 
