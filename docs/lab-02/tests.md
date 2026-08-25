@@ -77,15 +77,15 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 | UNIT-01 | Unit | BR-03, AC-09 | Ticket-number formatter with counter value 41, year 2026 | Returns `TKT-2026-000041` (6-digit zero pad) | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pass |
 | UNIT-02 | Unit | BR-03 | Formatter boundaries: 1 and 999999 | `TKT-2026-000001`, `TKT-2026-999999` | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pass |
 | UNIT-03 | Unit | BR-03, A-10 | Year resolution uses `Asia/Bangkok`, not UTC, for a UTC instant of 31 Dec 17:30Z | Year is the following year | `server/tests/lab-02/unit/ticket-number.unit.test.ts` | Pass |
-| UNIT-04 | Unit | BR-23 | Magic-byte detector on real JPEG/PNG/WEBP/PDF buffers | Returns the matching MIME type for each | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pending |
-| UNIT-05 | Unit | BR-23, AC-19 | Detector on a PDF renamed `.png` and on an EXE buffer | Rejected — declared extension and signature must agree | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pending |
-| UNIT-06 | Unit | BR-24 | Size guard at 5 MB exactly and 5 MB + 1 byte | Accepted / rejected respectively | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pending |
-| UNIT-07 | Unit | BR-27, AC-30 | Filename sanitiser on `../../etc/passwd`, `C:\x\y.png`, a 300-character name | Traversal rejected; length capped at 255 | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pending |
-| UNIT-08 | Unit | BR-27 | Stored-name generator | UUID v4 + normalised extension; two calls never collide | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pending |
+| UNIT-04 | Unit | BR-23 | Magic-byte detector on real JPEG/PNG/WEBP/PDF buffers | Returns the matching MIME type for each | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
+| UNIT-05 | Unit | BR-23, AC-19 | Detector on a PDF renamed `.png` and on an EXE buffer | Rejected — declared extension and signature must agree | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
+| UNIT-06 | Unit | BR-24 | Size guard at 5 MB exactly and 5 MB + 1 byte | Accepted / rejected respectively | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
+| UNIT-07 | Unit | BR-27, AC-30 | Filename sanitiser on `../../etc/passwd`, `C:\x\y.png`, a 300-character name | Traversal rejected; length capped at 255 | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
+| UNIT-08 | Unit | BR-27 | Stored-name generator | UUID v4 + normalised extension; two calls never collide | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
 | UNIT-09 | Unit | BR-38, BR-39 | Query parser defaults with an empty query | `page=1, pageSize=10, sortBy=createdAt, sortOrder=desc` | `server/tests/lab-02/unit/query-params.unit.test.ts` | Pending |
 | UNIT-10 | Unit | BR-39, AC-39 | Query parser on `pageSize=999`, `page=abc`, `sortBy=secret`, `requestedPriority=CRITICAL` | Throws a parameter error naming the offending parameter — never coerces | `server/tests/lab-02/unit/query-params.unit.test.ts` | Pending |
 | UNIT-11 | Unit | BR-16, BR-17, AC-12 | Client validators: trim-then-measure at 9/10 and 19/20 characters, whitespace-only input | Boundary messages exactly as specified; whitespace-only counts as missing | `client/tests/lab-02/unit/validation.unit.test.ts` | Pending |
-| UNIT-12 | Unit | BR-17, AC-28 | Removal-reason validator at 4, 5, 200, 201 characters | Rejected / accepted / accepted / rejected | `client/tests/lab-02/unit/validation.unit.test.ts` | Pending |
+| UNIT-12 | Unit | BR-17, AC-28 | Removal-reason validator at 4, 5, 200, 201 characters | Rejected / accepted / accepted / rejected | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
 
 ### 2.2 API tests — reference data and requester context
 
@@ -145,25 +145,25 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| API-35 | API | AC-18, BR-26 | Upload a valid PNG to an owned ticket | `201`; metadata complete; file exists on disk; parent ticket `updatedAt` refreshed | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-36 | API | AC-30, BR-27 | Inspect the stored name after upload | UUID + normalised extension; `originalFilename` preserved as metadata; `storedFilename` never returned in the response | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-37 | API | AC-30, BR-27 | Upload with filename `../../evil.png` | `400` `VALIDATION_FAILED`; nothing written outside the upload directory | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-38 | API | AC-19, BR-23 | Upload `not-an-image.exe`, then `fake.png` (PDF bytes with a `.png` name) | `415` `UNSUPPORTED_FILE_TYPE` for both; nothing persisted | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-39 | API | AC-20, BR-24 | Upload a 6 MB file | `413` `FILE_TOO_LARGE`; no row created; upload directory unchanged | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-40 | API | BR-24 | Upload a file of exactly 5 MB | `201` — the boundary is inclusive | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-41 | API | AC-21, BR-25 | Sixth upload to a ticket already holding five active attachments | `409` `ATTACHMENT_LIMIT_REACHED` | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-42 | API | AC-22, BR-25 | Five attachments, one soft-removed, then a new upload | `201` — removed files do not consume a slot | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-43 | API | BR-14 | Requester B uploads to Requester A's ticket | `404` `TICKET_NOT_FOUND`; nothing written | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-44 | API | api-spec §3.8 | Multipart request with no `file` part | `400` `NO_FILE_UPLOADED` | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-45 | API | AC-24, BR-14 | Owner downloads an active attachment | `200`; bytes match the uploaded file; `Content-Disposition` carries the original filename; `Content-Type` matches; `X-Content-Type-Options: nosniff` | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-46 | API | AC-25, BR-30 | Soft-remove with a valid reason | `200`; `removedAt`, `removalReason`, `removedById` set; **row still present**; file still on disk; `downloadUrl: null` | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-47 | API | AC-26, BR-32 | Download a removed attachment | `410` `ATTACHMENT_REMOVED`; no bytes returned | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-48 | API | AC-28, BR-17 | Remove with no reason, and with a 4-character reason | `400` `VALIDATION_FAILED`; attachment stays active | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-49 | API | AC-29, BR-32 | Remove an already-removed attachment | `409` `ALREADY_REMOVED`; original removal metadata unchanged | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-50 | API | AC-42, BR-14 | Requester B downloads and then removes Requester A's attachment | `404` `ATTACHMENT_NOT_FOUND` for both; the attachment remains active | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-51 | API | api-spec §3.10 | Requester B requests A's **removed** attachment | `404`, not `410` — a non-owner never learns it was removed | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-52 | API | BR-28 | Row insert forced to fail after a successful file write | Written file deleted; `500` returned; no orphan file left behind | `server/tests/lab-02/attachments.api.test.ts` | Pending |
-| API-53 | API | BR-27, X-01 | `GET /uploads/<stored name>` requested directly | Not served — the upload directory is not static | `server/tests/lab-02/attachments.api.test.ts` | Pending |
+| API-35 | API | AC-18, BR-26 | Upload a valid PNG to an owned ticket | `201`; metadata complete; file exists on disk; parent ticket `updatedAt` refreshed | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-36 | API | AC-30, BR-27 | Inspect the stored name after upload | UUID + normalised extension; `originalFilename` preserved as metadata; `storedFilename` never returned in the response | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-37 | API | AC-30, BR-27 | Upload with filename `../../evil.png` | `400` `VALIDATION_FAILED`; nothing written outside the upload directory | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-38 | API | AC-19, BR-23 | Upload `not-an-image.exe`, then `fake.png` (PDF bytes with a `.png` name) | `415` `UNSUPPORTED_FILE_TYPE` for both; nothing persisted | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-39 | API | AC-20, BR-24 | Upload a 6 MB file | `413` `FILE_TOO_LARGE`; no row created; upload directory unchanged | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-40 | API | BR-24 | Upload a file of exactly 5 MB | `201` — the boundary is inclusive | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-41 | API | AC-21, BR-25 | Sixth upload to a ticket already holding five active attachments | `409` `ATTACHMENT_LIMIT_REACHED` | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-42 | API | AC-22, BR-25 | Five attachments, one soft-removed, then a new upload | `201` — removed files do not consume a slot | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-43 | API | BR-14 | Requester B uploads to Requester A's ticket | `404` `TICKET_NOT_FOUND`; nothing written | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-44 | API | api-spec §3.8 | Multipart request with no `file` part | `400` `NO_FILE_UPLOADED` | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-45 | API | AC-24, BR-14 | Owner downloads an active attachment | `200`; bytes match the uploaded file; `Content-Disposition` carries the original filename; `Content-Type` matches; `X-Content-Type-Options: nosniff` | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-46 | API | AC-25, BR-30 | Soft-remove with a valid reason | `200`; `removedAt`, `removalReason`, `removedById` set; **row still present**; file still on disk; `downloadUrl: null` | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-47 | API | AC-26, BR-32 | Download a removed attachment | `410` `ATTACHMENT_REMOVED`; no bytes returned | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-48 | API | AC-28, BR-17 | Remove with no reason, and with a 4-character reason | `400` `VALIDATION_FAILED`; attachment stays active | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-49 | API | AC-29, BR-32 | Remove an already-removed attachment | `409` `ALREADY_REMOVED`; original removal metadata unchanged | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-50 | API | AC-42, BR-14 | Requester B downloads and then removes Requester A's attachment | `404` `ATTACHMENT_NOT_FOUND` for both; the attachment remains active | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-51 | API | api-spec §3.10 | Requester B requests A's **removed** attachment | `404`, not `410` — a non-owner never learns it was removed | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-52 | API | BR-28 | Row insert forced to fail after a successful file write | Written file deleted; `500` returned; no orphan file left behind | `server/tests/lab-02/attachments.api.test.ts` | Pass |
+| API-53 | API | BR-27, X-01 | `GET /uploads/<stored name>` requested directly | Not served — the upload directory is not static | `server/tests/lab-02/attachments.api.test.ts` | Pass |
 
 ### 2.7 UI component tests
 
