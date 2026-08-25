@@ -169,12 +169,12 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| UI-01 | UI | AC-01, AC-50 | Requester Selection renders | Dropdown lists active requesters only; visible text states it is a Lab 2 testing mechanism, not login, and that authentication arrives in Lab 3 | `client/tests/lab-02/RequesterSelection.test.tsx` | Pending |
-| UI-02 | UI | AC-05 | Requesters fetch rejects | Error callout with a **Try again** action; nothing written to `localStorage` | `client/tests/lab-02/RequesterSelection.test.tsx` | Pending |
-| UI-03 | UI | AC-06 | Requesters endpoint returns `[]` | Distinct empty state; Continue disabled/hidden — not the error state | `client/tests/lab-02/RequesterSelection.test.tsx` | Pending |
-| UI-04 | UI | AC-02, FR-05 | My Tickets, Create Ticket, and `/tickets/1` rendered with no stored context | Requester Selection shown instead in all three cases | `client/tests/lab-02/RequesterGuard.test.tsx` | Pending |
-| UI-05 | UI | AC-03 | Shell after selection | Requester name displayed with the "Testing as" label; Change Requester present; active nav item marked `aria-current` | `client/tests/lab-02/AppShell.test.tsx` | Pending |
-| UI-06 | UI | AC-07 | A requester-scoped call returns `403 REQUESTER_CONTEXT_INVALID` | Stored id cleared; Requester Selection shown with the "no longer available" warning | `client/tests/lab-02/RequesterGuard.test.tsx` | Pending |
+| UI-01 | UI | AC-01, AC-50 | Requester Selection renders | Dropdown lists active requesters only; visible text states it is a Lab 2 testing mechanism, not login, and that authentication arrives in Lab 3 | `client/tests/lab-02/RequesterSelection.test.tsx` | Pass |
+| UI-02 | UI | AC-05 | Requesters fetch rejects | Error callout with a **Try again** action; nothing written to `localStorage` | `client/tests/lab-02/RequesterSelection.test.tsx` | Pass |
+| UI-03 | UI | AC-06 | Requesters endpoint returns `[]` | Distinct empty state; Continue disabled/hidden — not the error state | `client/tests/lab-02/RequesterSelection.test.tsx` | Pass |
+| UI-04 | UI | AC-02, FR-05 | My Tickets, Create Ticket, and `/tickets/1` rendered with no stored context | Requester Selection shown instead in all three cases | `client/tests/lab-02/RequesterGuard.test.tsx` | Pass |
+| UI-05 | UI | AC-03 | Shell after selection | Requester name displayed with the "Testing as" label; Change Requester present; active nav item marked `aria-current` | `client/tests/lab-02/AppShell.test.tsx` | Pass |
+| UI-06 | UI | AC-07 | A requester-scoped call returns `403 REQUESTER_CONTEXT_INVALID` | Stored id cleared; Requester Selection shown with the "no longer available" warning | `client/tests/lab-02/RequesterGuard.test.tsx` | Pass |
 | UI-07 | UI | AC-10 | Create Ticket mounts | Category and Related System options rendered from the API response, not from a hard-coded list | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
 | UI-08 | UI | AC-11, BR-18 | Submit with an empty Summary | Message below the Summary field; summary callout with the field count; focus on Summary; **no** POST issued | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
 | UI-09 | UI | AC-12 | Summary of 9 characters, then 10 | Boundary message at 9; submission proceeds at 10 | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |

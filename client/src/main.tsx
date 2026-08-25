@@ -11,9 +11,7 @@ createRoot(document.getElementById('root')!).render(
       <a className="visually-hidden-focusable" href="#main">
         Skip to main content
       </a>
-      <main id="main" className="container py-4">
-        <AppRoutes />
-      </main>
+      <AppRoutes />
     </BrowserRouter>
   </StrictMode>,
 )
