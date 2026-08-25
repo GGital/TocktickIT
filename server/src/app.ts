@@ -2,7 +2,7 @@ import express, { type ErrorRequestHandler } from 'express'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
 import { requesterContext } from './requesterContext.js'
-import { createTicket } from './tickets.js'
+import { createTicket, listTickets } from './tickets.js'
 
 const app = express()
 
@@ -56,6 +56,7 @@ app.get('/api/requesters', async (_req, res) => {
 app.use(['/api/tickets', '/api/attachments'], requesterContext)
 
 app.post('/api/tickets', createTicket)
+app.get('/api/tickets', listTickets)
 
 // Express 5 forwards rejected promises here, so handlers need no try/catch.
 const handleUnexpectedError: ErrorRequestHandler = (error, _req, res, _next) => {
