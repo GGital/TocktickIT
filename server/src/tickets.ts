@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import { sendError, type FieldError } from './errors.js'
 import { prisma } from './prisma.js'
 import { bangkokYear, formatTicketNumber } from './ticketNumber.js'
+import { QueryParameterError, parseTicketListQuery } from './ticketQuery.js'
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const
 type Priority = (typeof PRIORITIES)[number]
@@ -165,4 +166,80 @@ export async function createTicket(req: Request, res: Response) {
   })
 
   res.status(201).location(`/api/tickets/${ticket.id}`).json({ ...ticket, attachments: [] })
+}
+
+
+const ticketSummary = {
+  id: true,
+  ticketNumber: true,
+  summary: true,
+  requestedPriority: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  category: { select: { id: true, name: true } },
+  relatedSystem: { select: { id: true, name: true } },
+  // Removed attachments do not count towards the list indicator (BR-25).
+  _count: { select: { attachments: { where: { removedAt: null } } } },
+} as const
+
+/** `GET /api/tickets` (api-spec §3.6). Search, filter, sort, and paging all happen
+ * in the database, always inside the requester's ownership scope (BR-15, BR-34). */
+export async function listTickets(req: Request, res: Response) {
+  let query
+  try {
+    query = parseTicketListQuery(req.query as Record<string, unknown>)
+  } catch (error) {
+    if (error instanceof QueryParameterError) {
+      return sendError(res, 'INVALID_QUERY_PARAMETER', error.message)
+    }
+    throw error
+  }
+
+  const where = {
+    // Ownership is part of the query itself, never a filter applied afterwards.
+    requesterId: req.requester!.id,
+    ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+    ...(query.relatedSystemId ? { relatedSystemId: query.relatedSystemId } : {}),
+    ...(query.requestedPriority ? { requestedPriority: query.requestedPriority } : {}),
+    ...(query.status ? { status: query.status } : {}),
+    // Filters and search combine with AND; the OR only spreads the term across
+    // the three searchable columns (BR-35, BR-36).
+    ...(query.search
+      ? {
+          OR: [
+            { ticketNumber: { contains: query.search, mode: 'insensitive' as const } },
+            { summary: { contains: query.search, mode: 'insensitive' as const } },
+            { description: { contains: query.search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}),
+  }
+
+  const [totalItems, rows] = await prisma.$transaction([
+    prisma.ticket.count({ where }),
+    prisma.ticket.findMany({
+      where,
+      // Sorting requestedPriority orders by severity, not alphabetically: the
+      // Postgres enum is declared LOW, MEDIUM, HIGH, URGENT, and enum comparison
+      // follows declaration order. Reordering the enum would change this (BR-37).
+      orderBy: [{ [query.sortBy]: query.sortOrder }, { id: 'desc' }],
+      skip: (query.page - 1) * query.pageSize,
+      take: query.pageSize,
+      select: ticketSummary,
+    }),
+  ])
+
+  res.json({
+    // A page past the end is an empty page, not an error (BR-40).
+    data: rows.map(({ _count, ...ticket }) => ({ ...ticket, attachmentCount: _count.attachments })),
+    meta: {
+      page: query.page,
+      pageSize: query.pageSize,
+      totalItems,
+      totalPages: Math.ceil(totalItems / query.pageSize),
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
+    },
+  })
 }

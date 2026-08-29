@@ -82,8 +82,8 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 | UNIT-06 | Unit | BR-24 | Size guard at 5 MB exactly and 5 MB + 1 byte | Accepted / rejected respectively | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
 | UNIT-07 | Unit | BR-27, AC-30 | Filename sanitiser on `../../etc/passwd`, `C:\x\y.png`, a 300-character name | Traversal rejected; length capped at 255 | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
 | UNIT-08 | Unit | BR-27 | Stored-name generator | UUID v4 + normalised extension; two calls never collide | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
-| UNIT-09 | Unit | BR-38, BR-39 | Query parser defaults with an empty query | `page=1, pageSize=10, sortBy=createdAt, sortOrder=desc` | `server/tests/lab-02/unit/query-params.unit.test.ts` | Pending |
-| UNIT-10 | Unit | BR-39, AC-39 | Query parser on `pageSize=999`, `page=abc`, `sortBy=secret`, `requestedPriority=CRITICAL` | Throws a parameter error naming the offending parameter — never coerces | `server/tests/lab-02/unit/query-params.unit.test.ts` | Pending |
+| UNIT-09 | Unit | BR-38, BR-39 | Query parser defaults with an empty query | `page=1, pageSize=10, sortBy=createdAt, sortOrder=desc` | `server/tests/lab-02/unit/query-params.unit.test.ts` | Pass |
+| UNIT-10 | Unit | BR-39, AC-39 | Query parser on `pageSize=999`, `page=abc`, `sortBy=secret`, `requestedPriority=CRITICAL` | Throws a parameter error naming the offending parameter — never coerces | `server/tests/lab-02/unit/query-params.unit.test.ts` | Pass |
 | UNIT-11 | Unit | BR-16, BR-17, AC-12 | Client validators: trim-then-measure at 9/10 and 19/20 characters, whitespace-only input | Boundary messages exactly as specified; whitespace-only counts as missing | `client/tests/lab-02/unit/validation.unit.test.ts` | Pending |
 | UNIT-12 | Unit | BR-17, AC-28 | Removal-reason validator at 4, 5, 200, 201 characters | Rejected / accepted / accepted / rejected | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
 
@@ -121,15 +121,15 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| API-21 | API | AC-31, BR-15 | Requester A and B each own tickets; A lists | Only A's tickets returned; none of B's ids present | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
-| API-22 | API | AC-36, BR-38 | 12 owned tickets, default page size, then `page=2` | Page 1 has 10 items, `totalItems: 12`, `totalPages: 2`; page 2 has the remaining 2 | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
-| API-23 | API | BR-40 | `page=99` with 12 tickets | `200`, `data: []`, meta still correct | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
-| API-24 | API | AC-34, BR-35 | `search` matching a ticket-number fragment, a summary fragment, and a description fragment, in upper and lower case | Matching tickets returned in every case | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
-| API-25 | API | AC-35, BR-36 | `categoryId` + `requestedPriority` together, then combined with `search` | Only tickets matching every criterion (AND) | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
-| API-26 | API | AC-37, BR-37 | `sortBy=createdAt&sortOrder=asc`, requested twice | Oldest first; identical order on both calls (stable secondary sort) | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
-| API-27 | API | BR-37 | `sortBy=requestedPriority&sortOrder=desc` | Order is `URGENT, HIGH, MEDIUM, LOW` — severity, not alphabetical | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
-| API-28 | API | AC-39, BR-39 | `pageSize=999`, `page=abc`, `sortBy=secret`, `sortOrder=sideways`, `requestedPriority=CRITICAL` | `400` `INVALID_QUERY_PARAMETER` each time, message naming the parameter | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
-| API-29 | API | BR-25, §2.4 api-spec | A ticket with 2 active and 1 removed attachment appears in the list | `attachmentCount` is `2` — removed files are not counted | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
+| API-21 | API | AC-31, BR-15 | Requester A and B each own tickets; A lists | Only A's tickets returned; none of B's ids present | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
+| API-22 | API | AC-36, BR-38 | 12 owned tickets, default page size, then `page=2` | Page 1 has 10 items, `totalItems: 12`, `totalPages: 2`; page 2 has the remaining 2 | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
+| API-23 | API | BR-40 | `page=99` with 12 tickets | `200`, `data: []`, meta still correct | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
+| API-24 | API | AC-34, BR-35 | `search` matching a ticket-number fragment, a summary fragment, and a description fragment, in upper and lower case | Matching tickets returned in every case | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
+| API-25 | API | AC-35, BR-36 | `categoryId` + `requestedPriority` together, then combined with `search` | Only tickets matching every criterion (AND) | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
+| API-26 | API | AC-37, BR-37 | `sortBy=createdAt&sortOrder=asc`, requested twice | Oldest first; identical order on both calls (stable secondary sort) | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
+| API-27 | API | BR-37 | `sortBy=requestedPriority&sortOrder=desc` | Order is `URGENT, HIGH, MEDIUM, LOW` — severity, not alphabetical | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
+| API-28 | API | AC-39, BR-39 | `pageSize=999`, `page=abc`, `sortBy=secret`, `sortOrder=sideways`, `requestedPriority=CRITICAL` | `400` `INVALID_QUERY_PARAMETER` each time, message naming the parameter | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
+| API-29 | API | BR-25, §2.4 api-spec | A ticket with 2 active and 1 removed attachment appears in the list | `attachmentCount` is `2` — removed files are not counted | `server/tests/lab-02/my-tickets.api.test.ts` | Pass |
 
 ### 2.5 API tests — Ticket Detail and ownership
 
