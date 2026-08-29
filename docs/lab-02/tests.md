@@ -84,7 +84,7 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 | UNIT-08 | Unit | BR-27 | Stored-name generator | UUID v4 + normalised extension; two calls never collide | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
 | UNIT-09 | Unit | BR-38, BR-39 | Query parser defaults with an empty query | `page=1, pageSize=10, sortBy=createdAt, sortOrder=desc` | `server/tests/lab-02/unit/query-params.unit.test.ts` | Pass |
 | UNIT-10 | Unit | BR-39, AC-39 | Query parser on `pageSize=999`, `page=abc`, `sortBy=secret`, `requestedPriority=CRITICAL` | Throws a parameter error naming the offending parameter — never coerces | `server/tests/lab-02/unit/query-params.unit.test.ts` | Pass |
-| UNIT-11 | Unit | BR-16, BR-17, AC-12 | Client validators: trim-then-measure at 9/10 and 19/20 characters, whitespace-only input | Boundary messages exactly as specified; whitespace-only counts as missing | `client/tests/lab-02/unit/validation.unit.test.ts` | Pending |
+| UNIT-11 | Unit | BR-16, BR-17, AC-12 | Client validators: trim-then-measure at 9/10 and 19/20 characters, whitespace-only input | Boundary messages exactly as specified; whitespace-only counts as missing | `client/tests/lab-02/unit/validation.unit.test.ts` | Pass |
 | UNIT-12 | Unit | BR-17, AC-28 | Removal-reason validator at 4, 5, 200, 201 characters | Rejected / accepted / accepted / rejected | `server/tests/lab-02/unit/file-validation.unit.test.ts` | Pass |
 
 ### 2.2 API tests — reference data and requester context
@@ -175,15 +175,15 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 | UI-04 | UI | AC-02, FR-05 | My Tickets, Create Ticket, and `/tickets/1` rendered with no stored context | Requester Selection shown instead in all three cases | `client/tests/lab-02/RequesterGuard.test.tsx` | Pass |
 | UI-05 | UI | AC-03 | Shell after selection | Requester name displayed with the "Testing as" label; Change Requester present; active nav item marked `aria-current` | `client/tests/lab-02/AppShell.test.tsx` | Pass |
 | UI-06 | UI | AC-07 | A requester-scoped call returns `403 REQUESTER_CONTEXT_INVALID` | Stored id cleared; Requester Selection shown with the "no longer available" warning | `client/tests/lab-02/RequesterGuard.test.tsx` | Pass |
-| UI-07 | UI | AC-10 | Create Ticket mounts | Category and Related System options rendered from the API response, not from a hard-coded list | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
-| UI-08 | UI | AC-11, BR-18 | Submit with an empty Summary | Message below the Summary field; summary callout with the field count; focus on Summary; **no** POST issued | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
-| UI-09 | UI | AC-12 | Summary of 9 characters, then 10 | Boundary message at 9; submission proceeds at 10 | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
-| UI-10 | UI | AC-14, BR-19 | Submit clicked twice while the request is in flight | Button disabled with a busy label and `aria-busy`; exactly one POST issued | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
-| UI-11 | UI | AC-08, FR-11 | Successful creation | Success card shows the backend `ticketNumber` and offers View Ticket / Create Another / My Tickets | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
-| UI-12 | UI | AC-16, BR-20 | POST rejects (backend down) | Error callout; every typed value and every staged file still present; Submit re-enabled | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
-| UI-13 | UI | AC-15 | POST returns `409 DUPLICATE_SUBMISSION` | Non-destructive warning; form not cleared | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
-| UI-14 | UI | AC-19, BR-23 | A `.exe` and a 6 MB file selected | Both rows marked invalid with the specific reason; neither is uploaded; the rest of the form is unaffected | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |
-| UI-15 | UI | AC-23, BR-29 | Ticket created but one attachment upload fails | Ticket number still shown; per-file outcome listed; retry offered | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
+| UI-07 | UI | AC-10 | Create Ticket mounts | Category and Related System options rendered from the API response, not from a hard-coded list | `client/tests/lab-02/CreateTicket.test.tsx` | Pass |
+| UI-08 | UI | AC-11, BR-18 | Submit with an empty Summary | Message below the Summary field; summary callout with the field count; focus on Summary; **no** POST issued | `client/tests/lab-02/CreateTicket.test.tsx` | Pass |
+| UI-09 | UI | AC-12 | Summary of 9 characters, then 10 | Boundary message at 9; submission proceeds at 10 | `client/tests/lab-02/CreateTicket.test.tsx` | Pass |
+| UI-10 | UI | AC-14, BR-19 | Submit clicked twice while the request is in flight | Button disabled with a busy label and `aria-busy`; exactly one POST issued | `client/tests/lab-02/CreateTicket.test.tsx` | Pass |
+| UI-11 | UI | AC-08, FR-11 | Successful creation | Success card shows the backend `ticketNumber` and offers View Ticket / Create Another / My Tickets | `client/tests/lab-02/CreateTicket.test.tsx` | Pass |
+| UI-12 | UI | AC-16, BR-20 | POST rejects (backend down) | Error callout; every typed value and every staged file still present; Submit re-enabled | `client/tests/lab-02/CreateTicket.test.tsx` | Pass |
+| UI-13 | UI | AC-15 | POST returns `409 DUPLICATE_SUBMISSION` | Non-destructive warning; form not cleared | `client/tests/lab-02/CreateTicket.test.tsx` | Pass |
+| UI-14 | UI | AC-19, BR-23 | A `.exe` and a 6 MB file selected | Both rows marked invalid with the specific reason; neither is uploaded; the rest of the form is unaffected | `client/tests/lab-02/AttachmentSection.test.tsx` | Pass |
+| UI-15 | UI | AC-23, BR-29 | Ticket created but one attachment upload fails | Ticket number still shown; per-file outcome listed; retry offered | `client/tests/lab-02/CreateTicket.test.tsx` | Pass |
 | UI-16 | UI | AC-32, AC-33, BR-42 | Empty list vs a search returning nothing | Two different states: Create Ticket action vs Clear filters action; clearing restores the list | `client/tests/lab-02/MyTickets.test.tsx` | Pending |
 | UI-17 | UI | AC-38, BR-41 | On page 2, a filter is changed | Next request carries `page=1` | `client/tests/lab-02/MyTickets.test.tsx` | Pending |
 | UI-18 | UI | AC-40 | List request fails | Failure callout with retry; no stale rows shown as current | `client/tests/lab-02/MyTickets.test.tsx` | Pending |
@@ -193,16 +193,16 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 | UI-22 | UI | AC-27, AC-26 | Attachment list holding one active and one removed file | Removed row shows the badge, reason, and timestamp, and renders **no** download, preview, or remove control | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |
 | UI-23 | UI | AC-25, BR-31 | Remove clicked on an active attachment | Confirmation dialog appears; Remove stays disabled until the reason reaches 5 characters; DELETE is sent only after confirmation | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |
 | UI-24 | UI | AC-21, BR-25 | Ticket already at five active attachments | Add attachment disabled with the limit explanation | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |
-| UI-25 | UI | AC-47 | Keyboard-only pass over Requester Selection and Create Ticket | Every control reachable in visual order; the form submits without a mouse; the dialog traps and restores focus | `client/tests/lab-02/Accessibility.test.tsx` | Pending |
+| UI-25 | UI | AC-47 | Keyboard-only pass over Requester Selection and Create Ticket | Every control reachable in visual order; the form submits without a mouse; the dialog traps and restores focus | `client/tests/lab-02/Accessibility.test.tsx` | Pass |
 
 ### 2.8 UI style tests
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
 | STYLE-01 | UI style | AC-46, ui-spec §1.1 | Theme tokens resolve | `--zen-primary` is `#006B3C`, `--zen-secondary` `#0B7A46`, `--zen-pale` `#EAF6EF`, `--zen-page-bg` `#F5F7F6` | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
-| STYLE-02 | UI style | AC-46 | Read-only vs editable fields on Create Ticket | Ticket Number, Ticket Date, Requester, Status carry the read-only class and the `readonly` attribute; editable fields do not | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
-| STYLE-03 | UI style | ui-spec §2.2 | Required-field marking | Every required control has a visible asterisk **and** `aria-required="true"`; the "Fields marked * are required" legend appears exactly once | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
-| STYLE-04 | UI style | BR-18 | Validation message placement | Each message is a sibling of its own field and is referenced by that field's `aria-describedby` | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pending |
+| STYLE-02 | UI style | AC-46 | Read-only vs editable fields on Create Ticket | Ticket Number, Ticket Date, Requester, Status carry the read-only class and the `readonly` attribute; editable fields do not | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
+| STYLE-03 | UI style | ui-spec §2.2 | Required-field marking | Every required control has a visible asterisk **and** `aria-required="true"`; the "Fields marked * are required" legend appears exactly once | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
+| STYLE-04 | UI style | BR-18 | Validation message placement | Each message is a sibling of its own field and is referenced by that field's `aria-describedby` | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
 | STYLE-05 | UI style | ui-spec §2.3 | Button hierarchy | Submit is primary, Cancel secondary, Remove attachment destructive; each uses the documented class | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
 | STYLE-06 | UI style | ui-spec §2.1 | Disabled and busy controls | Disabled controls carry the `disabled` attribute and cannot be activated; the busy button carries `aria-busy="true"` and a spinner | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |
 | STYLE-07 | UI style | AC-48 | Priority and status badges for all five values | Each renders its own text and the documented class; text alone identifies the value with colour removed | `client/tests/lab-02/ZenGreenStyle.test.tsx` | Pass |

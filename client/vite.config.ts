@@ -15,6 +15,6 @@ export default defineConfig({
     css: true,
     globals: true,
     setupFiles: './tests/setup.ts',
-    include: ['tests/**/*.test.tsx'],
+    include: ['tests/**/*.test.{ts,tsx}'],
   },
 })
