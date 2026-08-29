@@ -188,11 +188,11 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 | UI-17 | UI | AC-38, BR-41 | On page 2, a filter is changed | Next request carries `page=1` | `client/tests/lab-02/MyTickets.test.tsx` | Pass |
 | UI-18 | UI | AC-40 | List request fails | Failure callout with retry; no stale rows shown as current | `client/tests/lab-02/MyTickets.test.tsx` | Pass |
 | UI-19 | UI | AC-04, BR-12 | Requester switched while a filtered list is displayed | Previous requester's rows disappear before the new data resolves; page and filters reset | `client/tests/lab-02/MyTickets.test.tsx` | Pass |
-| UI-20 | UI | AC-43, BR-44 | Ticket Detail rendered for an owned ticket | All nine fields displayed read-only; no input, select, or textarea bound to ticket data; no status control | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Pending |
-| UI-21 | UI | AC-44, BR-13 | Detail responds `404` | Safe not-found card; wording identical for a non-existent id and another requester's ticket | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Pending |
-| UI-22 | UI | AC-27, AC-26 | Attachment list holding one active and one removed file | Removed row shows the badge, reason, and timestamp, and renders **no** download, preview, or remove control | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |
-| UI-23 | UI | AC-25, BR-31 | Remove clicked on an active attachment | Confirmation dialog appears; Remove stays disabled until the reason reaches 5 characters; DELETE is sent only after confirmation | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |
-| UI-24 | UI | AC-21, BR-25 | Ticket already at five active attachments | Add attachment disabled with the limit explanation | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |
+| UI-20 | UI | AC-43, BR-44 | Ticket Detail rendered for an owned ticket | All nine fields displayed read-only; no input, select, or textarea bound to ticket data; no status control | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Pass |
+| UI-21 | UI | AC-44, BR-13 | Detail responds `404` | Safe not-found card; wording identical for a non-existent id and another requester's ticket | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Pass |
+| UI-22 | UI | AC-27, AC-26 | Attachment list holding one active and one removed file | Removed row shows the badge, reason, and timestamp, and renders **no** download, preview, or remove control | `client/tests/lab-02/AttachmentSection.test.tsx` | Pass |
+| UI-23 | UI | AC-25, BR-31 | Remove clicked on an active attachment | Confirmation dialog appears; Remove stays disabled until the reason reaches 5 characters; DELETE is sent only after confirmation | `client/tests/lab-02/AttachmentSection.test.tsx` | Pass |
+| UI-24 | UI | AC-21, BR-25 | Ticket already at five active attachments | Add attachment disabled with the limit explanation | `client/tests/lab-02/AttachmentSection.test.tsx` | Pass |
 | UI-25 | UI | AC-47 | Keyboard-only pass over Requester Selection and Create Ticket | Every control reachable in visual order; the form submits without a mouse; the dialog traps and restores focus | `client/tests/lab-02/Accessibility.test.tsx` | Pending |
 
 ### 2.8 UI style tests

@@ -4,11 +4,8 @@ import AppShell from './components/AppShell'
 import RequesterGuard from './components/RequesterGuard'
 import MyTickets from './screens/MyTickets'
 import SelectRequester from './screens/SelectRequester'
-import {
-  CreateTicketScreen,
-  NotFoundScreen,
-  TicketDetailScreen,
-} from './screens/placeholders'
+import TicketDetail from './screens/TicketDetail'
+import { CreateTicketScreen, NotFoundScreen } from './screens/placeholders'
 
 // Routes from specification.md A-11. Exported without a router so tests can mount
 // them inside a MemoryRouter and drive direct-URL cases such as /tickets/:id.
@@ -28,7 +25,7 @@ export default function AppRoutes() {
         <Route path="/" element={<Navigate to="/tickets" replace />} />
         <Route path="/tickets" element={<MyTickets />} />
         <Route path="/tickets/new" element={<CreateTicketScreen />} />
-        <Route path="/tickets/:id" element={<TicketDetailScreen />} />
+        <Route path="/tickets/:id" element={<TicketDetail />} />
         <Route path="*" element={<NotFoundScreen />} />
       </Route>
 
