@@ -18,7 +18,9 @@ beforeEach(() => {
   localStorage.setItem(REQUESTER_ID_KEY, '2')
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => jsonResponse(requesters)),
+    vi.fn((url: string) =>
+      jsonResponse(url.startsWith('/api/tickets') ? { data: [], meta: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } } : requesters),
+    ),
   )
 })
 

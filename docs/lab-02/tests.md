@@ -184,10 +184,10 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 | UI-13 | UI | AC-15 | POST returns `409 DUPLICATE_SUBMISSION` | Non-destructive warning; form not cleared | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
 | UI-14 | UI | AC-19, BR-23 | A `.exe` and a 6 MB file selected | Both rows marked invalid with the specific reason; neither is uploaded; the rest of the form is unaffected | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |
 | UI-15 | UI | AC-23, BR-29 | Ticket created but one attachment upload fails | Ticket number still shown; per-file outcome listed; retry offered | `client/tests/lab-02/CreateTicket.test.tsx` | Pending |
-| UI-16 | UI | AC-32, AC-33, BR-42 | Empty list vs a search returning nothing | Two different states: Create Ticket action vs Clear filters action; clearing restores the list | `client/tests/lab-02/MyTickets.test.tsx` | Pending |
-| UI-17 | UI | AC-38, BR-41 | On page 2, a filter is changed | Next request carries `page=1` | `client/tests/lab-02/MyTickets.test.tsx` | Pending |
-| UI-18 | UI | AC-40 | List request fails | Failure callout with retry; no stale rows shown as current | `client/tests/lab-02/MyTickets.test.tsx` | Pending |
-| UI-19 | UI | AC-04, BR-12 | Requester switched while a filtered list is displayed | Previous requester's rows disappear before the new data resolves; page and filters reset | `client/tests/lab-02/MyTickets.test.tsx` | Pending |
+| UI-16 | UI | AC-32, AC-33, BR-42 | Empty list vs a search returning nothing | Two different states: Create Ticket action vs Clear filters action; clearing restores the list | `client/tests/lab-02/MyTickets.test.tsx` | Pass |
+| UI-17 | UI | AC-38, BR-41 | On page 2, a filter is changed | Next request carries `page=1` | `client/tests/lab-02/MyTickets.test.tsx` | Pass |
+| UI-18 | UI | AC-40 | List request fails | Failure callout with retry; no stale rows shown as current | `client/tests/lab-02/MyTickets.test.tsx` | Pass |
+| UI-19 | UI | AC-04, BR-12 | Requester switched while a filtered list is displayed | Previous requester's rows disappear before the new data resolves; page and filters reset | `client/tests/lab-02/MyTickets.test.tsx` | Pass |
 | UI-20 | UI | AC-43, BR-44 | Ticket Detail rendered for an owned ticket | All nine fields displayed read-only; no input, select, or textarea bound to ticket data; no status control | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Pending |
 | UI-21 | UI | AC-44, BR-13 | Detail responds `404` | Safe not-found card; wording identical for a non-existent id and another requester's ticket | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Pending |
 | UI-22 | UI | AC-27, AC-26 | Attachment list holding one active and one removed file | Removed row shows the badge, reason, and timestamp, and renders **no** download, preview, or remove control | `client/tests/lab-02/AttachmentSection.test.tsx` | Pending |

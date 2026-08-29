@@ -50,7 +50,9 @@ describe('UI-01 requester selection renders (AC-01, AC-50)', () => {
   it('stores the chosen id under the documented key and moves on (BR-10)', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(() => jsonResponse(activeRequesters)),
+      vi.fn((url: string) =>
+        jsonResponse(url.startsWith('/api/tickets') ? { data: [], meta: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } } : activeRequesters),
+      ),
     )
 
     renderSelection()

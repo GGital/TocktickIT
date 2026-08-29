@@ -2,10 +2,10 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import App from './App'
 import AppShell from './components/AppShell'
 import RequesterGuard from './components/RequesterGuard'
+import MyTickets from './screens/MyTickets'
 import SelectRequester from './screens/SelectRequester'
 import {
   CreateTicketScreen,
-  MyTicketsScreen,
   NotFoundScreen,
   TicketDetailScreen,
 } from './screens/placeholders'
@@ -26,7 +26,7 @@ export default function AppRoutes() {
         }
       >
         <Route path="/" element={<Navigate to="/tickets" replace />} />
-        <Route path="/tickets" element={<MyTicketsScreen />} />
+        <Route path="/tickets" element={<MyTickets />} />
         <Route path="/tickets/new" element={<CreateTicketScreen />} />
         <Route path="/tickets/:id" element={<TicketDetailScreen />} />
         <Route path="*" element={<NotFoundScreen />} />
