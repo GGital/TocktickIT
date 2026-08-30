@@ -8,7 +8,7 @@ import {
   removeAttachment,
   uploadAttachment,
 } from './attachments.js'
-import { createTicket, listTickets } from './tickets.js'
+import { createTicket, getTicket, listTickets } from './tickets.js'
 
 const app = express()
 
@@ -63,6 +63,7 @@ app.use(['/api/tickets', '/api/attachments'], requesterContext)
 
 app.post('/api/tickets', createTicket)
 app.get('/api/tickets', listTickets)
+app.get('/api/tickets/:id', getTicket)
 
 app.post('/api/tickets/:id/attachments', uploadAttachment)
 app.get('/api/tickets/:id/attachments', listAttachments)

@@ -31,7 +31,7 @@ const upload = multer({
 
 const MAX_ACTIVE_ATTACHMENTS = 5
 
-const attachmentSelect = {
+export const attachmentSelect = {
   id: true,
   ticketId: true,
   originalFilename: true,

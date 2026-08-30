@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express'
+import { attachmentSelect, toAttachmentShape } from './attachments.js'
 import { sendError, type FieldError } from './errors.js'
 import { prisma } from './prisma.js'
 import { bangkokYear, formatTicketNumber } from './ticketNumber.js'
@@ -242,4 +243,35 @@ export async function listTickets(req: Request, res: Response) {
       sortOrder: query.sortOrder,
     },
   })
+}
+
+const parseId = (value: string | string[] | undefined) =>
+  typeof value === 'string' && /^\d+$/.test(value) && Number(value) > 0 ? Number(value) : null
+
+/**
+ * `GET /api/tickets/:id` (api-spec §3.7). Ownership is part of the lookup, so a
+ * ticket belonging to another Requester is indistinguishable from one that does
+ * not exist — same status, same body (BR-13, BR-15, AC-41, AC-44).
+ */
+export async function getTicket(req: Request, res: Response) {
+  const id = parseId(req.params.id)
+  if (id === null) {
+    return sendError(res, 'INVALID_PATH_PARAMETER', 'The ticket id must be a positive integer.')
+  }
+
+  const ticket = await prisma.ticket.findFirst({
+    where: { id, requesterId: req.requester!.id },
+    select: {
+      ...ticketDetail,
+      // Removed attachments are listed too, as metadata only (BR-32, AC-27).
+      attachments: {
+        orderBy: [{ uploadedAt: 'asc' }, { id: 'asc' }],
+        select: attachmentSelect,
+      },
+    },
+  })
+
+  if (!ticket) return sendError(res, 'TICKET_NOT_FOUND', 'Ticket not found.')
+
+  res.json({ ...ticket, attachments: ticket.attachments.map(toAttachmentShape) })
 }
