@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Button from './Button'
-import { apiFetch, type Requester } from '../lib/apiClient'
-import { clearRequesterId, useRequesterId } from '../lib/requesterContext'
+import { useCurrentRequester } from '../lib/useCurrentRequester'
 
 /**
  * Application shell (ui-spec §3). Present on every route except /select-requester.
@@ -10,30 +9,10 @@ import { clearRequesterId, useRequesterId } from '../lib/requesterContext'
  * (BR-08, BR-50).
  */
 export default function AppShell() {
-  const requesterId = useRequesterId()
-  const [requester, setRequester] = useState<Requester | null>(null)
+  const requester = useCurrentRequester()
   const [navOpen, setNavOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-
-  useEffect(() => {
-    if (requesterId === null) return
-
-    let active = true
-    apiFetch<Requester[]>('/requesters')
-      .then((requesters) => {
-        if (!active) return
-        const match = requesters.find((candidate) => candidate.id === requesterId)
-        // Absent from the active list means the stored context is no longer usable (BR-11).
-        if (match) setRequester(match)
-        else clearRequesterId({ wasRejected: true })
-      })
-      .catch(() => active && setRequester(null))
-
-    return () => {
-      active = false
-    }
-  }, [requesterId])
 
   // The mobile panel closes on navigation and on Esc (ui-spec §3).
   useEffect(() => setNavOpen(false), [location.pathname])

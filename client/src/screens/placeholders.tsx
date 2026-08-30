@@ -9,5 +9,4 @@ function Placeholder({ title }: { title: string }) {
   )
 }
 
-export const CreateTicketScreen = () => <Placeholder title="Create Ticket" />
 export const NotFoundScreen = () => <Placeholder title="Page not found" />
