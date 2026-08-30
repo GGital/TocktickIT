@@ -1,11 +1,14 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import '../../src/styles/zen-theme.css'
+import AppRoutes from '../../src/AppRoutes'
 import Badge from '../../src/components/Badge'
 import Button from '../../src/components/Button'
+import { REQUESTER_ID_KEY } from '../../src/lib/requesterContext'
 
 // Vitest runs with the client project root as cwd.
 const srcDir = join(process.cwd(), 'src')
@@ -120,5 +123,103 @@ describe('STYLE-08 no hard-coded colours (AC-46)', () => {
     )
 
     expect(offenders.map((path) => relative(srcDir, path))).toEqual([])
+  })
+})
+
+
+const ok = (body: unknown, status = 200) =>
+  ({ ok: true, status, json: () => Promise.resolve(body) }) as Response
+
+/** Create Ticket is the screen that carries read-only, required, and validated fields. */
+function renderCreateTicket() {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string) => {
+      if (url.startsWith('/api/requesters')) {
+        return Promise.resolve(
+          ok([{ id: 1, fullName: 'Nadia Charoen', email: 'n@t.test', department: 'Registrar' }]),
+        )
+      }
+      if (url.startsWith('/api/categories')) return Promise.resolve(ok([{ id: 2, name: 'Hardware' }]))
+      if (url.startsWith('/api/related-systems')) {
+        return Promise.resolve(ok([{ id: 7, name: 'Corporate Laptop' }]))
+      }
+      return Promise.resolve(ok({}))
+    }),
+  )
+
+  return render(
+    <MemoryRouter initialEntries={['/tickets/new']}>
+      <AppRoutes />
+    </MemoryRouter>,
+  )
+}
+
+describe('Create Ticket field styling (STYLE-02, 03, 04)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    localStorage.setItem(REQUESTER_ID_KEY, '1')
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('STYLE-02 marks system-generated fields read-only and editable fields not', async () => {
+    renderCreateTicket()
+
+    for (const label of ['Ticket Number', 'Ticket Date', 'Current Status', 'Requester']) {
+      const field = await screen.findByLabelText(label)
+      expect(field).toHaveAttribute('readonly')
+      expect(field).toHaveClass('zen-control')
+    }
+
+    expect(screen.getByLabelText(/^Ticket Summary/)).not.toHaveAttribute('readonly')
+    expect(screen.getByLabelText(/^Description/)).not.toHaveAttribute('readonly')
+    expect(screen.getByLabelText(/^Category/)).not.toHaveAttribute('readonly')
+  })
+
+  it('STYLE-03 marks every required control with an asterisk and aria-required', async () => {
+    const { container } = renderCreateTicket()
+
+    const requiredLabels = ['Ticket Summary', 'Description', 'Category', 'Related System']
+    for (const label of requiredLabels) {
+      const control = await screen.findByLabelText(new RegExp(`^${label}`))
+      expect(control).toHaveAttribute('aria-required', 'true')
+
+      const field = control.closest('.zen-field')!
+      expect(within(field as HTMLElement).getByText('*')).toHaveClass('zen-required')
+    }
+
+    // The priority radio group carries the same marking on its fieldset.
+    expect(container.querySelector('fieldset')).toHaveAttribute('aria-required', 'true')
+
+    // The legend appears exactly once per form.
+    expect(screen.getAllByText('Fields marked * are required.')).toHaveLength(1)
+  })
+
+  it('STYLE-04 puts each message beside its own field and links it with aria-describedby', async () => {
+    renderCreateTicket()
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Submit Ticket' }))
+
+    for (const [label, message] of [
+      [/^Ticket Summary/, 'Summary must be between 10 and 120 characters.'],
+      [/^Description/, 'Description must be between 20 and 2000 characters.'],
+      [/^Category/, 'Select a valid category.'],
+    ] as const) {
+      const control = screen.getByLabelText(label)
+      const describedBy = control.getAttribute('aria-describedby')!.split(' ')
+      const messageNode = describedBy
+        .map((id) => document.getElementById(id))
+        .find((node) => node?.textContent === message)
+
+      expect(messageNode, `${message} must be referenced by its own field`).toBeTruthy()
+      // A sibling of the control, not a distant top-of-page block.
+      expect(messageNode!.parentElement).toBe(control.closest('.zen-field'))
+      expect(messageNode).toHaveClass('zen-error-text')
+    }
+
+    // The summary callout is additional, never a replacement for the field messages.
+    expect(screen.getByRole('alert')).toHaveTextContent(/fields need attention/)
   })
 })

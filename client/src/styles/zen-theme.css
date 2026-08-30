@@ -294,6 +294,12 @@ a:focus-visible {
   .zen-header { min-height: 56px; }
 }
 
+/* --- Create Ticket (ui-spec §5) --- */
+.zen-counter-warning { color: var(--zen-warning); font-weight: 600; }
+.zen-ticket-number { font-size: 1.5rem; font-weight: 600; }
+/* Shared with the My Tickets summary column, which truncates the same way. */
+.zen-filename { max-width: 22rem; }
+
 /* --- My Tickets (ui-spec §6) --- */
 /* Refetching dims the rows in place; they are never removed mid-request. */
 .zen-dimmed { opacity: 0.6; }
