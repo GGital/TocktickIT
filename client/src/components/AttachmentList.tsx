@@ -1,9 +1,9 @@
-import { useId, useState, type ChangeEvent } from 'react'
+import { useEffect, useId, useState, type ChangeEvent } from 'react'
 import Badge from './Badge'
 import Button from './Button'
 import Callout from './Callout'
 import ConfirmDialog from './ConfirmDialog'
-import { ApiError, apiFetch } from '../lib/apiClient'
+import { ApiError, apiFetch, apiFetchBlob } from '../lib/apiClient'
 
 export type Attachment = {
   id: number
@@ -40,6 +40,39 @@ const bangkokTime = (iso: string) =>
     timeStyle: 'short',
   })
 
+/** Loads an image preview through the ownership-checked download route (A-15). */
+function Thumbnail({ attachment }: { attachment: Attachment }) {
+  const [source, setSource] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!attachment.downloadUrl) return
+
+    let objectUrl: string | null = null
+    apiFetchBlob(`/attachments/${attachment.id}/download`)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
+        setSource(objectUrl)
+      })
+      .catch(() => setSource(null))
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [attachment.id, attachment.downloadUrl])
+
+  if (!source) return <span aria-hidden="true">🖼</span>
+
+  return (
+    <img
+      src={source}
+      alt={attachment.originalFilename}
+      width={48}
+      height={48}
+      className="zen-thumbnail"
+    />
+  )
+}
+
 type AttachmentListProps = {
   ticketId: number
   attachments: Attachment[]
@@ -58,6 +91,7 @@ export default function AttachmentList({ ticketId, attachments, onChanged }: Att
   const [removing, setRemoving] = useState<Attachment | null>(null)
   const [reason, setReason] = useState('')
   const [removeBusy, setRemoveBusy] = useState(false)
+  const [downloading, setDownloading] = useState<number | null>(null)
 
   const active = attachments.filter((item) => !item.isRemoved)
   const removed = attachments.filter((item) => item.isRemoved)
@@ -82,6 +116,30 @@ export default function AttachmentList({ ticketId, attachments, onChanged }: Att
       setUploadError(error instanceof ApiError ? error.message : 'The file could not be uploaded.')
     } finally {
       setUploading(null)
+    }
+  }
+
+  /** Fetches the bytes with the context header, then hands them to the browser. */
+  async function download(attachment: Attachment) {
+    setUploadError(null)
+    setDownloading(attachment.id)
+
+    try {
+      const blob = await apiFetchBlob(`/attachments/${attachment.id}/download`)
+      const objectUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = objectUrl
+      link.download = attachment.originalFilename
+      document.body.append(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(objectUrl)
+    } catch (error) {
+      setUploadError(
+        error instanceof ApiError ? error.message : 'This attachment is no longer available.',
+      )
+    } finally {
+      setDownloading(null)
     }
   }
 
@@ -170,14 +228,7 @@ export default function AttachmentList({ ticketId, attachments, onChanged }: Att
               className="d-flex flex-wrap align-items-center gap-2 border-top py-2"
             >
               {IMAGE_TYPES.includes(attachment.mimeType) ? (
-                // Preview is fetched through the ownership-checked download route (A-15).
-                <img
-                  src={attachment.downloadUrl ?? ''}
-                  alt={attachment.originalFilename}
-                  width={48}
-                  height={48}
-                  className="zen-thumbnail"
-                />
+                <Thumbnail attachment={attachment} />
               ) : (
                 <span aria-hidden="true">📄</span>
               )}
@@ -189,13 +240,14 @@ export default function AttachmentList({ ticketId, attachments, onChanged }: Att
               <span className="zen-help mb-0">{bangkokTime(attachment.uploadedAt)}</span>
 
               <span className="ms-auto d-flex gap-2">
-                <a
-                  className="btn btn-outline-primary"
-                  href={attachment.downloadUrl ?? undefined}
-                  download={attachment.originalFilename}
+                <Button
+                  variant="secondary"
+                  busy={downloading === attachment.id}
+                  busyLabel="Downloading…"
+                  onClick={() => download(attachment)}
                 >
                   Download
-                </a>
+                </Button>
                 <Button
                   variant="destructive"
                   aria-label={`Remove ${attachment.originalFilename}`}

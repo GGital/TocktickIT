@@ -212,7 +212,9 @@ describe('UI-22 removed attachments keep metadata only (AC-26, AC-27)', () => {
     expect(within(removedRow).queryByRole('img')).not.toBeInTheDocument()
 
     // The active one keeps both of its controls, and the heading counts only it.
-    expect(screen.getByRole('link', { name: 'Download' })).toBeInTheDocument()
+    // Download is a button, not a link: the bytes are fetched with the context
+    // header and handed to the browser as a blob (an <a href> cannot send headers).
+    expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Remove battery-report.pdf' })).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Attachments (1 active of 5)' }),
