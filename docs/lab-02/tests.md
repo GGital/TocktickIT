@@ -212,26 +212,26 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| RESP-01 | Responsive | AC-45, FR-32 | All four screens at 1280×800, 820×1180, 375×812 | `document.scrollWidth <= clientWidth` at every viewport — no horizontal page scroll | `e2e/lab-02/responsive.spec.ts` | Pending |
-| RESP-02 | Responsive | AC-45 | Create Ticket labels and messages at 375 px | No label clipped; no message overlapping another element (bounding-box comparison) | `e2e/lab-02/responsive.spec.ts` | Pending |
-| RESP-03 | Responsive | ui-spec §6.3 | My Tickets at 1280 px vs 375 px | Table visible on desktop; ticket cards visible on mobile; the other is absent | `e2e/lab-02/responsive.spec.ts` | Pending |
-| RESP-04 | Responsive | ui-spec §3 | Navigation at 375 px | Hamburger toggle present with an accessible name; nav links reachable after expanding | `e2e/lab-02/responsive.spec.ts` | Pending |
-| RESP-05 | Responsive | AC-45 | Filters, pagination, and attachment controls at 375 px | All are reachable and clickable; touch targets ≥ 44 px | `e2e/lab-02/responsive.spec.ts` | Pending |
-| RESP-06 | Responsive | AC-49 | A 90-character attachment filename at 375 px | Rendered width stays within its container; the full name is present in the `title` attribute | `e2e/lab-02/responsive.spec.ts` | Pending |
-| RESP-07 | Visual | ui-spec §12, DoD | Screenshot capture at three viewports for every documented state | All files written under `artifacts/lab-02/screenshots/` | `e2e/lab-02/screenshots.spec.ts` | Pending |
+| RESP-01 | Responsive | AC-45, FR-32 | All four screens at 1280×800, 820×1180, 375×812 | `document.scrollWidth <= clientWidth` at every viewport — no horizontal page scroll | `e2e/lab-02/responsive.spec.ts` | Pass |
+| RESP-02 | Responsive | AC-45 | Create Ticket labels and messages at 375 px | No label clipped; no message overlapping another element (bounding-box comparison) | `e2e/lab-02/responsive.spec.ts` | Pass |
+| RESP-03 | Responsive | ui-spec §6.3 | My Tickets at 1280 px vs 375 px | Table visible on desktop; ticket cards visible on mobile; the other is absent | `e2e/lab-02/responsive.spec.ts` | Pass |
+| RESP-04 | Responsive | ui-spec §3 | Navigation at 375 px | Hamburger toggle present with an accessible name; nav links reachable after expanding | `e2e/lab-02/responsive.spec.ts` | Pass |
+| RESP-05 | Responsive | AC-45 | Filters, pagination, and attachment controls at 375 px | All are reachable and clickable; touch targets ≥ 44 px | `e2e/lab-02/responsive.spec.ts` | Pass |
+| RESP-06 | Responsive | AC-49 | A 90-character attachment filename at 375 px | Rendered width stays within its container; the full name is present in the `title` attribute | `e2e/lab-02/responsive.spec.ts` | Pass |
+| RESP-07 | Visual | ui-spec §12, DoD | Screenshot capture at three viewports for every documented state | All files written under `artifacts/lab-02/screenshots/` | `e2e/lab-02/screenshots.spec.ts` | Pass |
 
 ### 2.10 E2E tests
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| E2E-01 | E2E | AC-01 – AC-03, AC-08, AC-09 | Select a requester, create a ticket, land on the success state | Ticket Number displayed; the same number is then visible in My Tickets and on Ticket Detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Pending |
-| E2E-02 | E2E | AC-11, AC-12, AC-16 | Submit an invalid form, correct it, then submit while the API is intercepted as failing, then succeed | Field messages appear; values survive the failure; retry succeeds | `e2e/lab-02/create-ticket.spec.ts` | Pending |
-| E2E-03 | E2E | AC-18, AC-19, AC-23 | Stage one valid and one invalid attachment and submit | Ticket created; the valid file uploads; the invalid one is reported individually and never uploaded | `e2e/lab-02/create-ticket.spec.ts` | Pending |
-| E2E-04 | E2E | AC-31, AC-04, AC-41 | Requester A creates a ticket, then the user switches to Requester B | A's ticket is absent from B's list; opening A's ticket URL as B shows the safe not-found state | `e2e/lab-02/ownership.spec.ts` | Pending |
-| E2E-05 | E2E | AC-32 – AC-39 | Search, filter, sort, page size, pagination, and Clear filters across a seeded set of 12 tickets | Each control changes the result set as documented; empty and no-results states differ; paging works both ways | `e2e/lab-02/my-tickets.spec.ts` | Pending |
-| E2E-06 | E2E | AC-24 – AC-27 | Add an attachment on Ticket Detail, download it, then soft-remove it with a reason | Download succeeds; after removal the metadata remains with its reason and the download control is gone | `e2e/lab-02/attachments.spec.ts` | Pending |
-| E2E-07 | E2E | AC-26 | The removed attachment's download URL is opened directly in the browser | `410`; no file downloaded | `e2e/lab-02/attachments.spec.ts` | Pending |
-| E2E-08 | E2E | AC-02, AC-05 | `localStorage` cleared mid-session, then a ticket URL opened | Redirected to Requester Selection; no ticket data rendered | `e2e/lab-02/ownership.spec.ts` | Pending |
+| E2E-01 | E2E | AC-01 – AC-03, AC-08, AC-09 | Select a requester, create a ticket, land on the success state | Ticket Number displayed; the same number is then visible in My Tickets and on Ticket Detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Pass |
+| E2E-02 | E2E | AC-11, AC-12, AC-16 | Submit an invalid form, correct it, then submit while the API is intercepted as failing, then succeed | Field messages appear; values survive the failure; retry succeeds | `e2e/lab-02/create-ticket.spec.ts` | Pass |
+| E2E-03 | E2E | AC-18, AC-19, AC-23 | Stage one valid and one invalid attachment and submit | Ticket created; the valid file uploads; the invalid one is reported individually and never uploaded | `e2e/lab-02/create-ticket.spec.ts` | Pass |
+| E2E-04 | E2E | AC-31, AC-04, AC-41 | Requester A creates a ticket, then the user switches to Requester B | A's ticket is absent from B's list; opening A's ticket URL as B shows the safe not-found state | `e2e/lab-02/ownership.spec.ts` | Pass |
+| E2E-05 | E2E | AC-32 – AC-39 | Search, filter, sort, page size, pagination, and Clear filters across a seeded set of 12 tickets | Each control changes the result set as documented; empty and no-results states differ; paging works both ways | `e2e/lab-02/my-tickets.spec.ts` | Pass |
+| E2E-06 | E2E | AC-24 – AC-27 | Add an attachment on Ticket Detail, download it, then soft-remove it with a reason | Download succeeds; after removal the metadata remains with its reason and the download control is gone | `e2e/lab-02/attachments.spec.ts` | Pass |
+| E2E-07 | E2E | AC-26 | The removed attachment's download URL is opened directly in the browser | `410`; no file downloaded | `e2e/lab-02/attachments.spec.ts` | Pass |
+| E2E-08 | E2E | AC-02, AC-05 | `localStorage` cleared mid-session, then a ticket URL opened | Redirected to Requester Selection; no ticket data rendered | `e2e/lab-02/ownership.spec.ts` | Pass |
 
 **Totals:** 12 unit · 53 API · 25 UI component · 8 UI style · 7 responsive/visual · 8 E2E = **113 planned tests**.
 
