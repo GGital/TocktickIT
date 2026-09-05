@@ -11,3 +11,6 @@ Part 8 — download succeeded, saved as evidence-screenshot.png
 Part 8 — owner downloads a REMOVED attachment: HTTP 410 ATTACHMENT_REMOVED
 Part 8 — requester B downloads A's attachment: HTTP 404 ATTACHMENT_NOT_FOUND
 Part 8 — requester B opens A's ticket: HTTP 404 TICKET_NOT_FOUND
+
+Part 8 — stale tab downloads a removed attachment: UI shows "no longer available" (API returned 410)
+Part 8 — attachment added through the UI on ticket TKT-2026-000345, then removed to prove the block
