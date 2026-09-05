@@ -5,3 +5,10 @@ dist/
 
 .claude
 .impeccable
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Playwright run output; the screenshots under artifacts/lab-02/screenshots are committed.
+artifacts/lab-02/playwright-report/
+artifacts/lab-02/playwright-output/
+test-results/
