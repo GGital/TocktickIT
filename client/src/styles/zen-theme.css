@@ -311,3 +311,14 @@ a:focus-visible {
 /* --- Ticket Detail (ui-spec §7) --- */
 .zen-thumbnail { object-fit: cover; border-radius: var(--zen-radius-control); }
 .zen-description { white-space: pre-wrap; }
+
+/*
+ * The file inputs are visually hidden behind their label button, so a keyboard
+ * user focusing one would otherwise see no ring at all (ui-spec §9, AC-47).
+ * The label mirrors the focus state of the input that follows it.
+ */
+label:has(+ input[type="file"]:focus-visible) {
+  border-color: var(--zen-secondary);
+  outline: 3px solid var(--zen-focus-ring);
+  outline-offset: 1px;
+}
