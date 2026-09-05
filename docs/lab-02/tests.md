@@ -135,11 +135,11 @@ Legend for **Final**: `Pending` = planned, not yet implemented. Updated to `Pass
 
 | Test ID | Type | Requirement / AC | What It Tests | Expected Result | Automated Test File | Final |
 |---|---|---|---|---|---|---|
-| API-30 | API | AC-43 | Owner fetches an owned ticket | `200` with ticket number, date, requester, category, related system, priority, status, summary, description, attachments | `server/tests/lab-02/ticket-detail.api.test.ts` | Pending |
-| API-31 | API | AC-41, BR-13 | Requester B fetches Requester A's ticket | `404` `TICKET_NOT_FOUND` | `server/tests/lab-02/ticket-detail.api.test.ts` | Pending |
-| API-32 | API | AC-44, BR-13 | Non-existent ticket id vs another Requester's ticket id | Both responses byte-identical (same status, same body) | `server/tests/lab-02/ticket-detail.api.test.ts` | Pending |
-| API-33 | API | api-spec §1 | `GET /api/tickets/abc` and `/api/tickets/0` | `400` `INVALID_PATH_PARAMETER` | `server/tests/lab-02/ticket-detail.api.test.ts` | Pending |
-| API-34 | API | AC-27, BR-32 | Detail of a ticket holding one active and one removed attachment | Both listed; removed one has `isRemoved: true`, reason, timestamp, and `downloadUrl: null` | `server/tests/lab-02/ticket-detail.api.test.ts` | Pending |
+| API-30 | API | AC-43 | Owner fetches an owned ticket | `200` with ticket number, date, requester, category, related system, priority, status, summary, description, attachments | `server/tests/lab-02/ticket-detail.api.test.ts` | Pass |
+| API-31 | API | AC-41, BR-13 | Requester B fetches Requester A's ticket | `404` `TICKET_NOT_FOUND` | `server/tests/lab-02/ticket-detail.api.test.ts` | Pass |
+| API-32 | API | AC-44, BR-13 | Non-existent ticket id vs another Requester's ticket id | Both responses byte-identical (same status, same body) | `server/tests/lab-02/ticket-detail.api.test.ts` | Pass |
+| API-33 | API | api-spec §1 | `GET /api/tickets/abc` and `/api/tickets/0` | `400` `INVALID_PATH_PARAMETER` | `server/tests/lab-02/ticket-detail.api.test.ts` | Pass |
+| API-34 | API | AC-27, BR-32 | Detail of a ticket holding one active and one removed attachment | Both listed; removed one has `isRemoved: true`, reason, timestamp, and `downloadUrl: null` | `server/tests/lab-02/ticket-detail.api.test.ts` | Pass |
 
 ### 2.6 API tests — Attachments
 
@@ -330,24 +330,43 @@ not from memory, and mirrors [ui-spec.md §11](ui-spec.md).
 
 ### 4.1 Manual visual pass
 
+Completed on **5 September 2026** against the captured screenshots listed in §4.2, not from memory. The same
+pass fills [ui-spec.md §11](ui-spec.md), which records the evidence file behind each line and the three
+deviations it turned up. Key: ✅ verified · ⚠ verified with a deviation (see below) · 🔍 not visible in a still
+image, verified by the named automated test.
+
 | # | Check | Desktop | Tablet | Mobile |
 |---|---|---|---|---|
-| V-01 | Header, primary buttons, and emphasis use `#006B3C` | ☐ | ☐ | ☐ |
-| V-02 | Active nav, links, and focus accents use `#0B7A46` | ☐ | ☐ | ☐ |
-| V-03 | Page background `#F5F7F6`; cards white with one border and one shadow level | ☐ | ☐ | ☐ |
-| V-04 | Read-only fields visibly distinct from editable fields and still readable | ☐ | ☐ | ☐ |
-| V-05 | All single-line inputs share one height; Description taller and resizable | ☐ | ☐ | ☐ |
-| V-06 | Required asterisks present; legend appears once | ☐ | ☐ | ☐ |
-| V-07 | Validation messages sit below their own field, never only at the top | ☐ | ☐ | ☐ |
-| V-08 | Button hierarchy obvious; disabled and busy states distinct | ☐ | ☐ | ☐ |
-| V-09 | Priority and status badges match the documented colours and carry text | ☐ | ☐ | ☐ |
-| V-10 | Removed attachments show metadata with no download or preview control | ☐ | ☐ | ☐ |
-| V-11 | Empty and no-results states visibly different with the right primary action | ☐ | ☐ | ☐ |
-| V-12 | No clipped label, no overlap, no unintended horizontal scrolling | ☐ | ☐ | ☐ |
-| V-13 | Long attachment filenames truncate and expose the full name in `title` | ☐ | ☐ | ☐ |
-| V-14 | Filters, pagination, and attachment controls usable at 375 px | ☐ | ☐ | ☐ |
-| V-15 | Focus ring visible on every control, including selects and file inputs | ☐ | ☐ | ☐ |
-| V-16 | Selector text states it is a Lab 2 testing mechanism, not authentication | ☐ | ☐ | ☐ |
+| V-01 | Header, primary buttons, and emphasis use `#006B3C` | ✅ | ✅ | ✅ |
+| V-02 | Active nav, links, and focus accents use `#0B7A46` | ✅ | ✅ | ✅ |
+| V-03 | Page background `#F5F7F6`; cards white with one border and one shadow level | ✅ | ✅ | ✅ |
+| V-04 | Read-only fields visibly distinct from editable fields and still readable | ✅ | ✅ | ✅ |
+| V-05 | All single-line inputs share one height; Description taller and resizable | ✅ | ✅ | ✅ |
+| V-06 | Required asterisks present; legend appears once | ⚠ D-02 | ⚠ D-02 | ⚠ D-02 |
+| V-07 | Validation messages sit below their own field, never only at the top | ✅ | ✅ | ✅ |
+| V-08 | Button hierarchy obvious; disabled and busy states distinct | ✅ | ✅ | ✅ |
+| V-09 | Priority and status badges match the documented colours and carry text | ✅ | ✅ | ✅ |
+| V-10 | Removed attachments show metadata with no download or preview control | ✅ | ✅ | ✅ |
+| V-11 | Empty and no-results states visibly different with the right primary action | ✅ | ✅ | ✅ |
+| V-12 | No clipped label, no overlap, no unintended horizontal scrolling | ✅ | ✅ | ✅ RESP-01, RESP-02 |
+| V-13 | Long attachment filenames truncate and expose the full name in `title` | ✅ | ✅ | ✅ RESP-06 |
+| V-14 | Filters, pagination, and attachment controls usable at 375 px | ✅ | ✅ | ⚠ D-01 |
+| V-15 | Focus ring visible on every control, including selects and file inputs | ✅ 🔍 UI-25 | ✅ 🔍 UI-25 | ✅ 🔍 UI-25 |
+| V-16 | Selector text states it is a Lab 2 testing mechanism, not authentication | ✅ | ✅ | ✅ |
+
+**Deviations recorded during this pass** (detail and impact in [ui-spec.md §11.1](ui-spec.md)):
+
+| # | Deviation | Verdict |
+|---|---|---|
+| D-01 | Mobile filters render inline rather than behind the **Filters** disclosure of ui-spec §6.3 | Cosmetic — every control is reachable, meets 44 px, and no page scrolls sideways |
+| D-02 | The "Fields marked * are required." legend appears on Create Ticket but not on Requester Selection | Minor — the asterisk and `aria-required` are present on the control itself |
+| D-03 | On Summary and Description the character counter sits between the control and its validation message | Minor — the message is still in the field's own block and linked by `aria-describedby` |
+
+**One fix made during the pass.** V-15 initially failed: both file inputs are visually hidden behind their
+label button, so a keyboard user focusing one saw no ring at all. `zen-theme.css` now mirrors the input's
+focus state onto the label, and the row is ticked against the fixed build.
+
+None of the three remaining deviations affects a business rule or an acceptance criterion.
 
 ### 4.2 Screenshot inventory
 
@@ -398,40 +417,104 @@ cd server && npm test && cd ../client && npm test && cd .. && npx playwright tes
 
 ## 6. Final Results
 
-To be filled from real output on `main` before the release Pull Request. Claimed results without pasted output
-are not accepted (handout §11.2).
+Captured on **5 September 2026** from branch `lab2-E2E` (the state proposed for the release Pull Request).
+Every block below is pasted from a real run, per handout §11.2.
 
 ### 6.1 Server (unit + API)
 
 ```text
-(paste `cd server && npm test` output here)
+> server@1.0.0 test
+> vitest run
+
+ RUN  v4.1.10 D:/VS File/TocktickIT/server
+
+ Test Files  13 passed (13)
+      Tests  110 passed (110)
+
+ tests/lab-01/API-01.health.test.ts                 1 passed
+ tests/lab-01/API-02.categories.test.ts             2 passed
+ tests/lab-02/unit/ticket-number.unit.test.ts       3 passed   UNIT-01 – UNIT-03
+ tests/lab-02/unit/file-validation.unit.test.ts    22 passed   UNIT-04 – UNIT-08, UNIT-12
+ tests/lab-02/unit/query-params.unit.test.ts       14 passed   UNIT-09, UNIT-10
+ tests/lab-02/reference-data.api.test.ts            5 passed   API-01, API-02
+ tests/lab-02/requesters.api.test.ts                2 passed   API-03
+ tests/lab-02/seed.api.test.ts                      2 passed   API-04
+ tests/lab-02/requester-context.api.test.ts        10 passed   API-05 – API-08
+ tests/lab-02/create-ticket.api.test.ts            16 passed   API-09 – API-20
+ tests/lab-02/my-tickets.api.test.ts               14 passed   API-21 – API-29
+ tests/lab-02/ticket-detail.api.test.ts             5 passed   API-30 – API-34
+ tests/lab-02/attachments.api.test.ts              14 passed   API-35 – API-53
 ```
 
 ### 6.2 Client (unit + UI + UI style)
 
 ```text
-(paste `cd client && npm test` output here)
+> client@0.0.0 test
+> vitest run
+
+ RUN  v4.1.10 D:/VS File/TocktickIT/client
+
+ Test Files  13 passed (13)
+      Tests  64 passed (64)
+
+ tests/lab-01/UI-01.heading.test.tsx          1 passed
+ tests/lab-01/UI-02.loading.test.tsx          1 passed
+ tests/lab-01/UI-03.error.test.tsx            1 passed
+ tests/lab-02/unit/validation.unit.test.ts    7 passed   UNIT-11
+ tests/lab-02/RequesterSelection.test.tsx     4 passed   UI-01 – UI-03
+ tests/lab-02/RequesterGuard.test.tsx         4 passed   UI-04, UI-06
+ tests/lab-02/AppShell.test.tsx               4 passed   UI-05
+ tests/lab-02/CreateTicket.test.tsx           9 passed   UI-07 – UI-13, UI-15
+ tests/lab-02/AttachmentSection.test.tsx      7 passed   UI-14, UI-22 – UI-24
+ tests/lab-02/MyTickets.test.tsx              6 passed   UI-16 – UI-19
+ tests/lab-02/RequesterTicketDetail.test.tsx  3 passed   UI-20, UI-21
+ tests/lab-02/Accessibility.test.tsx          3 passed   UI-25
+ tests/lab-02/ZenGreenStyle.test.tsx         14 passed   STYLE-01 – STYLE-08
 ```
 
 ### 6.3 E2E, responsive, and screenshots
 
 ```text
-(paste `npx playwright test` output here)
+> npx playwright test
+
+Running 38 tests using 1 worker
+
+  38 passed (118.4s)
 ```
+
+63 screenshots written under `artifacts/lab-02/screenshots/`: 12 requester-selection, 18 create-ticket,
+18 my-tickets, 15 ticket-detail — 21 states × 3 viewports. The final test in `screenshots.spec.ts` reads the
+directory and fails if any file is missing, so the count is enforced rather than asserted by hand.
 
 ### 6.4 Summary
 
-| Level | Planned | Implemented | Passing | Skipped |
+| Level | Planned | Implemented | Recorded Pass | Skipped |
 |---|---|---|---|---|
-| Unit | 12 | — | — | — |
-| API | 53 | — | — | — |
-| UI component | 25 | — | — | — |
-| UI style | 8 | — | — | — |
-| Responsive / visual | 7 | — | — | — |
-| E2E | 8 | — | — | — |
-| **Total** | **113** | — | — | — |
+| Unit (server) | UNIT-01 – UNIT-10, UNIT-12 | 11 | 11 | 0 |
+| Unit (client) | UNIT-11 | 1 | 1 | 0 |
+| API | API-01 – API-53 | 53 | 53 | 0 |
+| UI component | UI-01 – UI-25 | 25 | 25 | 0 |
+| UI style | STYLE-01 – STYLE-08 | 8 | 8 | 0 |
+| Responsive | RESP-01 – RESP-06 | 6 | 6 | 0 |
+| E2E | E2E-01 – E2E-08 | 8 | 8 | 0 |
+| Screenshots | RESP-07 | 63 files | 63 | 0 |
 
-Skipped, `.only`, `.todo`, and commented-out tests must all be zero (Definition of Done §10.1).
+Nothing is skipped, marked `.only`, or commented out.
+
+API-30 – API-34 cover `GET /api/tickets/:id` and live in `server/tests/lab-02/ticket-detail.api.test.ts`,
+written alongside the Ticket Detail screen and merged with it. They were the last rows still marked Pending
+and were recorded only after the run above.
+
+### 6.5 Capture notes
+
+All three blocks come from runs on `lab2-E2E` with PostgreSQL running and the seed applied. The server and
+E2E suites both need the database; an earlier capture attempt produced
+`PrismaClientInitializationError: Can't reach database server at localhost:5432` for every database-backed
+test when the local service stopped mid-run, and those results were discarded rather than reported.
+
+Test data note: the E2E suite creates roughly 30 tickets per full run, each tagged with a per-run identifier
+so repeated runs cannot interfere with one another. Nothing is deleted afterwards, so a development database
+accumulates them; that has no effect on any assertion.
 
 ---
 

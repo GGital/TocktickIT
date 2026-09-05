@@ -598,53 +598,66 @@ A second implementation of any of these is a review defect.
 
 ## 11. Visual inspection checklist
 
-Completed against the screenshots in §12, not from memory (Lab 2 handout §8.8). Every line is checked at all
-three viewports.
+Completed on **5 September 2026** against the captured screenshots in §12, not from memory (Lab 2 handout
+§8.8). Every line was checked at all three viewports unless the evidence column says otherwise. Items that a
+static image cannot prove (focus behaviour, keyboard traversal, absence of a hex literal in source) cite the
+automated test that does prove them.
 
 **Colour and theme**
-- [ ] Header, primary buttons, and strong emphasis use `#006B3C`
-- [ ] Active nav, links, and focus accents use `#0B7A46`
-- [ ] Selected/success surfaces use `#EAF6EF`; page background is `#F5F7F6`
-- [ ] Cards are white with one subtle border and one restrained shadow level
-- [ ] Body text is dark charcoal-green, not pure black
-- [ ] No literal hex value exists outside `zen-theme.css`
+- [x] Header, primary buttons, and strong emphasis use `#006B3C` — green bar and Submit Ticket / Create Ticket / Continue in `create-ticket/initial.*`, `my-tickets/empty.*`
+- [x] Active nav, links, and focus accents use `#0B7A46` — active nav underline in `my-tickets/empty.desktop.png`, "‹ Back to My Tickets" in `ticket-detail/loaded.*`
+- [x] Selected/success surfaces use `#EAF6EF`; page background is `#F5F7F6` — info callout in `requester-selection/loaded.*`, success card in `create-ticket/success.*`, page ground on every capture
+- [x] Cards are white with one subtle border and one restrained shadow level — all four cards in `create-ticket/initial.desktop.png`
+- [x] Body text is dark charcoal-green, not pure black — labels and values in `ticket-detail/loaded.desktop.png`
+- [x] No literal hex value exists outside `zen-theme.css` — not visible in a screenshot; proven by **STYLE-08**, which scans every file under `client/src`
 
 **Fields**
-- [ ] Read-only fields (Ticket Number, Ticket Date, Requester, Status) are visibly distinct and still readable
-- [ ] All single-line inputs share one height; Description is taller and resizes without breaking the layout
-- [ ] Required fields show a red asterisk **and** the form legend appears once
-- [ ] Focus ring is visible on every control, including selects and file inputs
+- [x] Read-only fields (Ticket Number, Ticket Date, Requester, Status) are visibly distinct and still readable — shaded `--zen-readonly-bg` against white editable fields in `create-ticket/initial.desktop.png`
+- [x] All single-line inputs share one height; Description is taller and resizes without breaking the layout — `create-ticket/initial.*`; the textarea shows its resize grip and is capped
+- [ ] Required fields show a red asterisk **and** the form legend appears once — **deviation D-02**: the asterisk is present on every required control, but the legend appears only on Create Ticket, not on Requester Selection (`requester-selection/loaded.desktop.png`)
+- [x] Focus ring is visible on every control, including selects and file inputs — visible on the focused Summary field in `create-ticket/validation-failure.mobile.png` and the dialog reason field in `ticket-detail/remove-dialog.desktop.png`; asserted for all controls by **UI-25**
 
 **Validation**
-- [ ] Every message sits directly below its own field
-- [ ] The summary callout states the count and names the fields
-- [ ] Focus lands on the first invalid control after a failed submit
-- [ ] No message appears only at the top of the page
+- [ ] Every message sits directly below its own field — **deviation D-03**: true for Category, Related System, and Description, but on Summary and Description the character counter sits between the control and the message (`create-ticket/validation-failure.mobile.png`)
+- [x] The summary callout states the count and names the fields — "4 fields need attention: Ticket Summary, Description, Category, Related System" in `create-ticket/validation-failure.*`
+- [x] Focus lands on the first invalid control after a failed submit — focus ring on Summary in `create-ticket/validation-failure.mobile.png`; asserted by **UI-08** and **E2E-02**
+- [x] No message appears only at the top of the page — every field in `create-ticket/validation-failure.*` carries its own message beneath it; asserted by **STYLE-04**
 
 **Buttons**
-- [ ] Hierarchy is visually obvious: primary vs secondary vs tertiary vs destructive
-- [ ] Disabled controls are visibly distinct and cannot be activated
-- [ ] Submit shows a busy label and is disabled while in flight
-- [ ] Every button has visible text; every icon-only control has a label and tooltip
+- [x] Hierarchy is visually obvious: primary vs secondary vs tertiary vs destructive — solid Submit Ticket vs outlined Cancel in `create-ticket/initial.desktop.png`; outlined Download vs red Remove in `ticket-detail/remove-dialog.desktop.png`
+- [x] Disabled controls are visibly distinct and cannot be activated — faded Continue in `requester-selection/loaded.desktop.png`, faded Remove attachment in `ticket-detail/remove-dialog.desktop.png`; non-activation asserted by **STYLE-06**
+- [x] Submit shows a busy label and is disabled while in flight — "Submitting…" with spinner in `create-ticket/submitting.*`
+- [x] Every button has visible text; every icon-only control has a label and tooltip — the only icon-only control is the mobile nav toggle, which carries `aria-label="Open navigation"` (**RESP-04**)
 
 **Badges and states**
-- [ ] Priority badges match §2.4 exactly and carry text
-- [ ] Status `NEW` badge is consistent on the list and the detail screen
-- [ ] Removed attachments show the `REMOVED` badge, the reason, the timestamp, and **no** download or preview control
-- [ ] Empty and no-results states are visibly different and offer the right primary action
+- [x] Priority badges match §2.4 exactly and carry text — `MEDIUM`, `HIGH ▲`, `URGENT ▲▲` in `my-tickets/loaded.mobile.png`
+- [x] Status `NEW` badge is consistent on the list and the detail screen — `my-tickets/loaded.*` and `ticket-detail/loaded.*`
+- [x] Removed attachments show the `REMOVED` badge, the reason, the timestamp, and **no** download or preview control — `ticket-detail/attachment-removed.desktop.png`: struck-through filename, badge, "Uploaded the wrong screenshot · 5 Sept 2026, 01:43 · Areeya Pongsak", no controls
+- [x] Empty and no-results states are visibly different and offer the right primary action — `my-tickets/empty.*` (Create Ticket, no toolbar) vs `my-tickets/no-results.*` (Clear filters, toolbar retained)
 
 **Layout integrity**
-- [ ] No clipped label at any viewport
-- [ ] No overlapping message or badge
-- [ ] No unintended horizontal page scrolling
-- [ ] No hidden or unreachable primary action on mobile
-- [ ] Long attachment filenames truncate and expose the full name in `title`
-- [ ] Filters, pagination, and attachment controls remain usable at 375 px
+- [x] No clipped label at any viewport — checked across all 63 captures; asserted at 375 px by **RESP-02**
+- [x] No overlapping message or badge — `create-ticket/validation-failure.mobile.png` is the densest case and stacks cleanly
+- [x] No unintended horizontal page scrolling — **RESP-01** measures `scrollWidth <= clientWidth` on four screens × three viewports
+- [x] No hidden or unreachable primary action on mobile — Submit Ticket, Create Ticket, and pagination all visible in `*.mobile.png`
+- [x] Long attachment filenames truncate and expose the full name in `title` — **RESP-06**; truncation also visible in `my-tickets/loaded.mobile.png` summaries
+- [ ] Filters, pagination, and attachment controls remain usable at 375 px — usable and ≥ 44 px (**RESP-05**), but **deviation D-01**: the filters render inline on mobile instead of collapsing behind the "Filters" disclosure described in §6.3 (`my-tickets/loaded.mobile.png`)
 
 **Accessibility**
-- [ ] Full keyboard pass on all four screens with no trap
-- [ ] The modal traps focus and returns it on close
-- [ ] Screen text confirms the selector is a Lab 2 testing mechanism, not authentication
+- [x] Full keyboard pass on all four screens with no trap — **UI-25** tabs to every control on Requester Selection and Create Ticket and submits without a pointer
+- [x] The modal traps focus and returns it on close — supplied by the native `<dialog>` element (`ConfirmDialog`); jsdom cannot exercise modality, so this is verified in the browser through `ticket-detail/remove-dialog.*` and **E2E-06**
+- [x] Screen text confirms the selector is a Lab 2 testing mechanism, not authentication — "This is a Lab 2 testing mechanism, not a login screen. Authentication and role-based access arrive in Lab 3." in `requester-selection/loaded.*` (**UI-01**, **E2E-01**)
+
+### 11.1 Deviations found during this pass
+
+| # | Deviation | Where | Impact |
+|---|---|---|---|
+| D-01 | Mobile filters render inline instead of collapsing behind a **Filters** disclosure showing the active count (§6.3) | `my-tickets/*.mobile.png` | Cosmetic. Every control is reachable and meets the 44 px touch target (**RESP-05**), and no page scrolls sideways (**RESP-01**). The toolbar is simply taller on mobile than the specification draws it |
+| D-02 | The "Fields marked * are required." legend appears on Create Ticket but not on Requester Selection (§2.2) | `requester-selection/loaded.*` | Minor. The single required control still carries the visible asterisk and `aria-required="true"` |
+| D-03 | On Summary and Description the character counter sits between the control and its validation message (§2.2) | `create-ticket/validation-failure.*` | Minor. The message is still inside the field's own block and is referenced by that field's `aria-describedby` (**STYLE-04**); only the vertical order of helper and message differs |
+
+None of the three affects a business rule or an acceptance criterion. They are recorded here rather than
+silently ticked, and are candidates for the Lab 3 clean-up.
 
 ---
 
