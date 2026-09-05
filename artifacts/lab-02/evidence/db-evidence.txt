@@ -1,0 +1,24 @@
+Lab 2 database evidence - captured 2026-09-05T13:56:48Z
+
+== Part 6: ticket created through the browser, bound to the selected requester ==
+ id  |  ticketNumber   | status | requesterId |     owner      
+-----+-----------------+--------+-------------+----------------
+ 564 | TKT-2026-000342 | NEW    |           4 | Areeya Pongsak
+(1 row)
+
+== Part 8: soft-removed attachment - row retained with reason and remover ==
+ id  | ticketId |    originalFilename     |              storedFilename              | removed |         removalReason         | removedById 
+-----+----------+-------------------------+------------------------------------------+---------+-------------------------------+-------------
+ 210 |      565 | evidence-screenshot.png | a6454123-797d-4675-b3de-38eb5b2314a0.png | t       | Uploaded the wrong screenshot |           4
+(1 row)
+
+== BR-46: seed is reference-data only, inactive requester excluded from the API ==
+ id |     fullName     | isActive 
+----+------------------+----------
+  1 | Napat Siriwat    | t
+  2 | Pimchanok Thanee | t
+  3 | Kittipong Wong   | t
+  4 | Areeya Pongsak   | t
+  5 | Somchai Retired  | f
+(5 rows)
+

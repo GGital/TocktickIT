@@ -1,0 +1,13 @@
+Lab 2 API status evidence — captured 2026-09-05T13:50:22.946Z
+
+Requester A = Areeya Pongsak (id 4)
+Requester B = Kittipong Wong (id 3)
+
+Part 6 — ticket created in the browser: TKT-2026-000342
+Part 6 — expected owner: Areeya Pongsak (id 4)
+
+Part 8 — uploaded attachment id 210 on ticket TKT-2026-000343
+Part 8 — download succeeded, saved as evidence-screenshot.png
+Part 8 — owner downloads a REMOVED attachment: HTTP 410 ATTACHMENT_REMOVED
+Part 8 — requester B downloads A's attachment: HTTP 404 ATTACHMENT_NOT_FOUND
+Part 8 — requester B opens A's ticket: HTTP 404 TICKET_NOT_FOUND
