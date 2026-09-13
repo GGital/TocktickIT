@@ -11,7 +11,7 @@ const runSeed = () =>
 const snapshot = async () => ({
   categories: await prisma.category.findMany({ select: { id: true, name: true }, orderBy: { id: 'asc' } }),
   relatedSystems: await prisma.relatedSystem.findMany({ select: { id: true, name: true }, orderBy: { id: 'asc' } }),
-  requesters: await prisma.requesterUser.findMany({
+  requesters: await prisma.user.findMany({
     select: { id: true, email: true, isActive: true },
     orderBy: { id: 'asc' },
   }),

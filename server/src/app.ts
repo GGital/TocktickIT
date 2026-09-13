@@ -49,8 +49,9 @@ app.get('/api/related-systems', async (_req, res) => {
 
 app.get('/api/requesters', async (_req, res) => {
   // Active only, and isActive itself is never returned (BR-09, BR-47, api-spec §2.3).
-  const requesters = await prisma.requesterUser.findMany({
-    where: { isActive: true },
+  const requesters = await prisma.user.findMany({
+    // Staff and Administrators now share the table; the selector stays Requester-only until #48 deletes it.
+    where: { isActive: true, role: 'REQUESTER' },
     orderBy: { fullName: 'asc' },
     select: { id: true, fullName: true, email: true, department: true },
   })
