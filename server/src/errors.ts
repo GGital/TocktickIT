@@ -3,7 +3,7 @@ import type { Response } from 'express'
 /**
  * Error code catalogue (api-spec §1.3). The status belongs to the code, so a
  * handler names the code and can never pair it with the wrong status.
- * `401` is deliberately absent: Lab 2 has no authentication (BR-08, BR-50).
+ * Lab 3 codes are added by the Issue that first returns them.
  */
 export const ERROR_STATUS = {
   VALIDATION_FAILED: 400,
@@ -11,6 +11,8 @@ export const ERROR_STATUS = {
   INVALID_PATH_PARAMETER: 400,
   REQUESTER_CONTEXT_MISSING: 400,
   NO_FILE_UPLOADED: 400,
+  UNAUTHENTICATED: 401,
+  INVALID_CREDENTIALS: 401,
   REQUESTER_CONTEXT_INVALID: 403,
   TICKET_NOT_FOUND: 404,
   ATTACHMENT_NOT_FOUND: 404,
@@ -20,6 +22,7 @@ export const ERROR_STATUS = {
   ATTACHMENT_REMOVED: 410,
   FILE_TOO_LARGE: 413,
   UNSUPPORTED_FILE_TYPE: 415,
+  TOO_MANY_ATTEMPTS: 429,
   INTERNAL_ERROR: 500,
 } as const
 
