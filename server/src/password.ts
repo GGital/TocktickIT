@@ -21,6 +21,24 @@ export async function hashPassword(password: string) {
   return `scrypt$${N}$${r}$${p}$${salt.toString('base64')}$${key.toString('base64')}`
 }
 
+/**
+ * BR-11 rules for a new password, or null when it passes. Never trimmed — surrounding spaces are part of the
+ * password. Length counts code points, so an emoji is one character, not two.
+ */
+export function validateNewPassword(newPassword: string, context: { currentPassword: string; email: string }) {
+  const length = [...newPassword].length
+  const lowered = newPassword.toLowerCase()
+
+  if (newPassword.trim() === '') return 'Your password cannot be only spaces.'
+  if (length < 10) return 'Use at least 10 characters.'
+  if (length > 128) return 'Use no more than 128 characters.'
+  if (newPassword === context.currentPassword) return 'Choose a password you have not used here before.'
+  if (lowered === context.email.toLowerCase() || lowered === context.email.toLowerCase().split('@')[0]) {
+    return 'Your password cannot be your email address.'
+  }
+  return null
+}
+
 /** Compares derived keys with timingSafeEqual, never `===` (BR-10). A malformed hash never verifies. */
 export async function verifyPassword(password: string, stored: string) {
   const [scheme, n, rr, pp, salt, hash] = stored.split('$')

@@ -1,4 +1,5 @@
 import express, { type ErrorRequestHandler } from 'express'
+import { changePassword, currentUser, login, logout, requireSession } from './auth.js'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
 import { requesterContext } from './requesterContext.js'
@@ -24,6 +25,13 @@ app.use('/api', (_req, res, next) => {
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'TokTickIT API' })
 })
+
+// --- Authentication (api-spec §3.1 – §3.4). Login is the only route reachable without a session. ---
+app.post('/api/auth/login', login)
+app.use('/api/auth', requireSession)
+app.post('/api/auth/logout', logout)
+app.get('/api/auth/me', currentUser)
+app.post('/api/auth/change-password', changePassword)
 
 // --- Public reference data (api-spec §3.2 – §3.4). No requester context. ---
 
@@ -73,6 +81,11 @@ app.delete('/api/attachments/:id', removeAttachment)
 
 // Express 5 forwards rejected promises here, so handlers need no try/catch.
 const handleUnexpectedError: ErrorRequestHandler = (error, _req, res, _next) => {
+  // Malformed JSON is the client's error, and the parser's error object carries the raw body — which can be a
+  // password — so it is answered 400 and never logged (BR-12, BR-65).
+  if (error?.type === 'entity.parse.failed') {
+    return sendError(res, 'VALIDATION_FAILED', 'The request body is not valid JSON.')
+  }
   console.error('Unhandled API error', error)
   sendError(res, 'INTERNAL_ERROR', 'Something went wrong. Please try again.')
 }
