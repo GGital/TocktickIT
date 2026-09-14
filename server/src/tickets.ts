@@ -161,6 +161,8 @@ export async function createTicket(req: Request, res: Response) {
         summary: input.summary,
         description: input.description,
         requestedPriority: input.requestedPriority,
+        // IT Priority starts as the Requester's value (BR-32).
+        itPriority: input.requestedPriority,
       },
       select: ticketDetail,
     })

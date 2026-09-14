@@ -10,11 +10,11 @@ let inactiveRequesterId: number
 let unknownRequesterId: number
 
 beforeAll(async () => {
-  const inactive = await prisma.requesterUser.findFirst({ where: { isActive: false } })
+  const inactive = await prisma.user.findFirst({ where: { isActive: false } })
   if (!inactive) throw new Error('The seed must provide an inactive requester (BR-46)')
   inactiveRequesterId = inactive.id
 
-  const highest = await prisma.requesterUser.findFirst({ orderBy: { id: 'desc' } })
+  const highest = await prisma.user.findFirst({ orderBy: { id: 'desc' } })
   unknownRequesterId = (highest?.id ?? 0) + 1000
 })
 

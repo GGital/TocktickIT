@@ -48,11 +48,38 @@ npx prisma migrate deploy
 npx prisma db seed
 ```
 
-The seed is idempotent — running it again creates no duplicates and changes no identifiers. It seeds
-**4 Categories**, **7 Related Systems**, and **5 Requesters** (4 active plus 1 inactive, which exists so the
-inactive-context path can be tested and must never appear in the selector).
+`migrate deploy` also upgrades an existing Lab 2 database in place: `RequesterUser` is renamed to `User`, so
+every Ticket, Attachment, and identifier survives. Each migrated Lab 2 user becomes a Requester whose password
+is the local-development initial password below and who must change it at first login.
 
-The seed deliberately creates **no tickets and no attachments** (BR-46). For data to click through by hand:
+The seed is idempotent — running it again creates no duplicates and changes no identifiers. It seeds
+**4 Categories**, **7 Related Systems**, **10 users** across the three roles, **9 Tickets** covering all eight
+statuses, all four IT Priorities, assigned and unassigned ownership, one Requester-flagged Ticket, and example
+Public Comments and Internal Notes. Re-running it returns every seeded account to the state in this table.
+
+#### Local-development credentials
+
+> **Warning — development only.** These accounts and this password exist for a developer's own local
+> database. Never create them in a shared, staging, or production environment, and never reuse the
+> password anywhere else.
+
+Every seeded account signs in with the password **`TokTick-Local-Dev-1`**.
+
+| Email | Role | Active | Must change password | Used for |
+|---|---|---|---|---|
+| `napat.s@toktickit.dev` | Requester | Yes | No | E2E Requester A |
+| `pimchanok.t@toktickit.dev` | Requester | Yes | No | E2E Requester B |
+| `kittipong.w@toktickit.dev` | Requester | Yes | Yes | First-login password change (E2E-03) |
+| `areeya.p@toktickit.dev` | Requester | Yes | Yes | Manual testing |
+| `former.staff@toktickit.dev` | Requester | **No** | Yes | Inactive-account login refusal |
+| `thanawat.it@toktickit.dev` | IT Staff | Yes | No | E2E IT Staff |
+| `malee.it@toktickit.dev` | IT Staff | Yes | No | E2E reassignment target |
+| `prasert.it@toktickit.dev` | IT Staff | Yes | Yes | Manual testing |
+| `former.it@toktickit.dev` | IT Staff | **No** | Yes | Inactive staff, never an eligible owner |
+| `admin@toktickit.dev` | Administrator | Yes | No | E2E Administrator |
+
+The seed creates **no attachments**, because those need files on disk. For attachment data to click through
+by hand:
 
 ```bash
 npm run seed:demo

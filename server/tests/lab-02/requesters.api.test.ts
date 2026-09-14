@@ -23,7 +23,7 @@ describe('API-03 GET /api/requesters (AC-01, BR-09, BR-47)', () => {
   })
 
   it('excludes the seeded inactive requester and never leaks isActive', async () => {
-    const inactive = await prisma.requesterUser.findFirst({ where: { isActive: false } })
+    const inactive = await prisma.user.findFirst({ where: { isActive: false } })
     expect(inactive, 'the seed must provide an inactive requester (BR-46)').not.toBeNull()
 
     const res = await request(app).get('/api/requesters')

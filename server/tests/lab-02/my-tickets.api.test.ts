@@ -44,6 +44,7 @@ async function seedTicket(
       summary: overrides.summary ?? `Fixture ticket number ${created} for the list suite`,
       description: overrides.description ?? 'Baseline description used by the my-tickets suite.',
       requestedPriority: overrides.requestedPriority ?? 'MEDIUM',
+      itPriority: overrides.requestedPriority ?? 'MEDIUM',
       // createdAt is set explicitly so sorting and paging are deterministic.
       createdAt: overrides.createdAt ?? new Date(Date.UTC(2026, 0, created)),
     },
@@ -52,15 +53,15 @@ async function seedTicket(
 
 beforeAll(async () => {
   const [a, b] = await Promise.all([
-    prisma.requesterUser.upsert({
+    prisma.user.upsert({
       where: { email: emailA },
       update: { isActive: true },
-      create: { email: emailA, fullName: 'List Owner A', department: 'QA' },
+      create: { email: emailA, fullName: 'List Owner A', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
     }),
-    prisma.requesterUser.upsert({
+    prisma.user.upsert({
       where: { email: emailB },
       update: { isActive: true },
-      create: { email: emailB, fullName: 'List Owner B', department: 'QA' },
+      create: { email: emailB, fullName: 'List Owner B', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
     }),
   ])
   requesterA = a.id
@@ -85,7 +86,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.ticket.deleteMany({ where: { requesterId: { in: [requesterA, requesterB] } } })
-  await prisma.requesterUser.deleteMany({ where: { email: { in: [emailA, emailB] } } })
+  await prisma.user.deleteMany({ where: { email: { in: [emailA, emailB] } } })
   await prisma.$disconnect()
 })
 

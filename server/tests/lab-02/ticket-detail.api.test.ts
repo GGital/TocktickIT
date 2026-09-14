@@ -30,6 +30,7 @@ async function createTicket(requesterId: number) {
       summary: 'Detail fixture ticket for the API suite',
       description: 'Created by the ticket-detail suite so the endpoint has something to return.',
       requestedPriority: 'HIGH',
+      itPriority: 'HIGH',
     },
   })
 
@@ -38,15 +39,15 @@ async function createTicket(requesterId: number) {
 
 beforeAll(async () => {
   const [a, b] = await Promise.all([
-    prisma.requesterUser.upsert({
+    prisma.user.upsert({
       where: { email: emailA },
       update: { isActive: true },
-      create: { email: emailA, fullName: 'Detail Owner A', department: 'QA' },
+      create: { email: emailA, fullName: 'Detail Owner A', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
     }),
-    prisma.requesterUser.upsert({
+    prisma.user.upsert({
       where: { email: emailB },
       update: { isActive: true },
-      create: { email: emailB, fullName: 'Detail Owner B', department: 'QA' },
+      create: { email: emailB, fullName: 'Detail Owner B', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
     }),
   ])
   requesterA = a.id
@@ -84,7 +85,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.ticket.deleteMany({ where: { requesterId: { in: [requesterA, requesterB] } } })
-  await prisma.requesterUser.deleteMany({ where: { email: { in: [emailA, emailB] } } })
+  await prisma.user.deleteMany({ where: { email: { in: [emailA, emailB] } } })
   await prisma.$disconnect()
 })
 

@@ -1,12 +1,12 @@
 import type { NextFunction, Request, Response } from 'express'
-import type { RequesterUser } from '@prisma/client'
+import type { User } from '@prisma/client'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
 
 declare global {
   namespace Express {
     interface Request {
-      requester?: RequesterUser
+      requester?: User
     }
   }
 }
@@ -30,7 +30,7 @@ export async function requesterContext(req: Request, res: Response, next: NextFu
     )
   }
 
-  const requester = await prisma.requesterUser.findFirst({
+  const requester = await prisma.user.findFirst({
     where: { id: Number(header), isActive: true },
   })
 

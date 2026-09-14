@@ -1,9 +1,9 @@
 /**
  * Development demo data for Ticket Detail — NOT the seed.
  *
- * `prisma/seed.ts` stays reference-data only, because BR-46 requires it to create
- * no Tickets and no Attachments. This script is a separate, explicitly-invoked
- * tool for exercising the Ticket Detail screen by hand:
+ * `prisma/seed.ts` seeds users, Tickets, and messages but never Attachments, because
+ * those need files on disk. This script is a separate, explicitly-invoked tool for
+ * exercising the attachment section by hand:
  *
  *   cd server && npm run seed:demo
  *
@@ -130,8 +130,8 @@ async function nextTicketNumber(year: number) {
 }
 
 async function main() {
-  const requesters = await prisma.requesterUser.findMany({
-    where: { isActive: true },
+  const requesters = await prisma.user.findMany({
+    where: { isActive: true, role: 'REQUESTER' },
     orderBy: { id: 'asc' },
   })
 
@@ -170,6 +170,7 @@ async function main() {
         summary: demo.summary,
         description: demo.description,
         requestedPriority: demo.requestedPriority,
+        itPriority: demo.requestedPriority,
       },
     })
 

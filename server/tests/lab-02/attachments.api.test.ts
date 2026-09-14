@@ -58,6 +58,7 @@ async function createTicket(requesterId: number) {
       summary: 'Attachment fixture ticket for the API suite',
       description: 'Created by the attachment API suite so uploads have a parent ticket.',
       requestedPriority: 'MEDIUM',
+      itPriority: 'MEDIUM',
     },
   })
 
@@ -66,15 +67,15 @@ async function createTicket(requesterId: number) {
 
 beforeAll(async () => {
   const [a, b] = await Promise.all([
-    prisma.requesterUser.upsert({
+    prisma.user.upsert({
       where: { email: emailA },
       update: { isActive: true },
-      create: { email: emailA, fullName: 'Attachment Owner A', department: 'QA' },
+      create: { email: emailA, fullName: 'Attachment Owner A', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
     }),
-    prisma.requesterUser.upsert({
+    prisma.user.upsert({
       where: { email: emailB },
       update: { isActive: true },
-      create: { email: emailB, fullName: 'Attachment Owner B', department: 'QA' },
+      create: { email: emailB, fullName: 'Attachment Owner B', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
     }),
   ])
   requesterA = a.id
@@ -100,7 +101,7 @@ afterAll(async () => {
 
   // Attachments cascade with their ticket; the requester foreign key is Restrict.
   await prisma.ticket.deleteMany({ where: { requesterId: { in: [requesterA, requesterB] } } })
-  await prisma.requesterUser.deleteMany({ where: { email: { in: [emailA, emailB] } } })
+  await prisma.user.deleteMany({ where: { email: { in: [emailA, emailB] } } })
   await prisma.$disconnect()
 })
 
