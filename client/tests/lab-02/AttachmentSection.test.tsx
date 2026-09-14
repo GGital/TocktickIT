@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
-import { REQUESTER_ID_KEY } from '../../src/lib/requesterContext'
+import { isAuthMe, signedInRequester } from '../helpers/auth'
 
 // One file, two modes: staging attachments before a ticket exists (Create Ticket,
 // ui-spec §5.5) and managing them on an existing ticket (Ticket Detail, §7.2).
@@ -29,10 +29,9 @@ let fetchMock: ReturnType<typeof vi.fn>
 
 beforeEach(() => {
   localStorage.clear()
-  localStorage.setItem(REQUESTER_ID_KEY, '1')
 
   fetchMock = vi.fn((url: string) => {
-    if (url.startsWith('/api/requesters')) return Promise.resolve(ok(requesters))
+    if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
     if (url.startsWith('/api/categories')) return Promise.resolve(ok(categories))
     if (url.startsWith('/api/related-systems')) return Promise.resolve(ok(systems))
     if (url === '/api/tickets') return Promise.resolve(ok(createdTicket, 201))
@@ -177,7 +176,7 @@ const ticketWith = (attachments: ReturnType<typeof attachment>[]) => ({
 
 function stubApi(attachments: ReturnType<typeof attachment>[]) {
   const fetchMock = vi.fn((url: string) => {
-    if (url.startsWith('/api/requesters')) return Promise.resolve(ok(requesters))
+    if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
     if (/^\/api\/tickets\/\d+$/.test(url)) return Promise.resolve(ok(ticketWith(attachments)))
     return Promise.resolve(ok({}))
   })

@@ -1,10 +1,16 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { cpSync, type Dirent, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { PrismaClient } from '@prisma/client'
+import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import app from '../../src/app.js'
+import { UPLOADS_ROOT } from '../../src/attachments.js'
 import { verifyPassword } from '../../src/password.js'
+import { prisma as appPrisma } from '../../src/prisma.js'
+import { asUser, signIn } from '../helpers/session.js'
 
 // Test fixture, not a secret: the local-development initial password documented in README.md (BR-56).
 const LOCAL_DEV_PASSWORD = 'TokTick-Local-Dev-1'
@@ -271,4 +277,195 @@ describe('API-42 idempotent seed (BR-56, DoD)', () => {
 
     expect(after).toEqual(before)
   }, 120_000)
+})
+
+describe('Lab 2 Requester regression on the authenticated identity (AC-22 – AC-27, BR-18 – BR-21, BR-57)', () => {
+  const DOMAIN = '@regression-api.toktickit.test'
+  let requesterA: number
+  let requesterB: number
+  let categoryId: number
+  let relatedSystemId: number
+  let counter = 0
+
+  const validBody = (overrides: Record<string, unknown> = {}) => ({
+    summary: `Regression ticket number ${(counter += 1)}`,
+    description: 'Created by the Lab 3 regression suite under an authenticated session.',
+    categoryId,
+    relatedSystemId,
+    requestedPriority: 'HIGH',
+    ...overrides,
+  })
+
+  const asA = (req: request.Test) => req.set('Cookie', asUser(requesterA))
+  const asB = (req: request.Test) => req.set('Cookie', asUser(requesterB))
+  const png = (size = 64) =>
+    Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(size - 8, 7)])
+
+  beforeAll(async () => {
+    const [a, b] = await Promise.all(
+      ['a', 'b'].map((key) =>
+        appPrisma.user.create({
+          data: {
+            email: `requester-${key}${DOMAIN}`,
+            fullName: `Regression Requester ${key.toUpperCase()}`,
+            passwordHash: 'unusable-regression-fixture',
+            mustChangePassword: false,
+          },
+        }),
+      ),
+    )
+    requesterA = a.id
+    requesterB = b.id
+    await Promise.all([signIn(requesterA), signIn(requesterB)])
+
+    categoryId = (await appPrisma.category.findFirstOrThrow({ where: { isActive: true } })).id
+    relatedSystemId = (await appPrisma.relatedSystem.findFirstOrThrow({ where: { isActive: true } })).id
+  })
+
+  afterAll(async () => {
+    const owners = { requesterId: { in: [requesterA, requesterB] } }
+    const tickets = await appPrisma.ticket.findMany({ where: owners, select: { id: true } })
+    await Promise.all(
+      tickets.map((ticket) => rm(path.join(UPLOADS_ROOT, String(ticket.id)), { recursive: true, force: true })),
+    )
+    await appPrisma.ticket.deleteMany({ where: owners })
+    await appPrisma.user.deleteMany({ where: { email: { endsWith: DOMAIN } } })
+    await appPrisma.$disconnect()
+  })
+
+  it('API-36 GET /api/requesters no longer exists (AC-26, BR-57)', async () => {
+    const res = await asA(request(app).get('/api/requesters'))
+
+    expect(res.status).toBe(404)
+    expect(res.text).not.toContain(DOMAIN)
+  })
+
+  it('API-36 leaves no selector artefact in the server or client source (AC-26)', () => {
+    const artefacts = [
+      'X-Requester-Id',
+      'toktickit.requesterId',
+      '/select-requester',
+      '/requesters',
+      'requesterContext',
+      'SelectRequester',
+      'RequesterGuard',
+      'useCurrentRequester',
+      'REQUESTER_CONTEXT_',
+    ]
+    const files = ['src', '../client/src'].flatMap((root) =>
+      (readdirSync(root, { recursive: true, withFileTypes: true }) as Dirent[])
+        .filter((entry) => entry.isFile())
+        .map((entry) => path.join(entry.parentPath, entry.name)),
+    )
+
+    const found = files.flatMap((file) => {
+      const text = readFileSync(file, 'utf8')
+      return artefacts.filter((artefact) => text.includes(artefact)).map((artefact) => `${file}: ${artefact}`)
+    })
+    expect(found).toEqual([])
+  })
+
+  it('API-37 ignores an X-Requester-Id header naming another user (AC-27, BR-18)', async () => {
+    const own = await asA(request(app).post('/api/tickets').send(validBody()))
+    expect(own.status).toBe(201)
+
+    const res = await asA(request(app).get('/api/tickets?pageSize=50').set('X-Requester-Id', String(requesterB)))
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.map((ticket: { id: number }) => ticket.id)).toContain(own.body.id)
+  })
+
+  it('API-38 creates the Ticket for the session user whatever requesterId the body names (AC-22, BR-18)', async () => {
+    const res = await asA(request(app).post('/api/tickets').send(validBody({ requesterId: requesterB })))
+
+    expect(res.status).toBe(201)
+    expect(res.body.requester.id).toBe(requesterA)
+    const stored = await appPrisma.ticket.findUniqueOrThrow({ where: { id: res.body.id } })
+    expect(stored.requesterId).toBe(requesterA)
+  })
+
+  it('API-39 lists only the session user’s Tickets with the Lab 2 query contract unchanged (AC-23, BR-20)', async () => {
+    const foreign = await asB(request(app).post('/api/tickets').send(validBody()))
+    expect(foreign.status).toBe(201)
+
+    const res = await asA(
+      request(app).get('/api/tickets?search=regression&requestedPriority=HIGH&sortBy=createdAt&sortOrder=asc&page=1&pageSize=10'),
+    )
+
+    expect(res.status).toBe(200)
+    expect(res.body.meta).toEqual({
+      page: 1,
+      pageSize: 10,
+      totalItems: expect.any(Number),
+      totalPages: expect.any(Number),
+      sortBy: 'createdAt',
+      sortOrder: 'asc',
+    })
+    const ids = res.body.data.map((ticket: { id: number }) => ticket.id)
+    expect(ids.length).toBeGreaterThan(0)
+    expect(ids).not.toContain(foreign.body.id)
+    const rows = await appPrisma.ticket.findMany({ where: { id: { in: ids } }, select: { requesterId: true } })
+    expect(rows.every((row) => row.requesterId === requesterA)).toBe(true)
+
+    // Requester B's Ticket through A's session is the Lab 2 404, never 403 (BR-19).
+    expect((await asA(request(app).get(`/api/tickets/${foreign.body.id}`))).status).toBe(404)
+  })
+
+  it('API-40 keeps Lab 2 numbering, NEW status, and a server Ticket Date, and copies IT Priority (AC-24, BR-32)', async () => {
+    const before = Date.now()
+    const res = await asA(
+      request(app)
+        .post('/api/tickets')
+        .send(validBody({ requestedPriority: 'URGENT', status: 'CLOSED', createdAt: '2001-01-01T00:00:00Z' })),
+    )
+
+    expect(res.status).toBe(201)
+    expect(res.body.ticketNumber).toMatch(/^TKT-\d{4}-\d{6}$/)
+    expect(res.body.status).toBe('NEW')
+    expect(new Date(res.body.createdAt).getTime()).toBeGreaterThanOrEqual(before - 1000)
+
+    const stored = await appPrisma.ticket.findUniqueOrThrow({ where: { id: res.body.id } })
+    expect(stored.itPriority).toBe('URGENT')
+    expect(stored.assigneeId).toBeNull()
+  })
+
+  it('API-41 keeps every Lab 2 attachment rule under authentication (AC-25)', async () => {
+    const ticket = await asA(request(app).post('/api/tickets').send(validBody()))
+    const upload = (bytes: Buffer, name: string) =>
+      asA(request(app).post(`/api/tickets/${ticket.body.id}/attachments`).attach('file', bytes, name))
+
+    const exe = Buffer.concat([Buffer.from([0x4d, 0x5a, 0x90, 0x00]), Buffer.alloc(64, 1)])
+    expect((await upload(exe, 'tool.exe')).status).toBe(415)
+    expect((await upload(png(6 * 1024 * 1024), 'huge.png')).status).toBe(413)
+
+    const uploaded: number[] = []
+    for (let index = 1; index <= 5; index += 1) {
+      const res = await upload(png(), `file-${index}.png`)
+      expect(res.status).toBe(201)
+      uploaded.push(res.body.id)
+    }
+    const sixth = await upload(png(), 'file-6.png')
+    expect(sixth.status).toBe(409)
+    expect(sixth.body.error.code).toBe('ATTACHMENT_LIMIT_REACHED')
+
+    const listed = await asA(request(app).get(`/api/tickets/${ticket.body.id}/attachments`))
+    expect(listed.status).toBe(200)
+    expect(listed.body).toHaveLength(5)
+
+    expect((await asA(request(app).get(`/api/attachments/${uploaded[0]}/download`))).status).toBe(200)
+    // Another Requester's session learns nothing, not even that the attachment exists (BR-19).
+    expect((await asB(request(app).get(`/api/attachments/${uploaded[0]}/download`))).status).toBe(404)
+
+    const removed = await asA(
+      request(app).delete(`/api/attachments/${uploaded[0]}`).send({ removalReason: 'Uploaded the wrong file' }),
+    )
+    expect(removed.status).toBe(200)
+    expect(await appPrisma.attachment.findUniqueOrThrow({ where: { id: uploaded[0] } })).toMatchObject({
+      removedById: requesterA,
+    })
+
+    const gone = await asA(request(app).get(`/api/attachments/${uploaded[0]}/download`))
+    expect(gone.status).toBe(410)
+    expect(gone.body.error.code).toBe('ATTACHMENT_REMOVED')
+  }, 60_000)
 })

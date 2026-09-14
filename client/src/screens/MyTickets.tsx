@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Badge, { type Priority } from '../components/Badge'
 import Button from '../components/Button'
@@ -8,7 +8,6 @@ import Pagination from '../components/Pagination'
 import SelectField from '../components/SelectField'
 import { SkeletonCard, SkeletonRows } from '../components/Skeleton'
 import { apiFetch } from '../lib/apiClient'
-import { useRequesterId } from '../lib/requesterContext'
 
 type Reference = { id: number; name: string }
 
@@ -59,7 +58,6 @@ const bangkokDate = (iso: string) =>
  * so a filtered view can be reloaded, shared, and screenshotted (BR-34). */
 export default function MyTickets() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const requesterId = useRequesterId()
   const navigate = useNavigate()
 
   const [result, setResult] = useState<Result | null>(null)
@@ -72,23 +70,6 @@ export default function MyTickets() {
 
   const query = searchParams.toString()
   const hasCriteria = FILTER_KEYS.some((key) => searchParams.get(key))
-  const previousRequester = useRef(requesterId)
-  // Set while a requester switch is clearing the query, so no request goes out
-  // carrying the previous requester's search and page (BR-12, AC-04).
-  const pendingReset = useRef<number | null>(null)
-
-  // Switching requester discards every requester-scoped piece of state before the
-  // new request resolves, so requester A's rows are never seen under B (BR-12, AC-04).
-  useEffect(() => {
-    if (previousRequester.current === requesterId) return
-
-    previousRequester.current = requesterId
-    pendingReset.current = requesterId
-    setResult(null)
-    setSearchInput('')
-    setSearchParams({}, { replace: true })
-  }, [requesterId, setSearchParams])
-
   useEffect(() => {
     Promise.all([apiFetch<Reference[]>('/categories'), apiFetch<Reference[]>('/related-systems')])
       .then(([loadedCategories, loadedSystems]) => {
@@ -99,12 +80,6 @@ export default function MyTickets() {
   }, [])
 
   useEffect(() => {
-    if (pendingReset.current === requesterId) {
-      // Params are cleared one render later; wait for that rather than querying twice.
-      if (query !== '') return
-      pendingReset.current = null
-    }
-
     let active = true
     setLoading(true)
     setFailed(false)
@@ -122,7 +97,7 @@ export default function MyTickets() {
     return () => {
       active = false
     }
-  }, [query, requesterId, reloadToken])
+  }, [query, reloadToken])
 
   // Debounced so a search does not fire a request per keystroke (ui-spec §6.4).
   useEffect(() => {

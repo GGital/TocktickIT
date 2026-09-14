@@ -8,8 +8,9 @@ React + TypeScript + Vite + Bootstrap → Express + TypeScript REST API → Pris
   backend-generated Ticket Number, attachments with soft removal, a searchable and paginated My Tickets list,
   a read-only Ticket Detail screen, and backend ownership isolation on every requester-scoped route.
 
-> **Lab 2 has no authentication.** The Development Requester selector is a testing mechanism, not a login. It
-> is deliberately not a security boundary; authentication and role-based access arrive in Lab 3.
+> **Lab 3 replaces the Lab 2 Development Requester selector with real authentication.** Identity is a server-side
+> session in an `HttpOnly` cookie; the selector screen, its storage key, the `X-Requester-Id` header, and
+> `GET /api/requesters` no longer exist.
 
 ## Prerequisites
 
@@ -116,7 +117,7 @@ cd client && npm run dev     # http://localhost:5173
 ```
 
 Open http://localhost:5173. Vite proxies `/api` to the backend, so the browser stays same-origin and no CORS
-configuration is needed. Pick a Requester on `/select-requester` to begin.
+configuration is needed. Sign in with one of the local-development accounts listed above.
 
 ## Tests
 
@@ -140,7 +141,7 @@ Everything, in the order run before a release Pull Request:
 cd server && npm test && cd ../client && npm test && cd .. && npx playwright test
 ```
 
-The Playwright run writes 63 screenshots to `artifacts/lab-02/screenshots/` — 21 documented states at 1280×800,
+The Playwright run writes 51 screenshots to `artifacts/lab-02/screenshots/` — 17 documented states at 1280×800,
 820×1180, and 375×812. To capture those alone:
 
 ```bash
@@ -151,7 +152,7 @@ npm run e2e:screenshots
 
 | Route | Screen |
 |---|---|
-| `/select-requester` | Development Requester Selection (testing mechanism, not a login) |
+| `/login` | Sign in — where every unauthenticated visit is sent |
 | `/tickets` | My Tickets — server-side search, filters, sorting, and pagination |
 | `/tickets/new` | Create Ticket — with staged attachments |
 | `/tickets/:id` | Ticket Detail — read-only, with the attachment section |
@@ -159,17 +160,21 @@ npm run e2e:screenshots
 
 ## API
 
-Base path `/api`. Requester-scoped routes require the header `X-Requester-Id: <positive integer>`; it is a
-simulated testing context, never authentication, and `401` is never returned. Every non-2xx response uses one
+Base path `/api`. Every route except health and login requires the `toktickit.sid` session cookie set by
+`POST /api/auth/login`; without it the API answers `401 UNAUTHENTICATED`. Requester routes always act as the
+signed-in user — a `requesterId` in a body, query, or header is ignored. Every non-2xx response uses one
 envelope: `{ "error": { "code", "message", "fields"? } }`. All `/api` responses send `Cache-Control: no-store`.
 
-| Method | Path | Purpose | Context required |
+| Method | Path | Purpose | Session required |
 |---|---|---|---|
 | GET | `/api/health` | Liveness | No |
-| GET | `/api/categories` | Active Categories, id order | No |
-| GET | `/api/related-systems` | Active Related Systems, alphabetical | No |
-| GET | `/api/requesters` | Active Development Requesters, name order | No |
-| POST | `/api/tickets` | Create one ticket; the server assigns `TKT-YYYY-NNNNNN`, `NEW`, and the timestamps | Yes |
+| POST | `/api/auth/login` | Sign in; sets the session cookie | No |
+| POST | `/api/auth/logout` | End the session | Yes |
+| GET | `/api/auth/me` | The signed-in user | Yes |
+| POST | `/api/auth/change-password` | Change the password; signs out other sessions | Yes |
+| GET | `/api/categories` | Active Categories, id order | Yes |
+| GET | `/api/related-systems` | Active Related Systems, alphabetical | Yes |
+| POST | `/api/tickets` | Create one ticket (Requesters only); the server assigns `TKT-YYYY-NNNNNN`, `NEW`, and the timestamps | Yes |
 | GET | `/api/tickets` | Owned tickets: search, filters, sort, pagination | Yes |
 | GET | `/api/tickets/:id` | One owned ticket with its attachment metadata | Yes |
 | POST | `/api/tickets/:id/attachments` | Upload one permitted file (JPG, PNG, WEBP, PDF; ≤ 5 MB; ≤ 5 active) | Yes |
@@ -186,16 +191,16 @@ confirms that someone else's ticket exists.
 client/                        React + TypeScript + Vite + Bootstrap
   src/
     components/                Reusable UI: Button, Badge, Callout, form fields,
-                               Pagination, ConfirmDialog, AppShell, RequesterGuard,
+                               Pagination, ConfirmDialog, AppShell, AuthGuard,
                                AttachmentSection (staging), AttachmentList (detail)
-    lib/                       requesterContext (localStorage), apiClient, validation
-    screens/                   SelectRequester, CreateTicket, MyTickets, TicketDetail
+    lib/                       auth (AuthProvider, useCurrentUser), apiClient, validation
+    screens/                   CreateTicket, MyTickets, TicketDetail
     styles/zen-theme.css       Zen Green tokens — the only file with colour literals
   tests/lab-01/                Lab 1 UI tests
   tests/lab-02/                UI, UI-style, accessibility, and unit tests
 server/                        Node.js + Express + TypeScript
   prisma/                      schema, migrations, seed.ts, dev-seed-tickets.ts
-  src/                         app.ts (routes), requesterContext.ts (middleware),
+  src/                         app.ts (routes and middleware stack), auth.ts, password.ts,
                                tickets.ts, attachments.ts, fileValidation.ts,
                                ticketQuery.ts, ticketNumber.ts, errors.ts
   tests/lab-01/                Lab 1 API tests

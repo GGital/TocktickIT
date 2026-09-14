@@ -9,24 +9,34 @@ export const VIEWPORTS = {
 
 export type ViewportName = keyof typeof VIEWPORTS
 
-/** The single documented storage key for the simulated requester context (BR-10). */
-export const REQUESTER_ID_KEY = 'toktickit.requesterId'
-
 export const API = 'http://localhost:3000/api'
 
-export type Requester = { id: number; fullName: string; department: string }
+export type Requester = { id: number; fullName: string; email: string }
 export type Reference = { id: number; name: string }
 
 /** Every run tags the tickets it creates, so specs never collide on shared data. */
 export const runTag = () => `E2E-${Date.now().toString(36).toUpperCase()}`
 
+/**
+ * Local-development credentials from README.md — test fixtures, not secrets. These two seeded Requesters are
+ * seeded with mustChangePassword = false precisely so the suite can sign in directly (Lab 3 A-19).
+ */
+const E2E_PASSWORD = 'TokTick-Local-Dev-1'
+const E2E_REQUESTER_EMAILS = ['napat.s@toktickit.dev', 'pimchanok.t@toktickit.dev']
+
+/** Signs a request context in as the requester; the session cookie replaces any previous one (Lab 3 BR-03). */
+export async function signIn(request: APIRequestContext, requester: Pick<Requester, 'email'>) {
+  const response = await request.post(`${API}/auth/login`, {
+    data: { email: requester.email, password: E2E_PASSWORD },
+  })
+  expect(response.status(), 'run `npx prisma db seed` so the E2E accounts exist').toBe(200)
+  return (await response.json()) as Requester
+}
+
+/** The two seeded E2E Requesters, A then B. Leaves `request` signed in as B. */
 export async function getRequesters(request: APIRequestContext): Promise<Requester[]> {
-  const response = await request.get(`${API}/requesters`)
-  expect(response.status(), 'the seed must provide active requesters').toBe(200)
-
-  const requesters = (await response.json()) as Requester[]
-  expect(requesters.length, 'at least two active requesters are needed').toBeGreaterThan(1)
-
+  const requesters: Requester[] = []
+  for (const email of E2E_REQUESTER_EMAILS) requesters.push(await signIn(request, { email }))
   return requesters
 }
 
@@ -47,15 +57,15 @@ type TicketSeed = {
   requestedPriority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
 }
 
-/** Creates a ticket through the API — used to set a list up quickly, never to
- * stand in for the UI flow the specs actually assert. */
+/** Creates a ticket through the API as the requester — used to set a list up quickly, never to
+ * stand in for the UI flow the specs actually assert. Leaves `request` signed in as that requester. */
 export async function createTicket(
   request: APIRequestContext,
-  requesterId: number,
+  requester: Requester,
   seed: TicketSeed,
 ) {
+  await signIn(request, requester)
   const response = await request.post(`${API}/tickets`, {
-    headers: { 'X-Requester-Id': String(requesterId) },
     data: {
       summary: seed.summary,
       description:
@@ -85,31 +95,11 @@ export const PDF_BYTES = Buffer.from(
 export const EXE_BYTES = Buffer.from([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00])
 
 /**
- * Puts a requester into the browser context without walking the selection screen,
- * for specs whose subject is a later screen. E2E-01 and E2E-08 drive the real
- * screen instead.
- *
- * The script runs on every navigation, so it only seeds an *absent* context: a
- * spec that switches requester or clears the key must keep that change across the
- * next `goto`, which an unconditional write would silently undo.
+ * Signs the browser in as the requester without a Login screen, for specs whose subject is a later screen.
+ * page.request shares its cookie store with the page, so the browser carries the same session.
  */
-export async function actAs(page: Page, requesterId: number) {
-  await page.addInitScript(
-    ([key, id]) => {
-      if (!window.localStorage.getItem(key as string)) {
-        window.localStorage.setItem(key as string, String(id))
-      }
-    },
-    [REQUESTER_ID_KEY, requesterId] as const,
-  )
-}
-
-/** Establishes the context the way a user does, for specs that test the context. */
-export async function selectRequesterThroughUi(page: Page, requesterId: number) {
-  await page.goto('/select-requester')
-  await page.getByLabel(/Development Requester/).selectOption(String(requesterId))
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await expect(page).toHaveURL(/\/tickets$/)
+export async function actAs(page: Page, requester: Requester) {
+  await signIn(page.request, requester)
 }
 
 /** Fills the Create Ticket form with valid values, leaving submission to the caller. */

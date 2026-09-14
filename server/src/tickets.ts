@@ -87,8 +87,8 @@ const ticketDetail = {
 
 /** `POST /api/tickets` (api-spec §3.5). JSON only — attachments upload separately (BR-29). */
 export async function createTicket(req: Request, res: Response) {
-  // requesterContext has already resolved and validated the header (BR-05, BR-48).
-  const requester = req.requester!
+  // The authenticated session user is the Requester; nothing in the body can change that (BR-18).
+  const requester = req.user!
   const body = (req.body ?? {}) as Record<string, unknown>
 
   const { input, errors } = validateTicketInput(body)
@@ -201,7 +201,7 @@ export async function listTickets(req: Request, res: Response) {
 
   const where = {
     // Ownership is part of the query itself, never a filter applied afterwards.
-    requesterId: req.requester!.id,
+    requesterId: req.user!.id,
     ...(query.categoryId ? { categoryId: query.categoryId } : {}),
     ...(query.relatedSystemId ? { relatedSystemId: query.relatedSystemId } : {}),
     ...(query.requestedPriority ? { requestedPriority: query.requestedPriority } : {}),
@@ -262,7 +262,7 @@ export async function getTicket(req: Request, res: Response) {
   }
 
   const ticket = await prisma.ticket.findFirst({
-    where: { id, requesterId: req.requester!.id },
+    where: { id, requesterId: req.user!.id },
     select: {
       ...ticketDetail,
       // Removed attachments are listed too, as metadata only (BR-32, AC-27).

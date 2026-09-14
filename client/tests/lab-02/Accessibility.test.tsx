@@ -3,11 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
-import { REQUESTER_ID_KEY } from '../../src/lib/requesterContext'
+import { isAuthMe, signedInRequester } from '../helpers/auth'
 
-const requesters = [
-  { id: 1, fullName: 'Nadia Charoen', email: 'nadia@toktickit.test', department: 'Registrar' },
-]
 const categories = [{ id: 2, name: 'Hardware' }]
 const systems = [{ id: 7, name: 'Corporate Laptop' }]
 const createdTicket = { id: 41, ticketNumber: 'TKT-2026-000041', createdAt: '2026-08-22T03:11:04.512Z' }
@@ -20,7 +17,7 @@ let fetchMock: ReturnType<typeof vi.fn>
 beforeEach(() => {
   localStorage.clear()
   fetchMock = vi.fn((url: string) => {
-    if (url.startsWith('/api/requesters')) return Promise.resolve(ok(requesters))
+    if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
     if (url.startsWith('/api/categories')) return Promise.resolve(ok(categories))
     if (url.startsWith('/api/related-systems')) return Promise.resolve(ok(systems))
     if (url === '/api/tickets') return Promise.resolve(ok(createdTicket, 201))
@@ -47,29 +44,10 @@ async function tabUntil(user: ReturnType<typeof userEvent.setup>, matches: () =>
   return matches()
 }
 
+// The selection-screen keyboard case left with the selector (BR-57); its authenticated equivalent is the
+// Login screen's keyboard test (Lab 3 AC-67).
 describe('UI-25 keyboard-only operation (AC-47)', () => {
-  it('drives the requester selection screen without a mouse', async () => {
-    renderAt('/select-requester')
-    const user = userEvent.setup()
-
-    const select = await screen.findByLabelText(/Development Requester/)
-    expect(await tabUntil(user, () => document.activeElement === select)).toBe(true)
-
-    await user.selectOptions(select, '1')
-    // Enter from inside the form submits it natively — no key handler needed.
-    expect(
-      await tabUntil(
-        user,
-        () => document.activeElement === screen.getByRole('button', { name: 'Continue' }),
-      ),
-    ).toBe(true)
-    await user.keyboard('{Enter}')
-
-    await waitFor(() => expect(localStorage.getItem(REQUESTER_ID_KEY)).toBe('1'))
-  })
-
   it('reaches every Create Ticket control and submits from the keyboard', async () => {
-    localStorage.setItem(REQUESTER_ID_KEY, '1')
     renderAt('/tickets/new')
     const user = userEvent.setup()
 
@@ -121,7 +99,6 @@ describe('UI-25 keyboard-only operation (AC-47)', () => {
   })
 
   it('never removes a focus indicator without a replacement', async () => {
-    localStorage.setItem(REQUESTER_ID_KEY, '1')
     renderAt('/tickets/new')
 
     // outline: none with no replacement is forbidden (ui-spec §9); the theme sets a

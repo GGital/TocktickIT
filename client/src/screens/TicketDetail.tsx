@@ -15,7 +15,8 @@ type Ticket = {
   description: string
   category: { id: number; name: string }
   relatedSystem: { id: number; name: string }
-  requester: { id: number; fullName: string; email: string; department: string }
+  // department is nullable since Lab 3: users created by an Administrator have none (X-10).
+  requester: { id: number; fullName: string; email: string; department: string | null }
   requestedPriority: Priority
   status: 'NEW'
   createdAt: string
@@ -116,7 +117,8 @@ export default function TicketDetail() {
 
           <dt className="col-sm-3">Requester</dt>
           <dd className="col-sm-9">
-            {ticket.requester.fullName} — {ticket.requester.department}
+            {ticket.requester.fullName}
+            {ticket.requester.department && ` — ${ticket.requester.department}`}
           </dd>
 
           <dt className="col-sm-3">Category</dt>
