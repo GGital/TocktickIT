@@ -1,13 +1,23 @@
-import { afterAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import request from 'supertest'
 import app from '../../src/app.js'
 import { prisma } from '../../src/prisma.js'
+import { signInSeededUser, signOutAll } from '../helpers/session.js'
 
-afterAll(() => prisma.$disconnect())
+// Lab 3: reference data requires an authenticated session (api-spec §3.5).
+let cookie: string
+beforeAll(async () => {
+  cookie = await signInSeededUser()
+})
+
+afterAll(async () => {
+  await signOutAll()
+  await prisma.$disconnect()
+})
 
 describe('API-03 GET /api/requesters (AC-01, BR-09, BR-47)', () => {
   it('returns the active development requesters, ordered by name', async () => {
-    const res = await request(app).get('/api/requesters')
+    const res = await request(app).get('/api/requesters').set('Cookie', cookie)
 
     expect(res.status).toBe(200)
     expect(res.body.length).toBeGreaterThanOrEqual(4)
@@ -26,7 +36,7 @@ describe('API-03 GET /api/requesters (AC-01, BR-09, BR-47)', () => {
     const inactive = await prisma.user.findFirst({ where: { isActive: false } })
     expect(inactive, 'the seed must provide an inactive requester (BR-46)').not.toBeNull()
 
-    const res = await request(app).get('/api/requesters')
+    const res = await request(app).get('/api/requesters').set('Cookie', cookie)
     const ids = res.body.map((requester: { id: number }) => requester.id)
 
     expect(ids).not.toContain(inactive!.id)

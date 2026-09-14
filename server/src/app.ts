@@ -1,5 +1,14 @@
 import express, { type ErrorRequestHandler } from 'express'
-import { changePassword, currentUser, login, logout, requireSession } from './auth.js'
+import {
+  changePassword,
+  currentUser,
+  login,
+  logout,
+  requireAuth,
+  requirePasswordChangeComplete,
+  requireRole,
+  resolveSession,
+} from './auth.js'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
 import { requesterContext } from './requesterContext.js'
@@ -26,14 +35,21 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'TokTickIT API' })
 })
 
-// --- Authentication (api-spec §3.1 – §3.4). Login is the only route reachable without a session. ---
+// Login is the only route reachable without a session (api-spec §3.1).
 app.post('/api/auth/login', login)
-app.use('/api/auth', requireSession)
+
+// --- The protected stack (api-spec §1.4). Mounted on prefixes, never per route, so every route registered
+// below — including ones added later — inherits authentication, the password-change gate, and its role guard
+// (BR-16, A-16). ---
+app.use('/api', resolveSession, requireAuth, requirePasswordChangeComplete)
+app.use('/api/staff', requireRole('IT_STAFF', 'ADMINISTRATOR'))
+app.use('/api/admin', requireRole('ADMINISTRATOR'))
+
 app.post('/api/auth/logout', logout)
 app.get('/api/auth/me', currentUser)
 app.post('/api/auth/change-password', changePassword)
 
-// --- Public reference data (api-spec §3.2 – §3.4). No requester context. ---
+// --- Reference data: any authenticated role (api-spec §3.5). ---
 
 app.get('/api/categories', async (_req, res) => {
   // id order preserves the Lab 1 contract (A-18); active only (BR-45).
@@ -66,11 +82,13 @@ app.get('/api/requesters', async (_req, res) => {
   res.json(requesters)
 })
 
-// --- Requester-scoped routes (api-spec §1.1). One middleware guards the whole
-// prefix, so every route added under it inherits the check (BR-15, BR-48). ---
+// --- Requester-scoped routes: any authenticated role, always scoped to the caller's own Tickets (BR-21). ---
 app.use(['/api/tickets', '/api/attachments'], requesterContext)
 
-app.post('/api/tickets', createTicket)
+// Creating a Ticket and flagging it resolved are Requester operations (matrix, BR-46). The appears-resolved
+// guard is declared ahead of its handler (#51) so the route is already refused to staff.
+app.post('/api/tickets', requireRole('REQUESTER'), createTicket)
+app.post('/api/tickets/:id/appears-resolved', requireRole('REQUESTER'))
 app.get('/api/tickets', listTickets)
 app.get('/api/tickets/:id', getTicket)
 

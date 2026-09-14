@@ -5,6 +5,7 @@ import request from 'supertest'
 import app from '../../src/app.js'
 import { UPLOADS_ROOT } from '../../src/attachments.js'
 import { prisma } from '../../src/prisma.js'
+import { asUser, signIn } from '../helpers/session.js'
 
 const emailA = 'attachments-a@toktickit.test'
 const emailB = 'attachments-b@toktickit.test'
@@ -31,7 +32,7 @@ const upload = (
 ) =>
   request(app)
     .post(`/api/tickets/${ticketId}/attachments`)
-    .set('X-Requester-Id', String(requesterId))
+    .set('Cookie', asUser(requesterId))
     .attach('file', buffer, filename)
 
 const filesIn = async (ticketId: number) =>
@@ -69,17 +70,19 @@ beforeAll(async () => {
   const [a, b] = await Promise.all([
     prisma.user.upsert({
       where: { email: emailA },
-      update: { isActive: true },
-      create: { email: emailA, fullName: 'Attachment Owner A', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
+      update: { isActive: true, mustChangePassword: false },
+      create: { email: emailA, fullName: 'Attachment Owner A', department: 'QA', passwordHash: 'unusable-lab2-fixture', mustChangePassword: false },
     }),
     prisma.user.upsert({
       where: { email: emailB },
-      update: { isActive: true },
-      create: { email: emailB, fullName: 'Attachment Owner B', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
+      update: { isActive: true, mustChangePassword: false },
+      create: { email: emailB, fullName: 'Attachment Owner B', department: 'QA', passwordHash: 'unusable-lab2-fixture', mustChangePassword: false },
     }),
   ])
   requesterA = a.id
   requesterB = b.id
+  // Lab 3: identity is the session, not the retired X-Requester-Id header (BR-18, BR-58).
+  await Promise.all([signIn(requesterA), signIn(requesterB)])
 
   ticketA = await createTicket(requesterA)
   ticketB = await createTicket(requesterB)
@@ -169,7 +172,7 @@ describe('API-37 path traversal in the filename (AC-30, BR-27)', () => {
 
     const res = await request(app)
       .post(`/api/tickets/${ticketId}/attachments`)
-      .set('X-Requester-Id', String(requesterA))
+      .set('Cookie', asUser(requesterA))
       .set('Content-Type', `multipart/form-data; boundary=${boundary}`)
       .send(body)
 
@@ -248,7 +251,7 @@ describe('API-41 / API-42 active attachment limit (AC-21, AC-22, BR-25)', () => 
     const first = await prisma.attachment.findFirstOrThrow({ where: { ticketId } })
     await request(app)
       .delete(`/api/attachments/${first.id}`)
-      .set('X-Requester-Id', String(requesterA))
+      .set('Cookie', asUser(requesterA))
       .send({ removalReason: 'Uploaded the wrong screenshot' })
       .expect(200)
 
@@ -274,7 +277,7 @@ describe('API-44 multipart request with no file part (api-spec §3.8)', () => {
   it('answers 400 NO_FILE_UPLOADED', async () => {
     const res = await request(app)
       .post(`/api/tickets/${ticketA}/attachments`)
-      .set('X-Requester-Id', String(requesterA))
+      .set('Cookie', asUser(requesterA))
       .field('note', 'no file here')
 
     expect(res.status).toBe(400)
@@ -290,7 +293,7 @@ describe('API-45 download an active attachment (AC-24, BR-14)', () => {
 
     const res = await request(app)
       .get(`/api/attachments/${created.body.id}/download`)
-      .set('X-Requester-Id', String(requesterA))
+      .set('Cookie', asUser(requesterA))
       .buffer()
       .parse((response, callback) => {
         const chunks: Buffer[] = []
@@ -317,7 +320,7 @@ describe('API-46 – API-49 soft removal (AC-25, AC-26, AC-28, AC-29)', () => {
     const remove = (removalReason?: string) =>
       request(app)
         .delete(`/api/attachments/${attachmentId}`)
-        .set('X-Requester-Id', String(requesterA))
+        .set('Cookie', asUser(requesterA))
         .send(removalReason === undefined ? {} : { removalReason })
 
     // API-48: no reason, then a 4-character reason — the attachment stays active.
@@ -344,7 +347,7 @@ describe('API-46 – API-49 soft removal (AC-25, AC-26, AC-28, AC-29)', () => {
     // API-47: the bytes are unreachable even though they still exist.
     const download = await request(app)
       .get(`/api/attachments/${attachmentId}/download`)
-      .set('X-Requester-Id', String(requesterA))
+      .set('Cookie', asUser(requesterA))
     expect(download.status).toBe(410)
     expect(download.body.error.code).toBe('ATTACHMENT_REMOVED')
 
@@ -367,17 +370,17 @@ describe('API-50 / API-51 cross-requester access (AC-42, BR-14)', () => {
 
     await request(app)
       .delete(`/api/attachments/${removed.body.id}`)
-      .set('X-Requester-Id', String(requesterA))
+      .set('Cookie', asUser(requesterA))
       .send({ removalReason: 'Removed before the ownership check' })
       .expect(200)
 
     const asIntruder = (id: number) =>
-      request(app).get(`/api/attachments/${id}/download`).set('X-Requester-Id', String(requesterB))
+      request(app).get(`/api/attachments/${id}/download`).set('Cookie', asUser(requesterB))
 
     const download = await asIntruder(active.body.id)
     const removal = await request(app)
       .delete(`/api/attachments/${active.body.id}`)
-      .set('X-Requester-Id', String(requesterB))
+      .set('Cookie', asUser(requesterB))
       .send({ removalReason: 'Not mine to remove' })
 
     expect(download.status).toBe(404)
