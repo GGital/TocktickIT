@@ -253,11 +253,10 @@ describe('API-27 Requester B requests Requester A’s Ticket (AC-20, BR-19)', ()
 })
 
 describe('API-28 IT Staff and Administrator pass the staff role guard (A-01, BR-25)', () => {
-  // The queue, detail, assignment, priority, and status handlers arrive in #52 and #54, which tighten those rows
-  // to the documented 200. Internal Notes landed in #51 and are asserted at their documented status already.
-  it.each(['staff', 'admin'])('%s is neither 401 nor 403 on queue, detail, assignment, priority, and status', async (key) => {
+  // The detail, assignment, priority, and status handlers arrive in #54, which tightens those rows to the
+  // documented 200. Internal Notes (#51) and the Queue (#52) are asserted at their documented status already.
+  it.each(['staff', 'admin'])('%s is neither 401 nor 403 on detail, assignment, priority, and status', async (key) => {
     for (const [route, body] of [
-      ['GET /api/staff/tickets', undefined],
       ['GET /api/staff/tickets/:id', undefined],
       ['PATCH /api/staff/tickets/:id/assignment', { assigneeId: 'me' }],
       ['PATCH /api/staff/tickets/:id/priority', { itPriority: 'HIGH' }],
@@ -267,6 +266,12 @@ describe('API-28 IT Staff and Administrator pass the staff role guard (A-01, BR-
       const res = await call(route, { cookie: cookie[key], body })
       expect([401, 403], `${key} ${route}`).not.toContain(res.status)
     }
+  })
+
+  it.each(['staff', 'admin'])('%s reads the Ticket Queue with 200', async (key) => {
+    const res = await call('GET /api/staff/tickets', { cookie: cookie[key] })
+    expect(res.status).toBe(200)
+    expect(res.body.meta).toMatchObject({ page: 1, pageSize: 20 })
   })
 
   it.each(['staff', 'admin'])('%s reads Internal Notes with 200 and appends one with 201', async (key) => {

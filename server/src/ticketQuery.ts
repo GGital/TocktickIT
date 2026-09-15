@@ -1,8 +1,8 @@
-const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const
+export const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const
 const STATUSES = ['NEW'] as const
 const SORT_FIELDS = ['createdAt', 'updatedAt', 'ticketNumber', 'requestedPriority'] as const
 const SORT_ORDERS = ['asc', 'desc'] as const
-const PAGE_SIZES = [10, 20, 50] as const
+export const PAGE_SIZES = [10, 20, 50] as const
 
 export type TicketListQuery = {
   search?: string
@@ -28,7 +28,7 @@ export class QueryParameterError extends Error {
 }
 
 /** Express gives `string | string[] | undefined`; a repeated parameter is not valid input. */
-function readSingle(query: Record<string, unknown>, name: string): string | undefined {
+export function readSingle(query: Record<string, unknown>, name: string): string | undefined {
   const value = query[name]
   if (value === undefined) return undefined
   if (typeof value !== 'string') {
@@ -38,7 +38,7 @@ function readSingle(query: Record<string, unknown>, name: string): string | unde
   return value
 }
 
-function readEnum<T extends readonly string[]>(
+export function readEnum<T extends readonly string[]>(
   query: Record<string, unknown>,
   name: string,
   allowed: T,
@@ -52,7 +52,7 @@ function readEnum<T extends readonly string[]>(
   return value
 }
 
-function readPositiveInt(query: Record<string, unknown>, name: string): number | undefined {
+export function readPositiveInt(query: Record<string, unknown>, name: string): number | undefined {
   const value = readSingle(query, name)
   if (value === undefined || value === '') return undefined
   if (!/^\d+$/.test(value) || Number(value) < 1) {
