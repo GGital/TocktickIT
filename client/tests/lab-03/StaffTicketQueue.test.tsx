@@ -53,6 +53,8 @@ beforeEach(() => {
       const totals = [24, 6, 3]
       return Promise.resolve(response(200, page([], { totalItems: totals[[...COUNT_URLS].indexOf(url)] })))
     }
+    // Staff Ticket Detail requests stay pending: these tests only follow the navigation to it.
+    if (/^\/api\/staff\/tickets\/\d+/.test(url)) return new Promise<Response>(() => undefined)
     if (url.startsWith('/api/staff/tickets')) return onList(url)
     if (url === '/api/categories') return Promise.resolve(response(200, [{ id: 2, name: 'Network' }]))
     if (url === '/api/related-systems') return Promise.resolve(response(200, [{ id: 3, name: 'VPN' }]))
