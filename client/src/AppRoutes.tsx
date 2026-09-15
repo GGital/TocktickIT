@@ -9,10 +9,10 @@ import CreateTicket from './screens/CreateTicket'
 import Login from './screens/Login'
 import MyTickets from './screens/MyTickets'
 import TicketDetail from './screens/TicketDetail'
+import TicketQueue from './screens/TicketQueue'
 import {
   NotFoundScreen,
   StaffTicketDetailScreen,
-  TicketQueueScreen,
   UserManagementScreen,
 } from './screens/placeholders'
 
@@ -65,7 +65,7 @@ export default function AppRoutes() {
             path="/staff/tickets"
             element={
               <RequireRole roles={['IT_STAFF', 'ADMINISTRATOR']}>
-                <TicketQueueScreen />
+                <TicketQueue />
               </RequireRole>
             }
           />

@@ -1,32 +1,34 @@
 import Badge from './Badge'
+import { STATUS_LABELS, type TicketStatus } from '../lib/ticketLabels'
 
-export type TicketStatus =
-  | 'NEW'
-  | 'OPEN'
-  | 'IN_PROGRESS'
-  | 'WAITING_FOR_REQUESTER'
-  | 'RESOLVED'
-  | 'CLOSED'
-  | 'REOPENED'
-  | 'CANCELLED'
+export type { TicketStatus }
 
-const STATUSES: Record<TicketStatus, { tone: string; label: string; glyph?: string }> = {
-  NEW: { tone: 'new', label: 'New' },
-  OPEN: { tone: 'open', label: 'Open' },
-  IN_PROGRESS: { tone: 'in-progress', label: 'In Progress' },
-  WAITING_FOR_REQUESTER: { tone: 'waiting', label: 'Waiting for Requester' },
-  RESOLVED: { tone: 'resolved', label: 'Resolved', glyph: '✓' },
-  CLOSED: { tone: 'closed', label: 'Closed' },
-  REOPENED: { tone: 'reopened', label: 'Reopened' },
-  CANCELLED: { tone: 'cancelled', label: 'Cancelled' },
+const TONES: Record<TicketStatus, string> = {
+  NEW: 'new',
+  OPEN: 'open',
+  IN_PROGRESS: 'in-progress',
+  WAITING_FOR_REQUESTER: 'waiting',
+  RESOLVED: 'resolved',
+  CLOSED: 'closed',
+  REOPENED: 'reopened',
+  CANCELLED: 'cancelled',
 }
 
 /** All eight Ticket statuses (BR-33, ui-spec §1.2). Status colour is deliberately quieter than priority colour. */
 export default function StatusBadge({ value }: { value: TicketStatus }) {
-  const { tone, label, glyph } = STATUSES[value]
   return (
-    <Badge tone={tone} glyph={glyph}>
-      {label}
+    <Badge tone={TONES[value]} glyph={value === 'RESOLVED' ? '✓' : undefined}>
+      {STATUS_LABELS[value]}
+    </Badge>
+  )
+}
+
+/** The Requester-resolution flag (ui-spec §1.2, BR-46): a signal to staff, never a status. */
+export function ResolutionFlagBadge() {
+  return (
+    <Badge tone="flag">
+      <span aria-hidden="true">✓ </span>
+      Requester says resolved
     </Badge>
   )
 }
