@@ -253,18 +253,31 @@ describe('API-27 Requester B requests Requester A’s Ticket (AC-20, BR-19)', ()
 })
 
 describe('API-28 IT Staff and Administrator pass the staff role guard (A-01, BR-25)', () => {
-  // The detail, assignment, priority, and status handlers arrive in #54, which tightens those rows to the
-  // documented 200. Internal Notes (#51) and the Queue (#52) are asserted at their documented status already.
-  it.each(['staff', 'admin'])('%s is neither 401 nor 403 on detail, assignment, priority, and status', async (key) => {
+  it.each(['staff', 'admin'])('%s reads detail and assignees, then claims, prioritises, and starts a Ticket, each 200', async (key) => {
+    // A Ticket of its own, so the shared fixture's status stays as the other cases expect it.
+    const { requesterId, categoryId, relatedSystemId, summary, description, requestedPriority } = await ticketRow()
+    const own = await prisma.ticket.create({
+      data: {
+        ticketNumber: `TKT-TEST-AUTHZ-${key}-${Date.now()}`,
+        requesterId,
+        categoryId,
+        relatedSystemId,
+        summary,
+        description,
+        requestedPriority,
+        itPriority: requestedPriority,
+      },
+    })
+
     for (const [route, body] of [
       ['GET /api/staff/tickets/:id', undefined],
+      ['GET /api/staff/assignees', undefined],
       ['PATCH /api/staff/tickets/:id/assignment', { assigneeId: 'me' }],
       ['PATCH /api/staff/tickets/:id/priority', { itPriority: 'HIGH' }],
-      ['PATCH /api/staff/tickets/:id/status', { status: 'OPEN' }],
-      ['GET /api/staff/assignees', undefined],
+      ['PATCH /api/staff/tickets/:id/status', { status: 'IN_PROGRESS' }],
     ] as const) {
-      const res = await call(route, { cookie: cookie[key], body })
-      expect([401, 403], `${key} ${route}`).not.toContain(res.status)
+      const res = await call(route, { cookie: cookie[key], id: own.id, body })
+      expect(res.status, `${key} ${route}`).toBe(200)
     }
   })
 
