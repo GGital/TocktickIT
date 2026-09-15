@@ -4,13 +4,13 @@ import {
   EXE_BYTES,
   PDF_BYTES,
   PNG_BYTES,
-  REQUESTER_ID_KEY,
   VIEWPORTS,
   actAs,
   createTicket,
   getReferenceData,
   getRequesters,
   runTag,
+  type Requester,
   type ViewportName,
 } from './helpers'
 
@@ -46,8 +46,8 @@ function captureAtEveryViewport(
 
 test.describe('RESP-07 screenshot inventory', () => {
   const tag = runTag()
-  let requesterId: number
-  let otherRequesterId: number
+  let account: Requester
+  let otherAccount: Requester
   let categoryId: number
   let systemId: number
   let listTicketId: number
@@ -57,14 +57,14 @@ test.describe('RESP-07 screenshot inventory', () => {
   test.beforeAll(async ({ request }) => {
     const [requester, other] = await getRequesters(request)
     const { categories, systems } = await getReferenceData(request)
-    requesterId = requester.id
-    otherRequesterId = other.id
+    account = requester
+    otherAccount = other
     categoryId = categories[0].id
     systemId = systems[0].id
 
     // Enough rows for a populated list and a second page.
     for (let index = 0; index < 12; index += 1) {
-      await createTicket(request, requester.id, {
+      await createTicket(request, requester, {
         summary: `${tag} screenshot fixture ticket ${String(index + 1).padStart(2, '0')}`,
         categoryId: categories[index % categories.length].id,
         relatedSystemId: systems[index % systems.length].id,
@@ -72,7 +72,7 @@ test.describe('RESP-07 screenshot inventory', () => {
       })
     }
 
-    const listTicket = await createTicket(request, requester.id, {
+    const listTicket = await createTicket(request, requester, {
       summary: `${tag} laptop battery drains within thirty minutes`,
       categoryId,
       relatedSystemId: systemId,
@@ -81,18 +81,17 @@ test.describe('RESP-07 screenshot inventory', () => {
     listTicketId = listTicket.id
 
     // One ticket with an active attachment, one with a removed attachment.
-    const withActive = await createTicket(request, requester.id, {
+    const withActive = await createTicket(request, requester, {
       summary: `${tag} ticket carrying an active attachment`,
       categoryId,
       relatedSystemId: systemId,
     })
     attachmentTicketId = withActive.id
     await request.post(`http://localhost:3000/api/tickets/${withActive.id}/attachments`, {
-      headers: { 'X-Requester-Id': String(requester.id) },
       multipart: { file: { name: 'battery-report.pdf', mimeType: 'application/pdf', buffer: PDF_BYTES } },
     })
 
-    const withRemoved = await createTicket(request, requester.id, {
+    const withRemoved = await createTicket(request, requester, {
       summary: `${tag} ticket carrying a removed attachment`,
       categoryId,
       relatedSystemId: systemId,
@@ -101,66 +100,33 @@ test.describe('RESP-07 screenshot inventory', () => {
     const uploaded = await request.post(
       `http://localhost:3000/api/tickets/${withRemoved.id}/attachments`,
       {
-        headers: { 'X-Requester-Id': String(requester.id) },
         multipart: {
           file: { name: 'wrong-screenshot.png', mimeType: 'image/png', buffer: PNG_BYTES },
         },
       },
     )
     await request.delete(`http://localhost:3000/api/attachments/${(await uploaded.json()).id}`, {
-      headers: { 'X-Requester-Id': String(requester.id) },
       data: { removalReason: 'Uploaded the wrong screenshot' },
     })
-  })
-
-  // --- Requester Selection -------------------------------------------------
-
-  captureAtEveryViewport('requester-selection', 'loading', async (page) => {
-    // Hold the requesters response open so the loading state is on screen.
-    await page.route('**/api/requesters', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 2_000))
-      await route.continue()
-    })
-    await page.goto('/select-requester')
-    await page.getByText('Loading requesters…').waitFor()
-  })
-
-  captureAtEveryViewport('requester-selection', 'loaded', async (page) => {
-    await page.goto('/select-requester')
-    await page.getByLabel(/Development Requester/).waitFor()
-  })
-
-  captureAtEveryViewport('requester-selection', 'empty', async (page) => {
-    await page.route('**/api/requesters', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
-    )
-    await page.goto('/select-requester')
-    await page.getByText('No active Development Requesters found.').waitFor()
-  })
-
-  captureAtEveryViewport('requester-selection', 'error', async (page) => {
-    await page.route('**/api/requesters', (route) => route.abort('failed'))
-    await page.goto('/select-requester')
-    await page.getByText('Unable to load the development requesters.').waitFor()
   })
 
   // --- Create Ticket -------------------------------------------------------
 
   captureAtEveryViewport('create-ticket', 'initial', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto('/tickets/new')
     await page.getByLabel(/^Ticket Summary/).waitFor()
   })
 
   captureAtEveryViewport('create-ticket', 'validation-failure', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto('/tickets/new')
     await page.getByRole('button', { name: 'Submit Ticket' }).click()
     await page.getByText('Summary must be between 10 and 120 characters.').waitFor()
   })
 
   captureAtEveryViewport('create-ticket', 'submitting', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     // Hold the create request open so the busy state is on screen.
     await page.route('**/api/tickets', async (route) => {
       if (route.request().method() !== 'POST') return route.continue()
@@ -175,7 +141,7 @@ test.describe('RESP-07 screenshot inventory', () => {
   })
 
   captureAtEveryViewport('create-ticket', 'success', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto('/tickets/new')
     await fillForScreenshot(page, `${tag} success state capture ${Date.now()}`)
     await page.getByRole('button', { name: 'Submit Ticket' }).click()
@@ -183,7 +149,7 @@ test.describe('RESP-07 screenshot inventory', () => {
   })
 
   captureAtEveryViewport('create-ticket', 'api-failure', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.route('**/api/tickets', (route) =>
       route.request().method() === 'POST' ? route.abort('failed') : route.continue(),
     )
@@ -194,7 +160,7 @@ test.describe('RESP-07 screenshot inventory', () => {
   })
 
   captureAtEveryViewport('create-ticket', 'invalid-attachment', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto('/tickets/new')
     await page.getByLabel('Choose files').setInputFiles([
       { name: 'screenshot.png', mimeType: 'image/png', buffer: PNG_BYTES },
@@ -206,13 +172,13 @@ test.describe('RESP-07 screenshot inventory', () => {
   // --- My Tickets ----------------------------------------------------------
 
   captureAtEveryViewport('my-tickets', 'loaded', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto(`/tickets?search=${encodeURIComponent(tag)}`)
     await page.getByText(/Showing 1–10 of/).waitFor()
   })
 
   captureAtEveryViewport('my-tickets', 'empty', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     // The list route with or without a query; a glob's ? is a single-character
     // wildcard, so '**/api/tickets?**' misses the bare request entirely.
     await page.route(/\/api\/tickets(\?|$)/, (route) =>
@@ -230,13 +196,13 @@ test.describe('RESP-07 screenshot inventory', () => {
   })
 
   captureAtEveryViewport('my-tickets', 'no-results', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto(`/tickets?search=${encodeURIComponent(`${tag}-nothing-matches-this`)}`)
     await page.getByText('No tickets match your search.').waitFor()
   })
 
   captureAtEveryViewport('my-tickets', 'filtered', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto(
       `/tickets?search=${encodeURIComponent(tag)}&requestedPriority=URGENT&categoryId=${categoryId}`,
     )
@@ -244,13 +210,13 @@ test.describe('RESP-07 screenshot inventory', () => {
   })
 
   captureAtEveryViewport('my-tickets', 'page-2', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto(`/tickets?search=${encodeURIComponent(tag)}&page=2`)
     await page.getByText(/Showing 11–/).waitFor()
   })
 
   captureAtEveryViewport('my-tickets', 'error', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.route(/\/api\/tickets(\?|$)/, (route) => route.abort('failed'))
     await page.goto('/tickets')
     await page.getByText('Unable to load your tickets.').waitFor()
@@ -259,36 +225,33 @@ test.describe('RESP-07 screenshot inventory', () => {
   // --- Ticket Detail -------------------------------------------------------
 
   captureAtEveryViewport('ticket-detail', 'loaded', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto(`/tickets/${listTicketId}`)
     await page.getByRole('heading', { name: 'Ticket information' }).waitFor()
   })
 
   captureAtEveryViewport('ticket-detail', 'attachment-active', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto(`/tickets/${attachmentTicketId}`)
     await page.getByRole('heading', { name: 'Attachments (1 active of 5)' }).waitFor()
   })
 
   captureAtEveryViewport('ticket-detail', 'attachment-removed', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto(`/tickets/${removedTicketId}`)
     await page.getByTestId('removed-attachment').waitFor()
   })
 
   captureAtEveryViewport('ticket-detail', 'remove-dialog', async (page) => {
-    await actAs(page, requesterId)
+    await actAs(page, account)
     await page.goto(`/tickets/${attachmentTicketId}`)
     await page.getByRole('button', { name: /^Remove / }).click()
     await page.getByRole('dialog').waitFor()
   })
 
   captureAtEveryViewport('ticket-detail', 'not-found', async (page) => {
-    // The other requester's context: the same card a non-existent id produces.
-    await page.addInitScript(
-      ([key, id]) => window.localStorage.setItem(key as string, String(id)),
-      [REQUESTER_ID_KEY, otherRequesterId] as const,
-    )
+    // Signed in as the other requester: the same card a non-existent id produces.
+    await actAs(page, otherAccount)
     await page.goto(`/tickets/${listTicketId}`)
     await page.getByText('Ticket not found.').waitFor()
   })
@@ -297,7 +260,6 @@ test.describe('RESP-07 screenshot inventory', () => {
     const { readdirSync } = await import('node:fs')
 
     const expected: Record<string, string[]> = {
-      'requester-selection': ['loading', 'loaded', 'empty', 'error'],
       'create-ticket': [
         'initial',
         'validation-failure',

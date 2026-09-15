@@ -3,7 +3,7 @@ import type { Response } from 'express'
 /**
  * Error code catalogue (api-spec §1.3). The status belongs to the code, so a
  * handler names the code and can never pair it with the wrong status.
- * REQUESTER_CONTEXT_MISSING and REQUESTER_CONTEXT_INVALID are retired: identity is the session (BR-57).
+ * The two Lab 2 requester-context codes are retired: identity is the session (BR-57).
  */
 export const ERROR_STATUS = {
   VALIDATION_FAILED: 400,

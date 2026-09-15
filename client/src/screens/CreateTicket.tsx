@@ -9,7 +9,7 @@ import TextArea from '../components/TextArea'
 import TextField from '../components/TextField'
 import { RequiredLegend } from '../components/FormField'
 import { ApiError, apiFetch } from '../lib/apiClient'
-import { useCurrentRequester } from '../lib/useCurrentRequester'
+import { useCurrentUser } from '../lib/auth'
 import { validateTicketForm, type FieldErrors, type TicketFormValues } from '../lib/validation'
 
 type Reference = { id: number; name: string }
@@ -69,7 +69,7 @@ export default function CreateTicket() {
   const [created, setCreated] = useState<{ ticket: CreatedTicket; uploads: UploadResult[] } | null>(
     null,
   )
-  const requester = useCurrentRequester()
+  const user = useCurrentUser()
   const navigate = useNavigate()
 
   const loadReference = useCallback(() => {
@@ -257,7 +257,7 @@ export default function CreateTicket() {
               id="requester"
               label="Requester"
               readOnly
-              value={requester ? `${requester.fullName} — ${requester.department}` : ''}
+              value={user?.fullName ?? ''}
             />
           </div>
         </div>

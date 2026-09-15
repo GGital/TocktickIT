@@ -1,5 +1,5 @@
-// Route placeholders for the Lab 2 screens. Each is replaced by its own issue;
-// they exist so the route skeleton and its links are real and navigable now.
+// Route placeholders for screens owned by a later issue. They exist so the routes and
+// the redirects that point at them are real and navigable now.
 function Placeholder({ title }: { title: string }) {
   return (
     <div className="zen-card">
@@ -10,3 +10,10 @@ function Placeholder({ title }: { title: string }) {
 }
 
 export const NotFoundScreen = () => <Placeholder title="Page not found" />
+
+// The unauthenticated redirect target (FR-05); the Login form itself arrives with its own issue.
+export const LoginScreen = () => (
+  <main id="main" className="container py-5">
+    <Placeholder title="Sign in" />
+  </main>
+)

@@ -278,8 +278,7 @@ a:focus-visible {
   border: 1px solid var(--zen-surface);
 }
 
-.zen-requester { font-size: 0.9375rem; }
-.zen-requester-department { opacity: 0.85; font-size: 0.875rem; }
+.zen-user { font-size: 0.9375rem; }
 
 /* Secondary button sitting on the green bar. */
 .zen-on-primary {

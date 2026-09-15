@@ -3,11 +3,8 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
-import { REQUESTER_ID_KEY } from '../../src/lib/requesterContext'
+import { isAuthMe, signedInRequester } from '../helpers/auth'
 
-const requesters = [
-  { id: 1, fullName: 'Nadia Charoen', email: 'nadia@toktickit.test', department: 'Registrar' },
-]
 const categories = [
   { id: 2, name: 'Hardware' },
   { id: 3, name: 'Software' },
@@ -36,7 +33,7 @@ const createdTicket = {
 /** Reference data and requesters always resolve; `onCreate` decides what POST does. */
 function stubApi(onCreate: (url: string) => Promise<Response> = () => Promise.resolve(ok(createdTicket, 201))) {
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
-    if (url.startsWith('/api/requesters')) return Promise.resolve(ok(requesters))
+    if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
     if (url.startsWith('/api/categories')) return Promise.resolve(ok(categories))
     if (url.startsWith('/api/related-systems')) return Promise.resolve(ok(systems))
     if (init?.method === 'POST') return onCreate(url)
@@ -62,7 +59,9 @@ const renderScreen = () =>
 /** Fills every required field with valid values. */
 async function fillValidForm(overrides: { summary?: string; description?: string } = {}) {
   const user = userEvent.setup()
-  await user.selectOptions(await screen.findByLabelText(/^Category/), '2')
+  const category = await screen.findByLabelText(/^Category/)
+  await within(category).findByRole('option', { name: 'Hardware' })
+  await user.selectOptions(category, '2')
   await user.selectOptions(screen.getByLabelText(/^Related System/), '7')
   await user.type(
     screen.getByLabelText(/^Ticket Summary/),
@@ -77,7 +76,6 @@ async function fillValidForm(overrides: { summary?: string; description?: string
 
 beforeEach(() => {
   localStorage.clear()
-  localStorage.setItem(REQUESTER_ID_KEY, '1')
 })
 
 afterEach(() => vi.unstubAllGlobals())
@@ -88,7 +86,8 @@ describe('UI-07 reference data (AC-10)', () => {
     renderScreen()
 
     const category = await screen.findByLabelText(/^Category/)
-    expect(within(category).getByRole('option', { name: 'Hardware' })).toBeInTheDocument()
+    // The screen mounts once the session is restored, so reference data arrives a tick later.
+    expect(await within(category).findByRole('option', { name: 'Hardware' })).toBeInTheDocument()
     expect(within(category).getByRole('option', { name: 'Software' })).toBeInTheDocument()
 
     const system = screen.getByLabelText(/^Related System/)
@@ -105,7 +104,7 @@ describe('UI-07 reference data (AC-10)', () => {
     expect(screen.getByLabelText('Ticket Date')).toHaveValue('Set on submit')
     expect(screen.getByLabelText('Current Status')).toHaveValue('NEW')
     await waitFor(() =>
-      expect(screen.getByLabelText('Requester')).toHaveValue('Nadia Charoen — Registrar'),
+      expect(screen.getByLabelText('Requester')).toHaveValue('Nadia Charoen'),
     )
   })
 })
@@ -116,7 +115,9 @@ describe('UI-08 empty summary (AC-11, BR-18)', () => {
     renderScreen()
 
     const user = userEvent.setup()
-    await user.selectOptions(await screen.findByLabelText(/^Category/), '2')
+    const category = await screen.findByLabelText(/^Category/)
+  await within(category).findByRole('option', { name: 'Hardware' })
+  await user.selectOptions(category, '2')
     await user.selectOptions(screen.getByLabelText(/^Related System/), '7')
     await user.type(
       screen.getByLabelText(/^Description/),
@@ -242,7 +243,7 @@ describe('UI-13 duplicate submission (AC-15)', () => {
 describe('UI-15 ticket created but an upload failed (AC-23, BR-29)', () => {
   it('keeps the ticket, reports the file individually, and offers a retry', async () => {
     const fetchMock = vi.fn((url: string, init?: RequestInit) => {
-      if (url.startsWith('/api/requesters')) return Promise.resolve(ok(requesters))
+      if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
       if (url.startsWith('/api/categories')) return Promise.resolve(ok(categories))
       if (url.startsWith('/api/related-systems')) return Promise.resolve(ok(systems))
       if (url === '/api/tickets' && init?.method === 'POST') {

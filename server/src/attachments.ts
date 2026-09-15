@@ -104,7 +104,7 @@ export async function uploadAttachment(req: Request, res: Response) {
 
   // Ownership is resolved before the body is read, so a non-owner never learns
   // anything about the ticket — not even that their file was too large (BR-14).
-  const ticket = await findOwnedTicket(ticketId, req.requester!.id)
+  const ticket = await findOwnedTicket(ticketId, req.user!.id)
   if (!ticket) return sendError(res, 'TICKET_NOT_FOUND', 'Ticket not found.')
 
   try {
@@ -163,7 +163,7 @@ export async function uploadAttachment(req: Request, res: Response) {
           storedFilename,
           mimeType,
           sizeBytes: file.size,
-          uploadedById: req.requester!.id,
+          uploadedById: req.user!.id,
         },
         select: attachmentSelect,
       })
@@ -188,7 +188,7 @@ export async function listAttachments(req: Request, res: Response) {
     return sendError(res, 'INVALID_PATH_PARAMETER', 'The ticket id must be a positive integer.')
   }
 
-  const ticket = await findOwnedTicket(ticketId, req.requester!.id)
+  const ticket = await findOwnedTicket(ticketId, req.user!.id)
   if (!ticket) return sendError(res, 'TICKET_NOT_FOUND', 'Ticket not found.')
 
   const attachments = await prisma.attachment.findMany({
@@ -207,7 +207,7 @@ export async function downloadAttachment(req: Request, res: Response) {
     return sendError(res, 'INVALID_PATH_PARAMETER', 'The attachment id must be a positive integer.')
   }
 
-  const attachment = await findOwnedAttachment(attachmentId, req.requester!.id)
+  const attachment = await findOwnedAttachment(attachmentId, req.user!.id)
   // Ownership is answered before removal, so a non-owner never learns that an
   // attachment was removed — they see the same 404 as for an unknown id (AC-42).
   if (!attachment) return sendError(res, 'ATTACHMENT_NOT_FOUND', 'Attachment not found.')
@@ -244,7 +244,7 @@ export async function removeAttachment(req: Request, res: Response) {
     return sendError(res, 'INVALID_PATH_PARAMETER', 'The attachment id must be a positive integer.')
   }
 
-  const attachment = await findOwnedAttachment(attachmentId, req.requester!.id)
+  const attachment = await findOwnedAttachment(attachmentId, req.user!.id)
   if (!attachment) return sendError(res, 'ATTACHMENT_NOT_FOUND', 'Attachment not found.')
 
   if (attachment.removedAt !== null) {
@@ -263,7 +263,7 @@ export async function removeAttachment(req: Request, res: Response) {
     // "removed" and "when/why/who" can never disagree (specification §7.4).
     const updated = await tx.attachment.update({
       where: { id: attachment.id },
-      data: { removedAt: new Date(), removalReason: reason, removedById: req.requester!.id },
+      data: { removedAt: new Date(), removalReason: reason, removedById: req.user!.id },
       select: attachmentSelect,
     })
 

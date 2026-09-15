@@ -11,7 +11,6 @@ import {
 } from './auth.js'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
-import { requesterContext } from './requesterContext.js'
 import {
   downloadAttachment,
   listAttachments,
@@ -71,20 +70,8 @@ app.get('/api/related-systems', async (_req, res) => {
   res.json(relatedSystems)
 })
 
-app.get('/api/requesters', async (_req, res) => {
-  // Active only, and isActive itself is never returned (BR-09, BR-47, api-spec §2.3).
-  const requesters = await prisma.user.findMany({
-    // Staff and Administrators now share the table; the selector stays Requester-only until #48 deletes it.
-    where: { isActive: true, role: 'REQUESTER' },
-    orderBy: { fullName: 'asc' },
-    select: { id: true, fullName: true, email: true, department: true },
-  })
-  res.json(requesters)
-})
-
-// --- Requester-scoped routes: any authenticated role, always scoped to the caller's own Tickets (BR-21). ---
-app.use(['/api/tickets', '/api/attachments'], requesterContext)
-
+// --- Requester-scoped routes: any authenticated role, always scoped to the caller's own Tickets (BR-21).
+// Handlers take identity from req.user alone; a requesterId in a body, query, or header is never read (BR-18). ---
 // Creating a Ticket and flagging it resolved are Requester operations (matrix, BR-46). The appears-resolved
 // guard is declared ahead of its handler (#51) so the route is already refused to staff.
 app.post('/api/tickets', requireRole('REQUESTER'), createTicket)

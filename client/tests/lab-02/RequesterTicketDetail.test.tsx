@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
-import { REQUESTER_ID_KEY } from '../../src/lib/requesterContext'
+import { isAuthMe, signedInRequester } from '../helpers/auth'
 
 const requesters = [
   { id: 1, fullName: 'Nadia Charoen', email: 'nadia@toktickit.test', department: 'Registrar' },
@@ -35,7 +35,7 @@ const notFound = () =>
 
 function stubApi(onDetail: (url: string) => Promise<Response>) {
   const fetchMock = vi.fn((url: string) => {
-    if (url.startsWith('/api/requesters')) return Promise.resolve(ok(requesters))
+    if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
     if (/^\/api\/tickets\/\d+$/.test(url)) return onDetail(url)
     return Promise.resolve(ok({}))
   })
@@ -53,7 +53,6 @@ const renderAt = (path: string) =>
 
 beforeEach(() => {
   localStorage.clear()
-  localStorage.setItem(REQUESTER_ID_KEY, '1')
 })
 
 afterEach(() => vi.unstubAllGlobals())
