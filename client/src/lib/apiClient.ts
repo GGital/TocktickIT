@@ -50,7 +50,8 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const response = await fetch(`/api${path}`, { ...init, credentials: 'same-origin' })
   if (!response.ok) throw await toApiError(response)
 
-  return response.json() as Promise<T>
+  // 204 No Content (logout) has no body to parse.
+  return (response.status === 204 ? undefined : response.json()) as Promise<T>
 }
 
 /** Binary variant for attachment bytes, downloaded through fetch so failures surface as ApiError. */
