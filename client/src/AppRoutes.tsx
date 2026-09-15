@@ -8,13 +8,10 @@ import ChangePassword from './screens/ChangePassword'
 import CreateTicket from './screens/CreateTicket'
 import Login from './screens/Login'
 import MyTickets from './screens/MyTickets'
+import StaffTicketDetail from './screens/StaffTicketDetail'
 import TicketDetail from './screens/TicketDetail'
 import TicketQueue from './screens/TicketQueue'
-import {
-  NotFoundScreen,
-  StaffTicketDetailScreen,
-  UserManagementScreen,
-} from './screens/placeholders'
+import { NotFoundScreen, UserManagementScreen } from './screens/placeholders'
 
 /** The root sends each role to its own home route (ui-spec §4.3). */
 function HomeRedirect() {
@@ -73,7 +70,7 @@ export default function AppRoutes() {
             path="/staff/tickets/:id"
             element={
               <RequireRole roles={['IT_STAFF', 'ADMINISTRATOR']}>
-                <StaffTicketDetailScreen />
+                <StaffTicketDetail />
               </RequireRole>
             }
           />

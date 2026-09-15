@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { errorId, helperId, type FieldProps } from './fieldIds'
+import { errorId, helperId, legendId, type FieldProps } from './fieldIds'
 
 // ui-spec §2.2: label above the control, asterisk plus aria-required, message
 // directly below its own field and linked with aria-describedby (BR-18).
@@ -16,7 +16,7 @@ export default function FormField({
 
   return (
     <div className="zen-field">
-      <Label className="zen-label" htmlFor={as === 'legend' ? undefined : id}>
+      <Label className="zen-label" htmlFor={as === 'legend' ? undefined : id} id={as === 'legend' ? legendId(id) : undefined}>
         {label}
         {required && (
           <span className="zen-required" aria-hidden="true">

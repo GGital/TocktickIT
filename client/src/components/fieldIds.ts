@@ -5,6 +5,8 @@ import type { ReactNode } from 'react'
 
 export const helperId = (id: string) => `${id}-help`
 export const errorId = (id: string) => `${id}-error`
+/** The legend sits inside a wrapper, not directly in the fieldset, so the fieldset names itself through this id. */
+export const legendId = (id: string) => `${id}-legend`
 
 /** aria-describedby value for a control, or undefined when it has nothing to describe. */
 export const describedBy = (id: string, helper?: ReactNode, error?: string) =>
