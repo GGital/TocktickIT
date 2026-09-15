@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import Badge, { type Priority } from '../components/Badge'
+import PriorityBadge, { type Priority } from '../components/PriorityBadge'
+import StatusBadge, { type TicketStatus } from '../components/StatusBadge'
 import Button from '../components/Button'
 import Callout from '../components/Callout'
 import EmptyState from '../components/EmptyState'
@@ -18,7 +19,7 @@ type TicketSummary = {
   category: Reference
   relatedSystem: Reference
   requestedPriority: Priority
-  status: 'NEW'
+  status: TicketStatus
   attachmentCount: number
   createdAt: string
   updatedAt: string
@@ -313,10 +314,10 @@ export default function MyTickets() {
                     <td>{ticket.category.name}</td>
                     <td className="d-none d-lg-table-cell">{ticket.relatedSystem.name}</td>
                     <td>
-                      <Badge kind="priority" value={ticket.requestedPriority} />
+                      <PriorityBadge kind="requested" value={ticket.requestedPriority} />
                     </td>
                     <td>
-                      <Badge kind="status" value={ticket.status} />
+                      <StatusBadge value={ticket.status} />
                     </td>
                     <td>{bangkokDate(ticket.createdAt)}</td>
                     <td className="d-none d-lg-table-cell">{bangkokDate(ticket.updatedAt)}</td>
@@ -330,11 +331,12 @@ export default function MyTickets() {
             {result.data.map((ticket) => (
               <li key={ticket.id} className="zen-card zen-ticket-card mb-3">
                 <Link to={`/tickets/${ticket.id}`} className="d-block text-decoration-none">
-                  <div className="d-flex justify-content-between align-items-center gap-2">
+                  {/* Wraps: "Waiting for Requester" beside a prefixed priority is wider than a phone (FR-44). */}
+                  <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <span className="zen-mono">{ticket.ticketNumber}</span>
-                    <span className="d-flex gap-1">
-                      <Badge kind="priority" value={ticket.requestedPriority} />
-                      <Badge kind="status" value={ticket.status} />
+                    <span className="d-flex flex-wrap gap-1">
+                      <PriorityBadge kind="requested" value={ticket.requestedPriority} />
+                      <StatusBadge value={ticket.status} />
                     </span>
                   </div>
                   <p className="mb-1 text-truncate" title={ticket.summary}>

@@ -2,13 +2,24 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import App from './App'
 import AppShell from './components/AppShell'
 import AuthGuard from './components/AuthGuard'
-import { AuthProvider } from './lib/auth'
+import RequireRole from './components/RequireRole'
+import { AuthProvider, homeFor, useCurrentUser } from './lib/auth'
 import ChangePassword from './screens/ChangePassword'
 import CreateTicket from './screens/CreateTicket'
 import Login from './screens/Login'
 import MyTickets from './screens/MyTickets'
 import TicketDetail from './screens/TicketDetail'
-import { NotFoundScreen } from './screens/placeholders'
+import {
+  NotFoundScreen,
+  StaffTicketDetailScreen,
+  TicketQueueScreen,
+  UserManagementScreen,
+} from './screens/placeholders'
+
+/** The root sends each role to its own home route (ui-spec §4.3). */
+function HomeRedirect() {
+  return <Navigate to={homeFor(useCurrentUser()!.role)} replace />
+}
 
 // Exported without a router so tests can mount the routes inside a MemoryRouter and
 // drive direct-URL cases such as /tickets/:id.
@@ -27,7 +38,8 @@ export default function AppRoutes() {
           }
         />
 
-        {/* Every application screen requires a session and sits inside the shell (FR-05). */}
+        {/* Every application screen requires a session and sits inside the shell (FR-05). RequireRole is
+            feedback for a direct URL; the API refuses the same operations itself (BR-23). */}
         <Route
           element={
             <AuthGuard>
@@ -35,10 +47,45 @@ export default function AppRoutes() {
             </AuthGuard>
           }
         >
-          <Route path="/" element={<Navigate to="/tickets" replace />} />
+          <Route path="/" element={<HomeRedirect />} />
+
+          {/* Own Tickets are readable by every role (matrix); creating one is a Requester operation. */}
           <Route path="/tickets" element={<MyTickets />} />
-          <Route path="/tickets/new" element={<CreateTicket />} />
+          <Route
+            path="/tickets/new"
+            element={
+              <RequireRole roles={['REQUESTER']}>
+                <CreateTicket />
+              </RequireRole>
+            }
+          />
           <Route path="/tickets/:id" element={<TicketDetail />} />
+
+          <Route
+            path="/staff/tickets"
+            element={
+              <RequireRole roles={['IT_STAFF', 'ADMINISTRATOR']}>
+                <TicketQueueScreen />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/staff/tickets/:id"
+            element={
+              <RequireRole roles={['IT_STAFF', 'ADMINISTRATOR']}>
+                <StaffTicketDetailScreen />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <RequireRole roles={['ADMINISTRATOR']}>
+                <UserManagementScreen />
+              </RequireRole>
+            }
+          />
+
           <Route path="*" element={<NotFoundScreen />} />
         </Route>
 

@@ -6,7 +6,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import '../../src/styles/zen-theme.css'
 import AppRoutes from '../../src/AppRoutes'
-import Badge from '../../src/components/Badge'
+import PriorityBadge from '../../src/components/PriorityBadge'
+import StatusBadge from '../../src/components/StatusBadge'
 import Button from '../../src/components/Button'
 import { isAuthMe, signedInRequester } from '../helpers/auth'
 
@@ -83,6 +84,8 @@ describe('STYLE-06 disabled and busy controls (ui-spec §2.1)', () => {
   })
 })
 
+// Lab 3 replaced the Lab 2 Badge kinds with PriorityBadge and StatusBadge (Lab 3 ui-spec §12); the Lab 2 rule —
+// own text plus the documented class — is asserted on the components that now render these badges.
 describe('STYLE-07 badges (AC-48, ui-spec §2.4)', () => {
   it.each([
     ['LOW', 'zen-badge-low'],
@@ -90,7 +93,7 @@ describe('STYLE-07 badges (AC-48, ui-spec §2.4)', () => {
     ['HIGH', 'zen-badge-high'],
     ['URGENT', 'zen-badge-urgent'],
   ] as const)('renders %s with its own text and documented class', (value, className) => {
-    const { container } = render(<Badge kind="priority" value={value} />)
+    const { container } = render(<PriorityBadge kind="requested" value={value} />)
     const badge = container.firstElementChild as HTMLElement
 
     expect(badge).toHaveClass('zen-badge', className)
@@ -99,11 +102,11 @@ describe('STYLE-07 badges (AC-48, ui-spec §2.4)', () => {
   })
 
   it('renders the NEW status badge with its own text', () => {
-    const { container } = render(<Badge kind="status" value="NEW" />)
+    const { container } = render(<StatusBadge value="NEW" />)
     const badge = container.firstElementChild as HTMLElement
 
     expect(badge).toHaveClass('zen-badge', 'zen-badge-new')
-    expect(badge.textContent).toBe('NEW')
+    expect(badge.textContent).toBe('New')
   })
 })
 
