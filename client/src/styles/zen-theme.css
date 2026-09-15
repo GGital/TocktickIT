@@ -321,3 +321,24 @@ label:has(+ input[type="file"]:focus-visible) {
   outline: 3px solid var(--zen-focus-ring);
   outline-offset: 1px;
 }
+
+/* --- Login and Change Password (Lab 3 ui-spec §4, §5): centred card, no shell --- */
+.zen-auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.zen-auth-card { width: 100%; max-width: 420px; }
+.zen-auth-card-wide { max-width: 480px; }
+
+/* The reveal toggle sits beside its input and never shrinks it off-screen (ui-spec §2.1). */
+.zen-password { display: flex; gap: 8px; }
+.zen-password .zen-control { flex: 1 1 auto; min-width: 0; }
+.zen-reveal { flex: 0 0 auto; }
+
+@media (max-width: 767.98px) {
+  .zen-auth { align-items: flex-start; }
+}

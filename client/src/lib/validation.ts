@@ -68,3 +68,37 @@ export function checkStagedFile(file: { name: string; size: number }): string | 
 
   return undefined
 }
+
+/** Login field rules, word-for-word the API's messages (Lab 3 api-spec §3.1). */
+export const LOGIN_MESSAGES = {
+  email: 'Enter a valid email address.',
+  password: 'Enter your password.',
+} as const
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export function validateLogin(email: string, password: string) {
+  const errors: { email?: string; password?: string } = {}
+  if (!EMAIL_PATTERN.test(email.trim())) errors.email = LOGIN_MESSAGES.email
+  // Never trimmed: surrounding spaces are part of a password (Lab 3 BR-11).
+  if (password.trim() === '') errors.password = LOGIN_MESSAGES.password
+  return errors
+}
+
+/** Shown under the New password field before any typing (Lab 3 ui-spec §5.2). */
+export const PASSWORD_RULES =
+  'At least 10 characters. Must differ from your current password and from your email address.'
+
+/** Client mirror of the server's new-password rules and messages (Lab 3 BR-11); the server re-checks. */
+export function validateNewPassword(newPassword: string, context: { currentPassword: string; email: string }) {
+  const length = [...newPassword].length
+  const lowered = newPassword.toLowerCase()
+  const email = context.email.toLowerCase()
+
+  if (newPassword.trim() === '') return 'Your password cannot be only spaces.'
+  if (length < 10) return 'Use at least 10 characters.'
+  if (length > 128) return 'Use no more than 128 characters.'
+  if (newPassword === context.currentPassword) return 'Choose a password you have not used here before.'
+  if (lowered === email || lowered === email.split('@')[0]) return 'Your password cannot be your email address.'
+  return undefined
+}

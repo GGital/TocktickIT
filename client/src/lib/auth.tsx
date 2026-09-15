@@ -17,30 +17,60 @@ export type AuthState =
   // The session could not be checked at all (network or 500): not the same as being signed out.
   | { status: 'error' }
 
-type AuthContextValue = { state: AuthState; reload: () => void }
+type AuthContextValue = {
+  state: AuthState
+  /** Shows the loading state and checks the session again — the start-up check and its retry. */
+  reload: () => void
+  /** Re-reads the user from GET /api/auth/me without a loading flash; the server is the only source (ui-spec §5.4). */
+  refresh: () => Promise<AuthState>
+  /** Ends the session on the server, then locally. */
+  signOut: () => Promise<void>
+}
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+/** The route each role lands on after signing in (ui-spec §4.3). */
+export const homeFor = (role: AuthenticatedUser['role']) => (role === 'REQUESTER' ? '/tickets' : '/staff/tickets')
+
 /**
- * Holds the authenticated user for the whole client, populated once by GET /api/auth/me on start-up and
- * dropped the moment any request reports the session is gone (A-18, FR-03, FR-05).
+ * Holds the authenticated user for the whole client, populated by GET /api/auth/me on start-up and dropped the
+ * moment any request reports the session is gone (A-18, FR-03, FR-05).
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' })
 
+  const refresh = useCallback(async () => {
+    let next: AuthState
+    try {
+      next = { status: 'authenticated', user: await apiFetch<AuthenticatedUser>('/auth/me') }
+    } catch (error) {
+      next = error instanceof ApiError && error.status === 401 ? { status: 'unauthenticated' } : { status: 'error' }
+    }
+    setState(next)
+    return next
+  }, [])
+
   const reload = useCallback(() => {
     setState({ status: 'loading' })
-    apiFetch<AuthenticatedUser>('/auth/me')
-      .then((user) => setState({ status: 'authenticated', user }))
-      .catch((error) =>
-        setState(error instanceof ApiError && error.status === 401 ? { status: 'unauthenticated' } : { status: 'error' }),
-      )
+    void refresh()
+  }, [refresh])
+
+  const signOut = useCallback(async () => {
+    try {
+      await apiFetch('/auth/logout', { method: 'POST' })
+    } catch (error) {
+      // An already-ended session is the outcome we wanted; anything else is a real failure.
+      if (!(error instanceof ApiError && error.status === 401)) throw error
+    }
+    setState({ status: 'unauthenticated' })
   }, [])
 
   useEffect(reload, [reload])
   useEffect(() => onUnauthenticated(() => setState({ status: 'unauthenticated' })), [])
 
-  return <AuthContext.Provider value={{ state, reload }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ state, reload, refresh, signOut }}>{children}</AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

@@ -5,12 +5,13 @@ import { SkeletonCard } from './Skeleton'
 import { useAuth } from '../lib/auth'
 
 /**
- * Renders its children only for an authenticated user; anyone else is sent to /login (FR-05). This is
- * feedback, not protection — every route it wraps is enforced by the API (BR-16).
+ * Renders its children only for an authenticated user; anyone else is sent to /login (FR-05). A user with an
+ * outstanding password change is sent to /change-password from every other route, including a direct URL and a
+ * reload (BR-17). This is feedback, not protection — the API enforces both rules itself (BR-15, BR-16).
  */
 export default function AuthGuard({ children }: { children: ReactNode }) {
   const { state, reload } = useAuth()
-  const location = useLocation()
+  const { pathname } = useLocation()
 
   if (state.status === 'loading') {
     return (
@@ -30,9 +31,10 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     )
   }
 
-  if (state.status === 'unauthenticated') {
-    // The intended location travels with the redirect so the Login screen can return there.
-    return <Navigate to="/login" replace state={{ from: location }} />
+  if (state.status === 'unauthenticated') return <Navigate to="/login" replace />
+
+  if (state.user.mustChangePassword && pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />
   }
 
   return <>{children}</>

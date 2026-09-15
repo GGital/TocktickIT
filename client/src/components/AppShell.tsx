@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import Callout from './Callout'
 import { useCurrentUser } from '../lib/auth'
 
 /**
@@ -9,6 +10,7 @@ export default function AppShell() {
   const user = useCurrentUser()
   const [navOpen, setNavOpen] = useState(false)
   const location = useLocation()
+  const notice = (location.state as { notice?: string } | null)?.notice
 
   // The mobile panel closes on navigation and on Esc (ui-spec §3).
   useEffect(() => setNavOpen(false), [location.pathname])
@@ -63,6 +65,12 @@ export default function AppShell() {
       </header>
 
       <main id="main" className="container py-4">
+        {/* A one-off message handed over by the previous screen, e.g. after a password change. */}
+        {notice && (
+          <div className="mb-4">
+            <Callout variant="success">{notice}</Callout>
+          </div>
+        )}
         <Outlet />
       </main>
     </>

@@ -3,10 +3,12 @@ import App from './App'
 import AppShell from './components/AppShell'
 import AuthGuard from './components/AuthGuard'
 import { AuthProvider } from './lib/auth'
+import ChangePassword from './screens/ChangePassword'
 import CreateTicket from './screens/CreateTicket'
+import Login from './screens/Login'
 import MyTickets from './screens/MyTickets'
 import TicketDetail from './screens/TicketDetail'
-import { LoginScreen, NotFoundScreen } from './screens/placeholders'
+import { NotFoundScreen } from './screens/placeholders'
 
 // Exported without a router so tests can mount the routes inside a MemoryRouter and
 // drive direct-URL cases such as /tickets/:id.
@@ -14,7 +16,16 @@ export default function AppRoutes() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/login" element={<LoginScreen />} />
+        {/* Login and Change Password render without the shell (ui-spec §3). */}
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/change-password"
+          element={
+            <AuthGuard>
+              <ChangePassword />
+            </AuthGuard>
+          }
+        />
 
         {/* Every application screen requires a session and sits inside the shell (FR-05). */}
         <Route
