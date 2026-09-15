@@ -24,7 +24,14 @@ import {
   postComment,
   postInternalNote,
 } from './messages.js'
-import { listQueue } from './staffTickets.js'
+import {
+  getStaffTicket,
+  listAssignees,
+  listQueue,
+  updateAssignment,
+  updatePriority,
+  updateStatus,
+} from './staffTickets.js'
 import { createTicket, getTicket, listTickets } from './tickets.js'
 
 const app = express()
@@ -93,6 +100,11 @@ app.post('/api/tickets/:id/comments', postComment)
 
 // --- Staff routes: the /api/staff role guard above has already refused a Requester (BR-23, A-16). ---
 app.get('/api/staff/tickets', listQueue)
+app.get('/api/staff/tickets/:id', getStaffTicket)
+app.patch('/api/staff/tickets/:id/assignment', updateAssignment)
+app.patch('/api/staff/tickets/:id/priority', updatePriority)
+app.patch('/api/staff/tickets/:id/status', updateStatus)
+app.get('/api/staff/assignees', listAssignees)
 app.get('/api/staff/tickets/:id/internal-notes', listInternalNotes)
 app.post('/api/staff/tickets/:id/internal-notes', postInternalNote)
 
