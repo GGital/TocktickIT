@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import Button from './Button'
 
 // ui-spec §7.3. The native <dialog> supplies the modal semantics, the focus
@@ -31,6 +31,8 @@ export default function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  // Unique per dialog: a screen can hold several (attachment removal and the resolution flag share Ticket Detail).
+  const titleId = useId()
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -44,13 +46,13 @@ export default function ConfirmDialog({
     <dialog
       ref={dialogRef}
       className="zen-dialog"
-      aria-labelledby="zen-dialog-title"
+      aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault()
         onCancel()
       }}
     >
-      <h2 id="zen-dialog-title">{title}</h2>
+      <h2 id={titleId}>{title}</h2>
       <div className="my-3">{children}</div>
       <div className="d-flex justify-content-end gap-2">
         <Button variant="secondary" onClick={onCancel} disabled={busy}>

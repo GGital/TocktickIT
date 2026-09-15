@@ -33,6 +33,12 @@ export const validateSummary = (value: string) =>
 export const validateDescription = (value: string) =>
   lengthOf(value) < 20 || lengthOf(value) > 2000 ? MESSAGES.description : undefined
 
+/** Comments and Internal Notes share the Lab 2 long-text bound (BR-44, A-10). */
+export const MESSAGE_MAX_LENGTH = 2000
+
+/** A Comment or Note body: 1–2000 characters after trimming; whitespace-only is empty (BR-44). */
+export const isValidMessageBody = (value: string) => lengthOf(value) >= 1 && lengthOf(value) <= MESSAGE_MAX_LENGTH
+
 export const validateRemovalReason = (value: string) =>
   lengthOf(value) < 5 || lengthOf(value) > 200 ? MESSAGES.removalReason : undefined
 
