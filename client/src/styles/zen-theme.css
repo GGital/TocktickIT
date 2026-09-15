@@ -418,6 +418,31 @@ label:has(+ input[type="file"]:focus-visible) {
 }
 .zen-check { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 
+/* --- IT Staff Ticket Detail (Lab 3 ui-spec §8) --- */
+/* Read-only values sit on the read-only ground, so they never look like the editable operations controls (AC-65). */
+.zen-readonly-value {
+  background-color: var(--zen-readonly-bg);
+  border-radius: var(--zen-radius-control);
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+}
+
+/* The Internal panel: warning border and heading, plus a heavier left edge that still reads in greyscale (§8.3). */
+/* RadioGroup wraps FormField in a second .zen-field; only the outer one should space the field. */
+.zen-field .zen-field { margin-bottom: 0; }
+
+.zen-internal { border-color: var(--zen-warning); border-width: 2px; border-left-width: 6px; }
+.zen-internal h2 { color: var(--zen-warning); }
+.zen-internal-suffix { font-size: 0.9375rem; font-weight: 600; }
+
+.zen-message { border-top: 1px solid var(--zen-border); padding: 12px 0; }
+.zen-message-meta { font-size: 0.875rem; color: var(--zen-text-muted); margin-bottom: 4px; }
+/* Line breaks come from CSS, never from generated markup (BR-45). */
+.zen-message-body { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 0; }
+.zen-composer .zen-textarea { min-height: 6rem; }
+.zen-counter-over { color: var(--zen-error); font-weight: 600; }
+
 @media (max-width: 767.98px) {
   /* On a phone the panels open inline rather than floating over the list. */
   .zen-disclosure { width: 100%; }
