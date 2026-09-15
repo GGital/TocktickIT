@@ -170,14 +170,31 @@ a:focus-visible {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  /* Transparent by default so the outlined statuses are the same size as the filled ones. */
+  border: 1px solid transparent;
 }
 
+/* Priority — Requested and IT share these; the "Requested:" / "IT:" prefix tells them apart (Lab 3 §1.2). */
 .zen-badge-low { background-color: var(--zen-readonly-bg); color: var(--zen-neutral); }
 .zen-badge-medium { background-color: var(--zen-pale); color: var(--zen-primary); }
 .zen-badge-high { background-color: var(--zen-warning-bg); color: var(--zen-warning); }
 .zen-badge-urgent { background-color: var(--zen-error-bg); color: var(--zen-error); }
-.zen-badge-new { background-color: var(--zen-primary); color: var(--zen-surface); }
 .zen-badge-removed { background-color: var(--zen-readonly-bg); color: var(--zen-text-muted); }
+
+/* Status — eight values, deliberately quieter than priority (Lab 3 ui-spec §1.2). No new colour value. */
+.zen-badge-new { background-color: var(--zen-primary); color: var(--zen-surface); }
+.zen-badge-open { background-color: var(--zen-secondary); color: var(--zen-surface); }
+.zen-badge-in-progress { background-color: var(--zen-surface); color: var(--zen-secondary); border-color: var(--zen-secondary); }
+.zen-badge-waiting { background-color: color-mix(in srgb, var(--zen-warning) 12%, transparent); color: var(--zen-warning); }
+.zen-badge-resolved { background-color: var(--zen-pale); color: var(--zen-success); }
+.zen-badge-closed { background-color: var(--zen-readonly-bg); color: var(--zen-text); }
+.zen-badge-reopened { background-color: var(--zen-surface); color: var(--zen-warning); border-color: var(--zen-warning); }
+.zen-badge-cancelled { background-color: var(--zen-readonly-bg); color: color-mix(in srgb, var(--zen-text) 70%, transparent); }
+
+/* Role */
+.zen-badge-role-requester { background-color: var(--zen-readonly-bg); color: var(--zen-text); }
+.zen-badge-role-it-staff { background-color: var(--zen-pale); color: var(--zen-secondary); }
+.zen-badge-role-administrator { background-color: var(--zen-primary); color: var(--zen-surface); }
 
 /* --- Callouts (ui-spec §2.5) --- */
 .zen-callout {
@@ -279,6 +296,15 @@ a:focus-visible {
 }
 
 .zen-user { font-size: 0.9375rem; }
+
+/* On the green bar every badge gets a light outline, so the solid Administrator badge never disappears into it. */
+.zen-header .zen-badge { border-color: var(--zen-surface); }
+
+.zen-header-link { color: var(--zen-surface); text-underline-offset: 3px; }
+.zen-header-link:hover { color: var(--zen-surface); }
+
+/* The forbidden state sits centred and narrow, unlike the full-width not-found card (ui-spec §2.5). */
+.zen-forbidden { max-width: 560px; margin: 48px auto; }
 
 /* Secondary button sitting on the green bar. */
 .zen-on-primary {

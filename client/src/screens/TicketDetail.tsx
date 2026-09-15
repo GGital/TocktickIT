@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AttachmentList, { type Attachment } from '../components/AttachmentList'
-import Badge, { type Priority } from '../components/Badge'
+import PriorityBadge, { type Priority } from '../components/PriorityBadge'
+import StatusBadge, { type TicketStatus } from '../components/StatusBadge'
 import Button from '../components/Button'
 import Callout from '../components/Callout'
 import EmptyState from '../components/EmptyState'
@@ -18,7 +19,7 @@ type Ticket = {
   // department is nullable since Lab 3: users created by an Administrator have none (X-10).
   requester: { id: number; fullName: string; email: string; department: string | null }
   requestedPriority: Priority
-  status: 'NEW'
+  status: TicketStatus
   createdAt: string
   updatedAt: string
   attachments: Attachment[]
@@ -98,8 +99,8 @@ export default function TicketDetail() {
 
       <div className="d-flex flex-wrap align-items-center gap-3 mt-2 mb-1">
         <h1 className="zen-mono mb-0">{ticket.ticketNumber}</h1>
-        <Badge kind="priority" value={ticket.requestedPriority} />
-        <Badge kind="status" value={ticket.status} />
+        <PriorityBadge kind="requested" value={ticket.requestedPriority} />
+        <StatusBadge value={ticket.status} />
       </div>
       <p className="zen-help">
         Created {bangkokTime(ticket.createdAt)} · Last updated {bangkokTime(ticket.updatedAt)}
@@ -129,12 +130,12 @@ export default function TicketDetail() {
 
           <dt className="col-sm-3">Requested Priority</dt>
           <dd className="col-sm-9">
-            <Badge kind="priority" value={ticket.requestedPriority} />
+            <PriorityBadge kind="requested" value={ticket.requestedPriority} />
           </dd>
 
           <dt className="col-sm-3">Current Status</dt>
           <dd className="col-sm-9">
-            <Badge kind="status" value={ticket.status} />
+            <StatusBadge value={ticket.status} />
           </dd>
 
           <dt className="col-sm-3">Summary</dt>
