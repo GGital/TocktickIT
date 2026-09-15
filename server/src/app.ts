@@ -9,6 +9,7 @@ import {
   requireRole,
   resolveSession,
 } from './auth.js'
+import { createUser, listUsers, setInitialPassword, updateUser } from './adminUsers.js'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
 import {
@@ -107,6 +108,13 @@ app.patch('/api/staff/tickets/:id/status', updateStatus)
 app.get('/api/staff/assignees', listAssignees)
 app.get('/api/staff/tickets/:id/internal-notes', listInternalNotes)
 app.post('/api/staff/tickets/:id/internal-notes', postInternalNote)
+
+// --- Administrator routes: the /api/admin role guard above has already refused every other role (BR-22). There is
+// deliberately no DELETE: deactivation is the only removal mechanism (BR-53). ---
+app.get('/api/admin/users', listUsers)
+app.post('/api/admin/users', createUser)
+app.patch('/api/admin/users/:id', updateUser)
+app.post('/api/admin/users/:id/initial-password', setInitialPassword)
 
 app.post('/api/tickets/:id/attachments', uploadAttachment)
 app.get('/api/tickets/:id/attachments', listAttachments)
