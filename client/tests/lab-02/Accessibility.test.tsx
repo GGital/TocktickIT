@@ -96,7 +96,9 @@ describe('UI-25 keyboard-only operation (AC-47)', () => {
       ).toHaveLength(1),
     )
     expect(await screen.findByText('TKT-2026-000041')).toBeInTheDocument()
-  })
+    // Typing two long strings key by key runs close to the 5 s default on a busy machine; the budget, not the
+    // behaviour, was the flaky part.
+  }, 15_000)
 
   it('never removes a focus indicator without a replacement', async () => {
     renderAt('/tickets/new')

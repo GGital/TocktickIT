@@ -368,3 +368,59 @@ label:has(+ input[type="file"]:focus-visible) {
 @media (max-width: 767.98px) {
   .zen-auth { align-items: flex-start; }
 }
+
+/* --- IT Staff Ticket Queue (Lab 3 ui-spec §7) --- */
+.zen-badge-flag { background-color: var(--zen-pale); color: var(--zen-success); border-color: var(--zen-success); }
+
+/* Sort headers are real buttons that look like the header text they replace (ui-spec §11). */
+.zen-sort {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+.zen-sort:hover { color: var(--zen-primary); }
+.zen-sort:focus-visible { outline: 3px solid var(--zen-focus-ring); outline-offset: 2px; border-radius: 4px; }
+
+.zen-queue-row { cursor: pointer; }
+/* The Summary is the one flexible column: it truncates so the other columns keep their width and the whole
+   table fits its card without sideways scrolling (ui-spec §7.1, §7.2). */
+.zen-queue td, .zen-queue th { padding: 12px 10px; }
+.zen-queue-summary { max-width: 14rem; }
+@media (max-width: 991.98px) {
+  .zen-queue td, .zen-queue th { padding: 10px 6px; }
+  .zen-queue-summary { max-width: 7rem; }
+}
+.zen-queue-row:hover td { background-color: var(--zen-pale); }
+/* The flag sub-row belongs to the Ticket above it, so the divider sits under the pair, not between them. */
+.zen-queue tbody tr.zen-queue-row:has(+ .zen-flag-row) td { border-bottom-width: 0; }
+.zen-flag-row td { padding-top: 0; }
+
+/* Status and More filters: native <details> disclosures (ui-spec §7.4). */
+.zen-disclosure { position: relative; margin-bottom: 20px; }
+.zen-disclosure > summary { list-style: none; }
+.zen-disclosure > summary::-webkit-details-marker { display: none; }
+.zen-disclosure[open] > summary { background-color: var(--zen-pale); }
+.zen-disclosure-panel {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 16rem;
+  padding: 16px;
+  background-color: var(--zen-surface);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-card);
+  box-shadow: var(--zen-shadow);
+}
+.zen-check { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+
+@media (max-width: 767.98px) {
+  /* On a phone the panels open inline rather than floating over the list. */
+  .zen-disclosure { width: 100%; }
+  .zen-disclosure-panel { position: static; margin-top: 8px; }
+  .zen-check { min-height: 44px; }
+}

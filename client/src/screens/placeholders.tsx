@@ -10,6 +10,5 @@ function Placeholder({ title }: { title: string }) {
 }
 
 export const NotFoundScreen = () => <Placeholder title="Page not found" />
-export const TicketQueueScreen = () => <Placeholder title="Ticket Queue" />
 export const StaffTicketDetailScreen = () => <Placeholder title="Ticket" />
 export const UserManagementScreen = () => <Placeholder title="User Management" />
