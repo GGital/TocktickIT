@@ -17,6 +17,13 @@ import {
   removeAttachment,
   uploadAttachment,
 } from './attachments.js'
+import {
+  flagAppearsResolved,
+  listComments,
+  listInternalNotes,
+  postComment,
+  postInternalNote,
+} from './messages.js'
 import { createTicket, getTicket, listTickets } from './tickets.js'
 
 const app = express()
@@ -72,12 +79,20 @@ app.get('/api/related-systems', async (_req, res) => {
 
 // --- Requester-scoped routes: any authenticated role, always scoped to the caller's own Tickets (BR-21).
 // Handlers take identity from req.user alone; a requesterId in a body, query, or header is never read (BR-18). ---
-// Creating a Ticket and flagging it resolved are Requester operations (matrix, BR-46). The appears-resolved
-// guard is declared ahead of its handler (#51) so the route is already refused to staff.
+// Creating a Ticket and flagging it resolved are Requester operations (matrix, BR-46).
 app.post('/api/tickets', requireRole('REQUESTER'), createTicket)
-app.post('/api/tickets/:id/appears-resolved', requireRole('REQUESTER'))
+app.post('/api/tickets/:id/appears-resolved', requireRole('REQUESTER'), flagAppearsResolved)
 app.get('/api/tickets', listTickets)
 app.get('/api/tickets/:id', getTicket)
+
+// Public Comments: the owning Requester, IT Staff, and Administrators (api-spec §3.6, §3.7). Append-only — no
+// edit or delete route exists for any message (BR-42).
+app.get('/api/tickets/:id/comments', listComments)
+app.post('/api/tickets/:id/comments', postComment)
+
+// --- Staff routes: the /api/staff role guard above has already refused a Requester (BR-23, A-16). ---
+app.get('/api/staff/tickets/:id/internal-notes', listInternalNotes)
+app.post('/api/staff/tickets/:id/internal-notes', postInternalNote)
 
 app.post('/api/tickets/:id/attachments', uploadAttachment)
 app.get('/api/tickets/:id/attachments', listAttachments)

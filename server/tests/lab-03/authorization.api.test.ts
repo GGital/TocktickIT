@@ -253,22 +253,27 @@ describe('API-27 Requester B requests Requester A’s Ticket (AC-20, BR-19)', ()
 })
 
 describe('API-28 IT Staff and Administrator pass the staff role guard (A-01, BR-25)', () => {
-  // The staff handlers arrive in #51, #52, and #54; those issues tighten this to the documented 200/201.
-  // Here it proves the half this issue owns: the guard admits both staff roles on every staff operation.
-  it.each(['staff', 'admin'])('%s is neither 401 nor 403 on queue, detail, assignment, priority, status, and notes', async (key) => {
+  // The queue, detail, assignment, priority, and status handlers arrive in #52 and #54, which tighten those rows
+  // to the documented 200. Internal Notes landed in #51 and are asserted at their documented status already.
+  it.each(['staff', 'admin'])('%s is neither 401 nor 403 on queue, detail, assignment, priority, and status', async (key) => {
     for (const [route, body] of [
       ['GET /api/staff/tickets', undefined],
       ['GET /api/staff/tickets/:id', undefined],
       ['PATCH /api/staff/tickets/:id/assignment', { assigneeId: 'me' }],
       ['PATCH /api/staff/tickets/:id/priority', { itPriority: 'HIGH' }],
       ['PATCH /api/staff/tickets/:id/status', { status: 'OPEN' }],
-      ['GET /api/staff/tickets/:id/internal-notes', undefined],
-      ['POST /api/staff/tickets/:id/internal-notes', { body: 'Staff note.' }],
       ['GET /api/staff/assignees', undefined],
     ] as const) {
       const res = await call(route, { cookie: cookie[key], body })
       expect([401, 403], `${key} ${route}`).not.toContain(res.status)
     }
+  })
+
+  it.each(['staff', 'admin'])('%s reads Internal Notes with 200 and appends one with 201', async (key) => {
+    expect((await call('GET /api/staff/tickets/:id/internal-notes', { cookie: cookie[key] })).status).toBe(200)
+    const posted = await call('POST /api/staff/tickets/:id/internal-notes', { cookie: cookie[key], body: { body: 'Staff note.' } })
+    expect(posted.status).toBe(201)
+    expect(posted.body.visibility).toBe('INTERNAL')
   })
 
   it.each(['staff', 'admin'])('%s reads their own Ticket list like any authenticated role', async (key) => {

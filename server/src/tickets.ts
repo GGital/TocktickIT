@@ -77,6 +77,10 @@ const ticketDetail = {
   summary: true,
   description: true,
   requestedPriority: true,
+  // Lab 3 additions to the detail shape (api-spec §2.6).
+  itPriority: true,
+  requesterResolvedFlaggedAt: true,
+  assignee: { select: { id: true, fullName: true } },
   status: true,
   createdAt: true,
   updatedAt: true,
@@ -247,8 +251,25 @@ export async function listTickets(req: Request, res: Response) {
   })
 }
 
-const parseId = (value: string | string[] | undefined) =>
+export const parseId = (value: string | string[] | undefined) =>
   typeof value === 'string' && /^\d+$/.test(value) && Number(value) > 0 ? Number(value) : null
+
+/** The Ticket detail shape with its attachments, or null when the predicate matches nothing. */
+export async function findTicketDetail(where: { id: number; requesterId?: number }) {
+  const ticket = await prisma.ticket.findFirst({
+    where,
+    select: {
+      ...ticketDetail,
+      // Removed attachments are listed too, as metadata only (BR-32, AC-27).
+      attachments: {
+        orderBy: [{ uploadedAt: 'asc' }, { id: 'asc' }],
+        select: attachmentSelect,
+      },
+    },
+  })
+
+  return ticket && { ...ticket, attachments: ticket.attachments.map(toAttachmentShape) }
+}
 
 /**
  * `GET /api/tickets/:id` (api-spec §3.7). Ownership is part of the lookup, so a
@@ -261,19 +282,8 @@ export async function getTicket(req: Request, res: Response) {
     return sendError(res, 'INVALID_PATH_PARAMETER', 'The ticket id must be a positive integer.')
   }
 
-  const ticket = await prisma.ticket.findFirst({
-    where: { id, requesterId: req.user!.id },
-    select: {
-      ...ticketDetail,
-      // Removed attachments are listed too, as metadata only (BR-32, AC-27).
-      attachments: {
-        orderBy: [{ uploadedAt: 'asc' }, { id: 'asc' }],
-        select: attachmentSelect,
-      },
-    },
-  })
-
+  const ticket = await findTicketDetail({ id, requesterId: req.user!.id })
   if (!ticket) return sendError(res, 'TICKET_NOT_FOUND', 'Ticket not found.')
 
-  res.json({ ...ticket, attachments: ticket.attachments.map(toAttachmentShape) })
+  res.json(ticket)
 }
