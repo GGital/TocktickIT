@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import request from 'supertest'
 import app from '../../src/app.js'
 import { prisma } from '../../src/prisma.js'
+import { asUser, signIn } from '../helpers/session.js'
 
 const emailA = 'detail-a@toktickit.test'
 const emailB = 'detail-b@toktickit.test'
@@ -13,7 +14,7 @@ let foreignTicket: number
 let activeAttachment: number
 
 const get = (id: number, requesterId: number) =>
-  request(app).get(`/api/tickets/${id}`).set('X-Requester-Id', String(requesterId))
+  request(app).get(`/api/tickets/${id}`).set('Cookie', asUser(requesterId))
 
 let counter = 0
 
@@ -41,17 +42,19 @@ beforeAll(async () => {
   const [a, b] = await Promise.all([
     prisma.user.upsert({
       where: { email: emailA },
-      update: { isActive: true },
-      create: { email: emailA, fullName: 'Detail Owner A', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
+      update: { isActive: true, mustChangePassword: false },
+      create: { email: emailA, fullName: 'Detail Owner A', department: 'QA', passwordHash: 'unusable-lab2-fixture', mustChangePassword: false },
     }),
     prisma.user.upsert({
       where: { email: emailB },
-      update: { isActive: true },
-      create: { email: emailB, fullName: 'Detail Owner B', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
+      update: { isActive: true, mustChangePassword: false },
+      create: { email: emailB, fullName: 'Detail Owner B', department: 'QA', passwordHash: 'unusable-lab2-fixture', mustChangePassword: false },
     }),
   ])
   requesterA = a.id
   requesterB = b.id
+  // Lab 3: identity is the session, not the retired X-Requester-Id header (BR-18, BR-58).
+  await Promise.all([signIn(requesterA), signIn(requesterB)])
 
   ownedTicket = await createTicket(requesterA)
   foreignTicket = await createTicket(requesterB)
@@ -125,7 +128,7 @@ describe('API-33 invalid path parameter (api-spec §1)', () => {
   it.each(['abc', '0'])('rejects /api/tickets/%s', async (id) => {
     const res = await request(app)
       .get(`/api/tickets/${id}`)
-      .set('X-Requester-Id', String(requesterA))
+      .set('Cookie', asUser(requesterA))
 
     expect(res.status).toBe(400)
     expect(res.body.error.code).toBe('INVALID_PATH_PARAMETER')

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { CookieOptions, NextFunction, Request, Response } from 'express'
-import type { User } from '@prisma/client'
+import type { User, UserRole } from '@prisma/client'
 import { sendError, type FieldError } from './errors.js'
 import { hashPassword, validateNewPassword, verifyPassword } from './password.js'
 import { prisma } from './prisma.js'
@@ -108,34 +108,66 @@ export async function login(req: Request, res: Response) {
   res.json(toAuthenticatedUser(user))
 }
 
+// --- The protected middleware stack (api-spec §1.4), mounted on prefixes so a route added later inherits it. ---
+
 /**
- * Resolves the session cookie to its User (BR-04). Absent, malformed, unknown, expired, or inactive is 401;
- * the role is re-read from the database on every request, never trusted from the cookie.
+ * Attaches the session's User when the cookie names a live session of an active user (BR-04), and nothing
+ * otherwise — rejecting is requireAuth's job. The role is re-read from the database on every request, never
+ * trusted from the cookie. An expired row is deleted when it is encountered.
  */
-export async function requireSession(req: Request, res: Response, next: NextFunction) {
+export async function resolveSession(req: Request, _res: Response, next: NextFunction) {
   const id = req.headers.cookie
     ?.split(';')
     .map((pair) => pair.trim())
     .find((pair) => pair.startsWith(`${SESSION_COOKIE}=`))
     ?.slice(SESSION_COOKIE.length + 1)
 
-  const unauthenticated = () => sendError(res, 'UNAUTHENTICATED', 'Sign in to continue.')
-
-  if (!id || !SESSION_ID_PATTERN.test(id)) return unauthenticated()
+  // Malformed ids never reach the database.
+  if (!id || !SESSION_ID_PATTERN.test(id)) return next()
 
   const session = await prisma.session.findUnique({ where: { id }, include: { user: true } })
-  if (!session) return unauthenticated()
-
-  if (session.expiresAt.getTime() <= Date.now()) {
+  if (session && session.expiresAt.getTime() <= Date.now()) {
     await prisma.session.deleteMany({ where: { id } })
-    return unauthenticated()
+  } else if (session?.user.isActive) {
+    req.user = session.user
+    req.sessionId = session.id
   }
-  if (!session.user.isActive) return unauthenticated()
-
-  req.user = session.user
-  req.sessionId = session.id
   next()
 }
+
+/** No resolved user is 401 UNAUTHENTICATED (BR-04, AC-04). */
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) return sendError(res, 'UNAUTHENTICATED', 'Sign in to continue.')
+  next()
+}
+
+// Method and path together: the gate opens exactly these three operations and nothing that merely resembles them.
+const PASSWORD_CHANGE_EXEMPT = new Set(['GET /api/auth/me', 'POST /api/auth/change-password', 'POST /api/auth/logout'])
+
+/**
+ * The mandatory-change gate (BR-15, BR-16): one middleware in front of the whole protected surface, never a
+ * per-route check. It runs before any role guard, so a gated user learns nothing about their permissions.
+ */
+export function requirePasswordChangeComplete(req: Request, res: Response, next: NextFunction) {
+  const operation = `${req.method} ${req.originalUrl.split('?')[0]}`
+  if (req.user!.mustChangePassword && !PASSWORD_CHANGE_EXEMPT.has(operation)) {
+    return sendError(res, 'PASSWORD_CHANGE_REQUIRED', 'Change your password to continue.')
+  }
+  next()
+}
+
+/**
+ * Role guard (BR-23). A forbidden *route* is 403 with one fixed message and no payload — no record, identifier,
+ * or count (BR-24). A forbidden *resource* on a permitted route stays the handler's 404 (BR-19).
+ */
+export const requireRole =
+  (...roles: UserRole[]) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    if (!roles.includes(req.user!.role)) {
+      return sendError(res, 'FORBIDDEN', 'You do not have permission to do this.')
+    }
+    next()
+  }
 
 /** POST /api/auth/logout (api-spec §3.2). */
 export async function logout(req: Request, res: Response) {

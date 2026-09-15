@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import request from 'supertest'
 import app from '../../src/app.js'
 import { prisma } from '../../src/prisma.js'
+import { asUser, signIn } from '../helpers/session.js'
 
 const emailA = 'create-ticket-a@toktickit.test'
 const emailB = 'create-ticket-b@toktickit.test'
@@ -26,23 +27,25 @@ const validBody = (overrides: Record<string, unknown> = {}) => ({
 })
 
 const post = (body: object, requesterId: number = requesterA) =>
-  request(app).post('/api/tickets').set('X-Requester-Id', String(requesterId)).send(body)
+  request(app).post('/api/tickets').set('Cookie', asUser(requesterId)).send(body)
 
 beforeAll(async () => {
   const [a, b] = await Promise.all([
     prisma.user.upsert({
       where: { email: emailA },
-      update: { isActive: true },
-      create: { email: emailA, fullName: 'Test Requester A', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
+      update: { isActive: true, mustChangePassword: false },
+      create: { email: emailA, fullName: 'Test Requester A', department: 'QA', passwordHash: 'unusable-lab2-fixture', mustChangePassword: false },
     }),
     prisma.user.upsert({
       where: { email: emailB },
-      update: { isActive: true },
-      create: { email: emailB, fullName: 'Test Requester B', department: 'QA', passwordHash: 'unusable-lab2-fixture' },
+      update: { isActive: true, mustChangePassword: false },
+      create: { email: emailB, fullName: 'Test Requester B', department: 'QA', passwordHash: 'unusable-lab2-fixture', mustChangePassword: false },
     }),
   ])
   requesterA = a.id
   requesterB = b.id
+  // Lab 3: identity is the session, not the retired X-Requester-Id header (BR-18, BR-58).
+  await Promise.all([signIn(requesterA), signIn(requesterB)])
 
   const category = await prisma.category.findFirstOrThrow({ where: { isActive: true } })
   const relatedSystem = await prisma.relatedSystem.findFirstOrThrow({ where: { isActive: true } })
