@@ -4,6 +4,7 @@ import type { User, UserRole } from '@prisma/client'
 import { sendError, type FieldError } from './errors.js'
 import { hashPassword, validateNewPassword, verifyPassword } from './password.js'
 import { prisma } from './prisma.js'
+import { EMAIL_PATTERN, normaliseEmail } from './userInput.js'
 
 declare global {
   namespace Express {
@@ -18,7 +19,6 @@ export const SESSION_COOKIE = 'toktickit.sid'
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000
 // 32 random bytes in base64url is always 43 characters; anything else never reaches the database.
 const SESSION_ID_PATTERN = /^[A-Za-z0-9_-]{43}$/
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const INVALID_CREDENTIALS = 'Email or password is incorrect, or the account is not active.'
 
@@ -70,7 +70,7 @@ function recordFailure(key: string) {
 /** POST /api/auth/login (api-spec §3.1). */
 export async function login(req: Request, res: Response) {
   const { email, password } = (req.body ?? {}) as Record<string, unknown>
-  const normalisedEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
+  const normalisedEmail = typeof email === 'string' ? normaliseEmail(email) : ''
 
   const fields: FieldError[] = []
   if (!EMAIL_PATTERN.test(normalisedEmail)) fields.push({ field: 'email', message: 'Enter a valid email address.' })
