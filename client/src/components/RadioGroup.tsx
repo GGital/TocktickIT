@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import FormField from './FormField'
-import { describedBy, type FieldProps } from './fieldIds'
+import { describedBy, legendId, type FieldProps } from './fieldIds'
 
 export type RadioOption = { value: string; label: ReactNode }
 
@@ -27,6 +27,7 @@ export default function RadioGroup({
   return (
     <fieldset
       className="zen-field"
+      aria-labelledby={legendId(id)}
       aria-required={required || undefined}
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy(id, helper, error)}

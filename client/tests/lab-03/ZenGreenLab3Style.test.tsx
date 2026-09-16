@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { render } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import '../../src/styles/zen-theme.css'
+import AppRoutes from '../../src/AppRoutes'
 import PriorityBadge from '../../src/components/PriorityBadge'
 import RoleBadge from '../../src/components/RoleBadge'
 import StatusBadge from '../../src/components/StatusBadge'
@@ -119,5 +121,83 @@ describe('STYLE-08 every badge reads correctly with colour removed (AC-68)', () 
       expect(glyph?.textContent).toMatch(/▲/)
       expect(readableText(element)).toBe(`IT: ${value}`)
     }
+  })
+})
+
+/** The declared value of a property on the first rule matching a selector — jsdom drops var() borders in the cascade. */
+const declared = (selector: string, property: string) =>
+  ([...document.styleSheets].flatMap((sheet) => [...sheet.cssRules]) as CSSStyleRule[])
+    .find((rule) => rule.selectorText === selector)
+    ?.style.getPropertyValue(property)
+
+describe('Staff Ticket Detail surfaces (Lab 3 ui-spec §8)', () => {
+  const json = (body: unknown) => ({ ok: true, status: 200, json: () => Promise.resolve(body) }) as Response
+  const detail = {
+    id: 41,
+    ticketNumber: 'TKT-2026-000041',
+    summary: 'VPN disconnects',
+    description: 'Drops every ten minutes.',
+    category: { id: 2, name: 'Network' },
+    relatedSystem: { id: 3, name: 'VPN' },
+    requester: { id: 12, fullName: 'Nara Sukjai', email: 'nara@toktickit.test', department: null },
+    requestedPriority: 'HIGH',
+    itPriority: 'MEDIUM',
+    status: 'OPEN',
+    assignee: null,
+    requesterResolvedFlaggedAt: null,
+    createdAt: '2026-09-04T02:20:00.000Z',
+    updatedAt: '2026-09-09T08:02:31.000Z',
+    attachments: [],
+  }
+
+  const renderDetail = () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url === '/api/auth/me') return Promise.resolve(json({ id: 7, fullName: 'Ada', email: 'a@t.test', role: 'IT_STAFF', mustChangePassword: false }))
+        if (url === '/api/staff/tickets/41') return Promise.resolve(json(detail))
+        return Promise.resolve(json([]))
+      }),
+    )
+    render(
+      <MemoryRouter initialEntries={['/staff/tickets/41']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  describe('STYLE-05 the Internal Notes panel (AC-66)', () => {
+    it('resolves its border and heading to --zen-warning, distinct from the Public panel border', async () => {
+      renderDetail()
+      const internal = await screen.findByRole('region', { name: 'Internal Notes, not visible to the Requester' })
+      const publicPanel = screen.getByRole('region', { name: 'Public Comments' })
+
+      expect(internal).toHaveClass('zen-internal')
+      expect(publicPanel).not.toHaveClass('zen-internal')
+      expect(declared('.zen-internal', 'border-color')).toBe('var(--zen-warning)')
+      expect(declared('.zen-card', 'border')).toContain('var(--zen-border)')
+      expect(getComputedStyle(within(internal).getByRole('heading', { level: 2 })).color).toBe('var(--zen-warning)')
+      expect(getComputedStyle(within(publicPanel).getByRole('heading', { level: 2 })).color).not.toBe('var(--zen-warning)')
+      // Thicker than the standard card border, so the difference survives a greyscale rendering.
+      expect(declared('.zen-internal', 'border-left-width')).toBe('6px')
+    })
+  })
+
+  describe('STYLE-06 read-only fields versus operations controls (AC-65)', () => {
+    it('paints read-only values with --zen-readonly-bg and editable controls with --zen-field-bg', async () => {
+      renderDetail()
+      const info = await screen.findByRole('region', { name: 'Ticket information' })
+      const operations = screen.getByRole('region', { name: 'Operations' })
+
+      const values = info.querySelectorAll('.zen-readonly-value')
+      expect(values.length).toBeGreaterThanOrEqual(6)
+      for (const value of values) expect(getComputedStyle(value).backgroundColor).toBe('var(--zen-readonly-bg)')
+
+      for (const control of within(operations).getAllByRole('combobox')) {
+        expect(getComputedStyle(control).backgroundColor).toBe('var(--zen-field-bg)')
+      }
+    })
   })
 })
