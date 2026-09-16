@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
-import { isAuthMe, signedInRequester } from '../helpers/auth'
+import { isAuthMe, isCommentThread, signedInRequester } from '../helpers/auth'
 
 // One file, two modes: staging attachments before a ticket exists (Create Ticket,
 // ui-spec §5.5) and managing them on an existing ticket (Ticket Detail, §7.2).
@@ -32,6 +32,7 @@ beforeEach(() => {
 
   fetchMock = vi.fn((url: string) => {
     if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
+    if (isCommentThread(url)) return Promise.resolve(ok([]))
     if (url.startsWith('/api/categories')) return Promise.resolve(ok(categories))
     if (url.startsWith('/api/related-systems')) return Promise.resolve(ok(systems))
     if (url === '/api/tickets') return Promise.resolve(ok(createdTicket, 201))
@@ -88,7 +89,9 @@ describe('UI-14 invalid staged files (AC-19, BR-23, BR-24)', () => {
     )
     expect(uploads).toHaveLength(1)
     expect(screen.getByText(/1 uploaded · 0 failed/)).toBeInTheDocument()
-  })
+    // Typing two long strings key by key takes about 2.4 s alone and passes 5 s under full-suite load; the
+    // budget, not the behaviour, was the flaky part (same as the Lab 2 keyboard test).
+  }, 15_000)
 
   it('removes a staged file and frees its slot', async () => {
     renderCreateTicket()
@@ -177,6 +180,7 @@ const ticketWith = (attachments: ReturnType<typeof attachment>[]) => ({
 function stubApi(attachments: ReturnType<typeof attachment>[]) {
   const fetchMock = vi.fn((url: string) => {
     if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
+    if (isCommentThread(url)) return Promise.resolve(ok([]))
     if (/^\/api\/tickets\/\d+$/.test(url)) return Promise.resolve(ok(ticketWith(attachments)))
     return Promise.resolve(ok({}))
   })

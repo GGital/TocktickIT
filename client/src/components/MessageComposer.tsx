@@ -2,8 +2,8 @@ import { useState } from 'react'
 import Button from './Button'
 import Callout from './Callout'
 import { ApiError } from '../lib/apiClient'
+import { isValidMessageBody, MESSAGE_MAX_LENGTH } from '../lib/validation'
 
-const MAX_LENGTH = 2000
 const COUNTER_FROM = 1800
 
 const LABELS = {
@@ -28,7 +28,8 @@ export default function MessageComposer({ id, visibility, postLabel, failureMess
   const [fieldError, setFieldError] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
 
-  const over = text.length > MAX_LENGTH
+  const valid = isValidMessageBody(text)
+  const over = !valid && text.trim() !== ''
   const errorId = `${id}-error`
 
   async function post() {
@@ -81,10 +82,10 @@ export default function MessageComposer({ id, visibility, postLabel, failureMess
       <div className="d-flex flex-wrap align-items-center justify-content-end gap-3 mt-2">
         {text.length >= COUNTER_FROM && (
           <span className={`zen-help mt-0 ${over ? 'zen-counter-over' : ''}`.trim()}>
-            {text.length} / {MAX_LENGTH}
+            {text.length} / {MESSAGE_MAX_LENGTH}
           </span>
         )}
-        <Button onClick={post} disabled={disabled || over || text.trim() === ''} busy={posting} busyLabel="Posting…">
+        <Button onClick={post} disabled={disabled || !valid} busy={posting} busyLabel="Posting…">
           {postLabel}
         </Button>
       </div>

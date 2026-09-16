@@ -6,12 +6,11 @@ import Callout from '../components/Callout'
 import ConfirmDialog from '../components/ConfirmDialog'
 import EmptyState from '../components/EmptyState'
 import ForbiddenState from '../components/ForbiddenState'
-import MessageComposer from '../components/MessageComposer'
-import MessageList, { type TicketMessage } from '../components/MessageList'
+import Conversation from '../components/Conversation'
 import PriorityBadge, { type Priority } from '../components/PriorityBadge'
 import RadioGroup from '../components/RadioGroup'
 import SelectField from '../components/SelectField'
-import { SkeletonCard, SkeletonRows } from '../components/Skeleton'
+import { SkeletonCard } from '../components/Skeleton'
 import StatusBadge, { ResolutionFlagBadge } from '../components/StatusBadge'
 import type { Attachment } from '../components/AttachmentList'
 import { ApiError, apiFetch } from '../lib/apiClient'
@@ -244,69 +243,6 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
   )
 }
 
-/** One conversation panel. Public and Internal never share a container or a list (ui-spec §8.3). */
-function Conversation({ ticketId, visibility }: { ticketId: number; visibility: 'PUBLIC' | 'INTERNAL' }) {
-  const internal = visibility === 'INTERNAL'
-  const path = internal ? `/staff/tickets/${ticketId}/internal-notes` : `/tickets/${ticketId}/comments`
-  const [messages, setMessages] = useState<TicketMessage[] | null>(null)
-  const [failed, setFailed] = useState(false)
-
-  const load = useCallback(() => {
-    setFailed(false)
-    setMessages(null)
-    apiFetch<TicketMessage[]>(path)
-      .then(setMessages)
-      .catch(() => setFailed(true))
-  }, [path])
-
-  useEffect(load, [load])
-
-  const post = async (body: string) => {
-    const created = await apiFetch<TicketMessage>(path, { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ body }) })
-    setMessages((current) => [...(current ?? []), created])
-  }
-
-  return (
-    <section
-      className={`zen-card mt-4 ${internal ? 'zen-internal' : ''}`.trim()}
-      // The landmark name carries the distinction without relying on the border colour (ui-spec §11).
-      aria-label={internal ? 'Internal Notes, not visible to the Requester' : 'Public Comments'}
-    >
-      <h2>
-        {internal ? (
-          <>
-            Internal Notes{' '}
-            <span className="zen-internal-suffix">
-              <span aria-hidden="true">⚠ </span>Not visible to the Requester
-            </span>
-          </>
-        ) : (
-          'Public Comments'
-        )}
-      </h2>
-
-      {failed ? (
-        <Callout variant="error" onRetry={load}>
-          {internal ? 'Unable to load internal notes.' : 'Unable to load public comments.'}
-        </Callout>
-      ) : messages === null ? (
-        <SkeletonRows rows={3} label={internal ? 'Loading internal notes…' : 'Loading public comments…'} />
-      ) : (
-        <MessageList messages={messages} emptyText={internal ? 'No internal notes yet.' : 'No public comments yet.'} />
-      )}
-
-      <MessageComposer
-        id={internal ? 'internalNote' : 'publicComment'}
-        visibility={visibility}
-        postLabel={internal ? 'Post note' : 'Post comment'}
-        failureMessage={internal ? 'The note could not be posted.' : 'The comment could not be posted.'}
-        disabled={messages === null}
-        onPost={post}
-      />
-    </section>
-  )
-}
-
 /** Read-only Ticket information (ui-spec §8.1, FR-29): a definition list, never disabled inputs. */
 function Information({ ticket }: { ticket: StaffTicket }) {
   const rows: [string, ReactNode, string?][] = [
@@ -452,8 +388,34 @@ export default function StaffTicketDetail() {
         </div>
       </div>
 
-      <Conversation ticketId={ticket.id} visibility="PUBLIC" />
-      <Conversation ticketId={ticket.id} visibility="INTERNAL" />
+      <Conversation
+        ticketId={ticket.id}
+        visibility="PUBLIC"
+        label="Public Comments"
+        heading="Public Comments"
+        emptyText="No public comments yet."
+        loadingLabel="Loading public comments…"
+        loadFailure="Unable to load public comments."
+      />
+      {/* Four independent signals: warning border and heading, this suffix, the composer label, and a lock on every
+          note — so no single failure can make the panel look public (ui-spec §8.3). */}
+      <Conversation
+        ticketId={ticket.id}
+        visibility="INTERNAL"
+        className="zen-internal"
+        label="Internal Notes, not visible to the Requester"
+        heading={
+          <>
+            Internal Notes{' '}
+            <span className="zen-internal-suffix">
+              <span aria-hidden="true">⚠ </span>Not visible to the Requester
+            </span>
+          </>
+        }
+        emptyText="No internal notes yet."
+        loadingLabel="Loading internal notes…"
+        loadFailure="Unable to load internal notes."
+      />
     </>
   )
 }
