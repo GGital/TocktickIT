@@ -81,7 +81,7 @@ export const LOGIN_MESSAGES = {
   password: 'Enter your password.',
 } as const
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function validateLogin(email: string, password: string) {
   const errors: { email?: string; password?: string } = {}

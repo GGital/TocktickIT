@@ -55,7 +55,8 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await prisma.user.deleteMany({ where: { email: { endsWith: DOMAIN } } })
+  // Case-insensitive: a run with a broken normaliser (a mutation check, say) stores addresses as typed.
+  await prisma.user.deleteMany({ where: { email: { endsWith: DOMAIN, mode: 'insensitive' } } })
   await prisma.$disconnect()
 })
 

@@ -449,3 +449,48 @@ label:has(+ input[type="file"]:focus-visible) {
   .zen-disclosure-panel { position: static; margin-top: 8px; }
   .zen-check { min-height: 44px; }
 }
+
+/* --- Administrator User Management (Lab 3 ui-spec §9) --- */
+.zen-badge-account-active { background-color: var(--zen-pale); color: var(--zen-success); }
+.zen-badge-account-inactive { background-color: var(--zen-readonly-bg); color: var(--zen-text); }
+
+/* Long addresses truncate and expose the full value through title (ui-spec §9.1). */
+.zen-users-email { max-width: 18rem; }
+@media (max-width: 991.98px) {
+  .zen-users-email { max-width: 11rem; }
+  .zen-users td, .zen-users th { padding: 10px 8px; }
+}
+
+/* The one-time initial password: plain text, easy to select whole (ui-spec §9.2). */
+.zen-one-time {
+  display: inline-block;
+  padding: 8px 12px;
+  background-color: var(--zen-readonly-bg);
+  border-radius: var(--zen-radius-control);
+  font-size: 1.0625rem;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.zen-dialog-form { max-width: 560px; }
+
+/* Mobile: the form dialog becomes full-screen with its actions pinned at the bottom (ui-spec §10). */
+@media (max-width: 767.98px) {
+  .zen-dialog-form {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .zen-dialog-actions {
+    position: sticky;
+    bottom: -24px;
+    margin: 16px -24px -24px;
+    padding: 12px 24px;
+    background-color: var(--zen-surface);
+    border-top: 1px solid var(--zen-border);
+  }
+}
