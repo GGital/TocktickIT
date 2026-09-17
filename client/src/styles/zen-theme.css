@@ -474,9 +474,10 @@ label:has(+ input[type="file"]:focus-visible) {
 
 .zen-dialog-form { max-width: 560px; }
 
-/* Mobile: the form dialog becomes full-screen with its actions pinned at the bottom (ui-spec §10). */
+/* Mobile: every dialog — forms and confirmations alike — becomes full-screen with its actions pinned at the bottom
+   (Lab 3 ui-spec §10, RESP-05). */
 @media (max-width: 767.98px) {
-  .zen-dialog-form {
+  .zen-dialog {
     width: 100%;
     max-width: none;
     height: 100%;
@@ -485,10 +486,13 @@ label:has(+ input[type="file"]:focus-visible) {
     border: 0;
     border-radius: 0;
   }
+  /* A column, so the actions sit at the bottom even when the content is short. */
+  .zen-dialog[open] { display: flex; flex-direction: column; }
+  .zen-dialog > form { display: flex; flex-direction: column; flex: 1 0 auto; }
   .zen-dialog-actions {
     position: sticky;
     bottom: -24px;
-    margin: 16px -24px -24px;
+    margin: auto -24px -24px;
     padding: 12px 24px;
     background-color: var(--zen-surface);
     border-top: 1px solid var(--zen-border);

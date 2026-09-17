@@ -1,16 +1,15 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * Lab 2 end-to-end configuration (tests.md §2.9, §4.2).
+ * End-to-end configuration for Lab 2 and Lab 3 (Lab 2 tests.md §2.9, Lab 3 tests.md §2.11, §2.12).
  *
  * Both servers are started by Playwright itself so `npm run e2e` needs nothing
  * running beforehand except PostgreSQL: the API on :3000 and the Vite dev server
  * on :5173, which proxies /api to the API and keeps the browser same-origin.
  */
-export default defineConfig({
-  testDir: './e2e/lab-02',
-  outputDir: './artifacts/lab-02/playwright-output',
+const desktop = { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } }
 
+export default defineConfig({
   // Every spec talks to one shared database, so they run one at a time. Parallel
   // workers would see each other's tickets and make the list assertions flaky.
   fullyParallel: false,
@@ -23,7 +22,7 @@ export default defineConfig({
 
   reporter: [
     ['list'],
-    ['html', { outputFolder: './artifacts/lab-02/playwright-report', open: 'never' }],
+    ['html', { outputFolder: './artifacts/playwright-report', open: 'never' }],
   ],
 
   use: {
@@ -35,7 +34,10 @@ export default defineConfig({
     viewport: { width: 1280, height: 800 },
   },
 
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } } }],
+  projects: [
+    { name: 'lab-02', testDir: './e2e/lab-02', outputDir: './artifacts/lab-02/playwright-output', use: desktop },
+    { name: 'lab-03', testDir: './e2e/lab-03', outputDir: './artifacts/lab-03/playwright-output', use: desktop },
+  ],
 
   webServer: [
     {

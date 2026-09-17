@@ -54,7 +54,7 @@ export default function ConfirmDialog({
     >
       <h2 id={titleId}>{title}</h2>
       <div className="my-3">{children}</div>
-      <div className="d-flex justify-content-end gap-2">
+      <div className="zen-dialog-actions d-flex justify-content-end gap-2">
         <Button variant="secondary" onClick={onCancel} disabled={busy}>
           {cancelLabel}
         </Button>
