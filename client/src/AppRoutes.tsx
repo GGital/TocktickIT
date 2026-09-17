@@ -11,7 +11,8 @@ import MyTickets from './screens/MyTickets'
 import StaffTicketDetail from './screens/StaffTicketDetail'
 import TicketDetail from './screens/TicketDetail'
 import TicketQueue from './screens/TicketQueue'
-import { NotFoundScreen, UserManagementScreen } from './screens/placeholders'
+import { NotFoundScreen } from './screens/placeholders'
+import UserManagement from './screens/UserManagement'
 
 /** The root sends each role to its own home route (ui-spec §4.3). */
 function HomeRedirect() {
@@ -78,7 +79,7 @@ export default function AppRoutes() {
             path="/admin/users"
             element={
               <RequireRole roles={['ADMINISTRATOR']}>
-                <UserManagementScreen />
+                <UserManagement />
               </RequireRole>
             }
           />
