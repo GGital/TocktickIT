@@ -127,3 +127,107 @@ describe('UI-36 announcements and real links (AC-67, ui-spec §11)', () => {
     expect(cardLink).toHaveAttribute('href', '/staff/tickets/41')
   })
 })
+
+// --- AC-67 beyond Login: the visual pass (ui-spec §13) found no keyboard or aria-required proof for these forms. ---
+
+/** Tabs forward until `matches` holds, so the assertion is about reachability rather than a fixed tab count. */
+async function tabUntil(user: ReturnType<typeof userEvent.setup>, matches: () => boolean, limit = 40) {
+  for (let step = 0; step < limit && !matches(); step += 1) await user.tab()
+  return matches()
+}
+
+const staffUser = { id: 7, fullName: 'Ada Chaiyawat', email: 'ada@toktickit.test', role: 'IT_STAFF', mustChangePassword: false }
+const emptyQueue = { data: [], meta: { page: 1, pageSize: 20, totalItems: 0, totalPages: 0, sortBy: 'itPriority', sortOrder: 'desc' } }
+
+describe('UI-36 keyboard operation and required fields on the Lab 3 forms (AC-67, ui-spec §2.2, §11)', () => {
+  it('operates mandatory Change Password from the keyboard alone and marks every field aria-required', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url === '/api/auth/me') return Promise.resolve(response(200, { ...staffUser, role: 'REQUESTER', mustChangePassword: true }))
+      if (url === '/api/auth/change-password') return Promise.resolve(response(200, { ...staffUser, role: 'REQUESTER', mustChangePassword: false }))
+      return Promise.resolve(response(200, { data: [], meta: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(
+      <MemoryRouter initialEntries={['/change-password']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+    const user = userEvent.setup()
+
+    const current = await screen.findByLabelText(/^Current password/)
+    const next = screen.getByLabelText(/^New password/)
+    const confirm = screen.getByLabelText(/^Confirm new password/)
+    for (const field of [current, next, confirm]) expect(field).toHaveAttribute('aria-required', 'true')
+
+    for (const [field, value] of [[current, 'fixture-issued-1'], [next, 'fixture-chosen-1'], [confirm, 'fixture-chosen-1']] as const) {
+      expect(await tabUntil(user, () => document.activeElement === field)).toBe(true)
+      await user.keyboard(value)
+    }
+    // Every reveal toggle and the submit button are in the tab order too.
+    expect(await tabUntil(user, () => document.activeElement === screen.getByRole('button', { name: 'Save new password' }))).toBe(true)
+    await user.keyboard('{Enter}')
+
+    await vi.waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url === '/api/auth/change-password')).toBe(true))
+  })
+
+  it('reaches every Queue filter with Tab', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url === '/api/auth/me') return Promise.resolve(response(200, staffUser))
+      if (url.startsWith('/api/staff/tickets')) return Promise.resolve(response(200, emptyQueue))
+      return Promise.resolve(response(200, []))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(
+      <MemoryRouter initialEntries={['/staff/tickets']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+    const user = userEvent.setup()
+
+    const search = await screen.findByLabelText('Search')
+    const status = screen.getByText('Status', { selector: 'summary' })
+    for (const control of [search, status, screen.getByLabelText('IT Priority'), screen.getByLabelText('Owner'), screen.getByText('More filters', { selector: 'summary' })]) {
+      expect(await tabUntil(user, () => document.activeElement === control), control.textContent || control.id).toBe(true)
+    }
+
+    // Opening the disclosure with Enter and applying a preset needs a real browser: the AC-67 keyboard test in e2e/lab-03/staff-ticket-flow.spec.ts.
+  })
+
+  it('marks the Login fields and every create-user field aria-required', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url === '/api/auth/me') return Promise.resolve(response(200, { ...staffUser, role: 'ADMINISTRATOR' }))
+        return Promise.resolve(response(200, []))
+      }),
+    )
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/admin/users']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Create user' }))
+    const dialog = await screen.findByRole('dialog')
+
+    for (const label of [/^Full name/, /^Email address/, /^Initial password/]) {
+      expect(within(dialog).getByLabelText(label)).toHaveAttribute('aria-required', 'true')
+    }
+    for (const group of [/^Role/, /^Account status/]) {
+      expect(within(dialog).getByRole('group', { name: group })).toHaveAttribute('aria-required', 'true')
+    }
+    unmount()
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(response(401, { error: { code: 'UNAUTHENTICATED', message: 'Sign in.' } }))),
+    )
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+    expect(await screen.findByLabelText(/^Email address/)).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByLabelText(/^Password/)).toHaveAttribute('aria-required', 'true')
+  })
+})

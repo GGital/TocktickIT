@@ -43,7 +43,7 @@ test.describe('Lab 3 responsive behaviour', () => {
   const screens: { name: string; as?: 'requester' | 'staff' | 'admin'; url: () => string; ready: (page: Page) => Promise<void> }[] = [
     { name: 'Login', url: () => '/login', ready: (page) => expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible() },
     { name: 'Change Password', as: 'requester', url: () => '/change-password', ready: (page) => expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible() },
-    { name: 'My Tickets (Lab 3 shell)', as: 'requester', url: () => '/tickets', ready: (page) => expect(page.getByRole('heading', { name: 'My Tickets' })).toBeVisible() },
+    { name: 'My Tickets (Lab 3 shell)', as: 'requester', url: () => '/tickets', ready: (page) => expect(page.getByRole('heading', { name: 'My Tickets' })).toBeVisible().then(() => page.waitForLoadState('networkidle')) },
     { name: 'Requester Ticket Detail', as: 'requester', url: () => `/tickets/${assigned.id}`, ready: (page) => expect(page.getByRole('region', { name: 'Conversation' }).getByRole('listitem').first()).toBeVisible() },
     { name: 'Ticket Queue', as: 'staff', url: () => '/staff/tickets', ready: (page) => expect(page.getByRole('heading', { name: 'Ticket Queue' })).toBeVisible().then(() => page.waitForLoadState('networkidle')) },
     { name: 'Staff Ticket Detail', as: 'staff', url: () => `/staff/tickets/${assigned.id}`, ready: (page) => expect(page.getByRole('region', { name: 'Internal Notes, not visible to the Requester' }).getByRole('listitem').first()).toBeVisible() },
@@ -60,6 +60,14 @@ test.describe('Lab 3 responsive behaviour', () => {
         await page.goto(screen.url())
         await screen.ready(page)
         await expectNoHorizontalScroll(page, `${screen.name} at ${viewport}`)
+        // A table may scroll inside its own card (ui-spec §10), but none should need to: the visual pass found My
+        // Tickets hiding a column that way at tablet width (D-01).
+        const hiddenColumns = await page.evaluate(() =>
+          [...document.querySelectorAll('.overflow-x-auto')]
+            .filter((container) => container.querySelector('table') && (container as HTMLElement).offsetParent !== null)
+            .map((container) => container.scrollWidth - container.clientWidth),
+        )
+        expect(hiddenColumns.filter((hidden) => hidden > 1), `${screen.name} at ${viewport}: a table overflows its card`).toEqual([])
         await context.close()
       }
     })

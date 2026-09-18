@@ -207,3 +207,40 @@ test.describe('E2E-07 "Problem appears resolved" reaches staff (AC-50, BR-46)', 
     await staffContext.close()
   })
 })
+
+test.describe('AC-67 the Queue filters from the keyboard alone (UI-36, ui-spec §11)', () => {
+  test('Tab reaches the filters, Enter opens Status and applies Open work, and the arrow keys change IT Priority', async ({ page }) => {
+    await signInAs(page, 'staff')
+    await page.goto('/staff/tickets')
+    await expect(page.getByRole('heading', { name: 'Ticket Queue' })).toBeVisible()
+
+    const tabTo = async (locator: ReturnType<Page['locator']>, label: string) => {
+      for (let step = 0; step < 40; step += 1) {
+        if (await locator.evaluate((element) => element === document.activeElement)) return
+        await page.keyboard.press('Tab')
+      }
+      throw new Error(`${label} is not reachable with Tab`)
+    }
+
+    await tabTo(page.getByLabel('Search', { exact: true }), 'Search')
+    await page.keyboard.type('no-such-ticket-kingfisher')
+    await expect(page.getByRole('heading', { name: 'No tickets match these filters.' })).toBeVisible()
+    for (let index = 0; index < 'no-such-ticket-kingfisher'.length; index += 1) await page.keyboard.press('Backspace')
+
+    const status = page.locator('summary', { hasText: 'Status' })
+    await tabTo(status, 'Status')
+    await page.keyboard.press('Enter')
+    await expect(page.locator('details', { has: status })).toHaveAttribute('open', '')
+    await tabTo(page.getByRole('button', { name: 'Open work' }), 'Open work')
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/status=NEW&status=OPEN&status=IN_PROGRESS&status=WAITING_FOR_REQUESTER&status=REOPENED/)
+
+    await tabTo(page.getByLabel('IT Priority'), 'IT Priority')
+    await page.keyboard.press('ArrowDown')
+    await expect(page).toHaveURL(/itPriority=/)
+
+    // Focus stays visible on the control that has it (STYLE-07 proves the rule; this proves it renders).
+    const outline = await page.getByLabel('IT Priority').evaluate((element) => getComputedStyle(element).outlineStyle)
+    expect(outline).not.toBe('none')
+  })
+})
