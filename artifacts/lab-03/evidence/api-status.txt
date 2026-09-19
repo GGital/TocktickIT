@@ -1,0 +1,36 @@
+TokTickIT Lab 3 — direct API authorization evidence
+Captured 19 September 2026 against the running API at http://localhost:3000/api, with curl-equivalent fetch calls and no browser.
+Each row is one request. "no session" sends no cookie at all; the other rows use the session cookie of the named role.
+No password, cookie value, or session id is recorded here.
+
+actor             request                                 status  code
+--------------------------------------------------------------------------
+no session        GET /tickets                            401  UNAUTHENTICATED
+no session        GET /staff/tickets                      401  UNAUTHENTICATED
+no session        GET /admin/users                        401  UNAUTHENTICATED
+Requester         GET /tickets                            200  OK                        10 rows
+Requester         GET /staff/tickets                      403  FORBIDDEN
+Requester         GET /staff/tickets/3886                 403  FORBIDDEN
+Requester         GET /staff/tickets/3886/internal-notes  403  FORBIDDEN
+Requester         PATCH /staff/tickets/3886/status        403  FORBIDDEN
+Requester         PATCH /staff/tickets/3886/assignment    403  FORBIDDEN
+Requester         GET /admin/users                        403  FORBIDDEN
+Requester         POST /admin/users                       403  FORBIDDEN
+Requester B       GET /tickets/3886                       404  TICKET_NOT_FOUND
+Requester B       GET /tickets/99999999                   404  TICKET_NOT_FOUND
+IT Staff          GET /staff/tickets                      200  OK                        20 rows
+IT Staff          GET /staff/tickets/3886/internal-notes  200  OK                        1 rows
+IT Staff          GET /admin/users                        403  FORBIDDEN
+Administrator     GET /staff/tickets                      200  OK                        20 rows
+Administrator     GET /admin/users                        200  OK                        10 rows
+Administrator     GET /admin/users?search=kittipong       200  OK                        1 rows
+first login       POST /auth/login (change outstanding)   200  mustChangePassword: true
+first login       GET /tickets                            403  PASSWORD_CHANGE_REQUIRED
+first login       GET /staff/tickets                      403  PASSWORD_CHANGE_REQUIRED
+first login       GET /auth/me                            200  OK
+wrong password    POST /auth/login                        401  INVALID_CREDENTIALS       Email or password is incorrect, or the account is not active.
+unknown address   POST /auth/login                        401  INVALID_CREDENTIALS       Email or password is incorrect, or the account is not active.
+inactive account  POST /auth/login                        401  INVALID_CREDENTIALS       Email or password is incorrect, or the account is not active.
+IT Staff          POST /auth/logout                       204  OK
+after logout      GET /auth/me                            401  UNAUTHENTICATED
+after logout      GET /staff/tickets                      401  UNAUTHENTICATED

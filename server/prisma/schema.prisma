@@ -25,6 +25,7 @@ model RelatedSystem {
   tickets Ticket[]
 }
 
+// Reused for Ticket.itPriority: one value set, one badge map, one sort order (spec §7.1).
 enum RequestedPriority {
   LOW
   MEDIUM
@@ -32,47 +33,99 @@ enum RequestedPriority {
   URGENT
 }
 
-// Lab 2 has exactly one status (BR-02); later labs extend this enum by migration.
 enum TicketStatus {
   NEW
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_REQUESTER
+  RESOLVED
+  CLOSED
+  REOPENED
+  CANCELLED
 }
 
-model RequesterUser {
-  id         Int      @id @default(autoincrement())
-  fullName   String
-  email      String   @unique
-  department String
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+// Exactly one role per user, no role table and no history (BR-22).
+enum UserRole {
+  REQUESTER
+  IT_STAFF
+  ADMINISTRATOR
+}
 
-  tickets             Ticket[]
-  uploadedAttachments Attachment[] @relation("AttachmentUploadedBy")
-  removedAttachments  Attachment[] @relation("AttachmentRemovedBy")
+enum MessageVisibility {
+  PUBLIC
+  INTERNAL
+}
+
+// The Lab 2 RequesterUser, renamed in place so every id and foreign key survives (BR-55, A-13).
+model User {
+  id                 Int      @id @default(autoincrement())
+  fullName           String
+  // Stored trimmed and lower-cased, so the plain unique index is case-insensitive (BR-49).
+  email              String   @unique
+  department         String?
+  role               UserRole @default(REQUESTER)
+  // scrypt$N$r$p$salt$hash (BR-09). Never selected into an API response (BR-12).
+  passwordHash       String
+  mustChangePassword Boolean  @default(true)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  tickets             Ticket[]        @relation("TicketRequester")
+  assignedTickets     Ticket[]        @relation("TicketAssignee")
+  uploadedAttachments Attachment[]    @relation("AttachmentUploadedBy")
+  removedAttachments  Attachment[]    @relation("AttachmentRemovedBy")
+  sessions            Session[]
+  messages            TicketMessage[]
+
+  @@index([role, isActive])
+}
+
+// Opaque server-side session: logout is a DELETE, not a denylist (A-02, BR-02).
+model Session {
+  id        String   @id
+  userId    Int
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Ticket {
-  id                Int               @id @default(autoincrement())
-  ticketNumber      String            @unique
-  requesterId       Int
-  categoryId        Int
-  relatedSystemId   Int
-  summary           String            @db.VarChar(120)
-  description       String            @db.Text
-  requestedPriority RequestedPriority
-  status            TicketStatus      @default(NEW)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id                         Int               @id @default(autoincrement())
+  ticketNumber               String            @unique
+  requesterId                Int
+  categoryId                 Int
+  relatedSystemId            Int
+  summary                    String            @db.VarChar(120)
+  description                String            @db.Text
+  requestedPriority          RequestedPriority
+  // Initialised from requestedPriority; the only priority staff may change (BR-31, BR-32).
+  itPriority                 RequestedPriority
+  status                     TicketStatus      @default(NEW)
+  // Null means unassigned (BR-26).
+  assigneeId                 Int?
+  // Null means not flagged by the Requester (BR-46).
+  requesterResolvedFlaggedAt DateTime?
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
 
-  requester     RequesterUser @relation(fields: [requesterId], references: [id], onDelete: Restrict)
-  category      Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  relatedSystem RelatedSystem @relation(fields: [relatedSystemId], references: [id], onDelete: Restrict)
+  requester     User            @relation("TicketRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  assignee      User?           @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: Restrict)
+  category      Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  relatedSystem RelatedSystem   @relation(fields: [relatedSystemId], references: [id], onDelete: Restrict)
   attachments   Attachment[]
+  messages      TicketMessage[]
 
   @@index([requesterId, createdAt])
   @@index([requesterId, categoryId])
   @@index([requesterId, relatedSystemId])
   @@index([requesterId, requestedPriority])
+  @@index([status, itPriority, createdAt])
+  @@index([assigneeId, status])
 }
 
 model Attachment {
@@ -89,11 +142,29 @@ model Attachment {
   removalReason    String?
   removedById      Int?
 
-  ticket     Ticket         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  uploadedBy RequesterUser  @relation("AttachmentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
-  removedBy  RequesterUser? @relation("AttachmentRemovedBy", fields: [removedById], references: [id], onDelete: Restrict)
+  ticket     Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploadedBy User   @relation("AttachmentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+  removedBy  User?  @relation("AttachmentRemovedBy", fields: [removedById], references: [id], onDelete: Restrict)
 
   @@index([ticketId, removedAt])
+}
+
+// Public Comments and Internal Notes in one append-only table; visibility is always part
+// of the read predicate, never a post-filter (A-05, BR-39, BR-40).
+model TicketMessage {
+  id         Int               @id @default(autoincrement())
+  ticketId   Int
+  authorId   Int
+  visibility MessageVisibility
+  body       String            @db.Text
+  // True only for the Comment written by "Problem Appears Resolved" (BR-46).
+  isSystem   Boolean           @default(false)
+  createdAt  DateTime          @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([ticketId, visibility, createdAt])
 }
 
 // One row per year; incremented atomically to issue TKT-YYYY-NNNNNN sequences (BR-03).

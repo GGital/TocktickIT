@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import Badge, { type Priority } from '../components/Badge'
+import PriorityBadge, { type Priority } from '../components/PriorityBadge'
+import StatusBadge, { type TicketStatus } from '../components/StatusBadge'
 import Button from '../components/Button'
 import Callout from '../components/Callout'
 import EmptyState from '../components/EmptyState'
@@ -8,7 +9,6 @@ import Pagination from '../components/Pagination'
 import SelectField from '../components/SelectField'
 import { SkeletonCard, SkeletonRows } from '../components/Skeleton'
 import { apiFetch } from '../lib/apiClient'
-import { useRequesterId } from '../lib/requesterContext'
 
 type Reference = { id: number; name: string }
 
@@ -19,7 +19,7 @@ type TicketSummary = {
   category: Reference
   relatedSystem: Reference
   requestedPriority: Priority
-  status: 'NEW'
+  status: TicketStatus
   attachmentCount: number
   createdAt: string
   updatedAt: string
@@ -59,7 +59,6 @@ const bangkokDate = (iso: string) =>
  * so a filtered view can be reloaded, shared, and screenshotted (BR-34). */
 export default function MyTickets() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const requesterId = useRequesterId()
   const navigate = useNavigate()
 
   const [result, setResult] = useState<Result | null>(null)
@@ -72,23 +71,6 @@ export default function MyTickets() {
 
   const query = searchParams.toString()
   const hasCriteria = FILTER_KEYS.some((key) => searchParams.get(key))
-  const previousRequester = useRef(requesterId)
-  // Set while a requester switch is clearing the query, so no request goes out
-  // carrying the previous requester's search and page (BR-12, AC-04).
-  const pendingReset = useRef<number | null>(null)
-
-  // Switching requester discards every requester-scoped piece of state before the
-  // new request resolves, so requester A's rows are never seen under B (BR-12, AC-04).
-  useEffect(() => {
-    if (previousRequester.current === requesterId) return
-
-    previousRequester.current = requesterId
-    pendingReset.current = requesterId
-    setResult(null)
-    setSearchInput('')
-    setSearchParams({}, { replace: true })
-  }, [requesterId, setSearchParams])
-
   useEffect(() => {
     Promise.all([apiFetch<Reference[]>('/categories'), apiFetch<Reference[]>('/related-systems')])
       .then(([loadedCategories, loadedSystems]) => {
@@ -99,12 +81,6 @@ export default function MyTickets() {
   }, [])
 
   useEffect(() => {
-    if (pendingReset.current === requesterId) {
-      // Params are cleared one render later; wait for that rather than querying twice.
-      if (query !== '') return
-      pendingReset.current = null
-    }
-
     let active = true
     setLoading(true)
     setFailed(false)
@@ -122,7 +98,7 @@ export default function MyTickets() {
     return () => {
       active = false
     }
-  }, [query, requesterId, reloadToken])
+  }, [query, reloadToken])
 
   // Debounced so a search does not fire a request per keystroke (ui-spec §6.4).
   useEffect(() => {
@@ -306,7 +282,7 @@ export default function MyTickets() {
         // does not jump between pages (ui-spec §6.5).
         <div aria-busy={loading || undefined} className={loading ? 'zen-dimmed' : undefined}>
           <div className="zen-card d-none d-md-block p-0 overflow-x-auto">
-            <table className="table mb-0">
+            <table className="table mb-0 zen-tickets">
               <thead>
                 <tr>
                   <th scope="col">Ticket Number</th>
@@ -338,10 +314,10 @@ export default function MyTickets() {
                     <td>{ticket.category.name}</td>
                     <td className="d-none d-lg-table-cell">{ticket.relatedSystem.name}</td>
                     <td>
-                      <Badge kind="priority" value={ticket.requestedPriority} />
+                      <PriorityBadge kind="requested" value={ticket.requestedPriority} />
                     </td>
                     <td>
-                      <Badge kind="status" value={ticket.status} />
+                      <StatusBadge value={ticket.status} />
                     </td>
                     <td>{bangkokDate(ticket.createdAt)}</td>
                     <td className="d-none d-lg-table-cell">{bangkokDate(ticket.updatedAt)}</td>
@@ -355,11 +331,12 @@ export default function MyTickets() {
             {result.data.map((ticket) => (
               <li key={ticket.id} className="zen-card zen-ticket-card mb-3">
                 <Link to={`/tickets/${ticket.id}`} className="d-block text-decoration-none">
-                  <div className="d-flex justify-content-between align-items-center gap-2">
+                  {/* Wraps: "Waiting for Requester" beside a prefixed priority is wider than a phone (FR-44). */}
+                  <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <span className="zen-mono">{ticket.ticketNumber}</span>
-                    <span className="d-flex gap-1">
-                      <Badge kind="priority" value={ticket.requestedPriority} />
-                      <Badge kind="status" value={ticket.status} />
+                    <span className="d-flex flex-wrap gap-1">
+                      <PriorityBadge kind="requested" value={ticket.requestedPriority} />
+                      <StatusBadge value={ticket.status} />
                     </span>
                   </div>
                   <p className="mb-1 text-truncate" title={ticket.summary}>

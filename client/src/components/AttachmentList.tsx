@@ -277,7 +277,7 @@ export default function AttachmentList({ ticketId, attachments, onChanged }: Att
                   >
                     {attachment.originalFilename}
                   </span>
-                  <Badge kind="attachment" value="REMOVED" />
+                  <Badge tone="removed">Removed</Badge>
                 </div>
                 {/* Metadata is retained; no download, preview, or remove control exists. */}
                 <p className="zen-help mb-0">

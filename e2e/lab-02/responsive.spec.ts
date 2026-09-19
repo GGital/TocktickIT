@@ -7,6 +7,7 @@ import {
   getReferenceData,
   getRequesters,
   runTag,
+  type Requester,
   type ViewportName,
 } from './helpers'
 
@@ -23,13 +24,13 @@ async function expectNoHorizontalScroll(page: Page) {
   ).toBeLessThanOrEqual(overflow.clientWidth + 1)
 }
 
-const setup = async (page: Page, requesterId: number, viewport: ViewportName) => {
+const setup = async (page: Page, requester: Requester, viewport: ViewportName) => {
   await page.setViewportSize(VIEWPORTS[viewport])
-  await actAs(page, requesterId)
+  await actAs(page, requester)
 }
 
 test.describe('Responsive behaviour', () => {
-  let requesterId: number
+  let account: Requester
   let ticketId: number
   let attachmentTicketId: number
   const tag = runTag()
@@ -37,9 +38,9 @@ test.describe('Responsive behaviour', () => {
   test.beforeAll(async ({ request }) => {
     const [requester] = await getRequesters(request)
     const { categories, systems } = await getReferenceData(request)
-    requesterId = requester.id
+    account = requester
 
-    const ticket = await createTicket(request, requester.id, {
+    const ticket = await createTicket(request, requester, {
       summary: `${tag} responsive fixture ticket for the viewport checks`,
       categoryId: categories[0].id,
       relatedSystemId: systems[0].id,
@@ -47,7 +48,7 @@ test.describe('Responsive behaviour', () => {
     ticketId = ticket.id
 
     // A second ticket carries a deliberately long filename for RESP-06.
-    const withFile = await createTicket(request, requester.id, {
+    const withFile = await createTicket(request, requester, {
       summary: `${tag} responsive fixture with a long attachment name`,
       categoryId: categories[0].id,
       relatedSystemId: systems[0].id,
@@ -58,7 +59,6 @@ test.describe('Responsive behaviour', () => {
     const uploaded = await request.post(
       `http://localhost:3000/api/tickets/${withFile.id}/attachments`,
       {
-        headers: { 'X-Requester-Id': String(requester.id) },
         multipart: {
           file: { name: longName, mimeType: 'application/pdf', buffer: PDF_BYTES },
         },
@@ -70,9 +70,9 @@ test.describe('Responsive behaviour', () => {
   /** RESP-01 (AC-45, FR-32): no horizontal page scroll on any screen at any viewport. */
   for (const viewport of ['desktop', 'tablet', 'mobile'] as ViewportName[]) {
     test(`RESP-01 no horizontal scrolling at ${viewport}`, async ({ page }) => {
-      await setup(page, requesterId, viewport)
+      await setup(page, account, viewport)
 
-      for (const path of ['/select-requester', '/tickets', '/tickets/new', `/tickets/${ticketId}`]) {
+      for (const path of ['/tickets', '/tickets/new', `/tickets/${ticketId}`]) {
         await page.goto(path)
         await page.waitForLoadState('networkidle')
         await expectNoHorizontalScroll(page)
@@ -82,7 +82,7 @@ test.describe('Responsive behaviour', () => {
 
   /** RESP-02 (AC-45): labels are not clipped and messages do not overlap at 375 px. */
   test('RESP-02 Create Ticket labels and messages fit at 375 px', async ({ page }) => {
-    await setup(page, requesterId, 'mobile')
+    await setup(page, account, 'mobile')
     await page.goto('/tickets/new')
 
     // Force the validation state so the messages are on screen.
@@ -111,7 +111,7 @@ test.describe('Responsive behaviour', () => {
 
   /** RESP-03 (ui-spec §6.3): table on desktop, cards on mobile, never both. */
   test('RESP-03 My Tickets swaps the table for cards on mobile', async ({ page }) => {
-    await setup(page, requesterId, 'desktop')
+    await setup(page, account, 'desktop')
     await page.goto(`/tickets?search=${encodeURIComponent(tag)}`)
     await expect(page.getByRole('table')).toBeVisible()
     await expect(page.locator('.zen-ticket-card').first()).toBeHidden()
@@ -123,7 +123,7 @@ test.describe('Responsive behaviour', () => {
 
   /** RESP-04 (ui-spec §3): the mobile navigation is reachable through the toggle. */
   test('RESP-04 the mobile navigation expands from the hamburger', async ({ page }) => {
-    await setup(page, requesterId, 'mobile')
+    await setup(page, account, 'mobile')
     await page.goto('/tickets')
 
     const toggle = page.getByRole('button', { name: 'Open navigation' })
@@ -140,7 +140,7 @@ test.describe('Responsive behaviour', () => {
 
   /** RESP-05 (AC-45): filters, pagination, and attachment controls stay usable at 375 px. */
   test('RESP-05 controls stay reachable and large enough at 375 px', async ({ page }) => {
-    await setup(page, requesterId, 'mobile')
+    await setup(page, account, 'mobile')
     await page.goto(`/tickets?search=${encodeURIComponent(tag)}`)
 
     for (const label of ['Search', 'Category', 'Requested Priority', 'Sort', 'Show']) {
@@ -164,7 +164,7 @@ test.describe('Responsive behaviour', () => {
 
   /** RESP-06 (AC-49): a long filename truncates but stays fully available. */
   test('RESP-06 a long attachment name truncates without breaking the layout', async ({ page }) => {
-    await setup(page, requesterId, 'mobile')
+    await setup(page, account, 'mobile')
     await page.goto(`/tickets/${attachmentTicketId}`)
 
     const filename = page.locator('.zen-filename').first()

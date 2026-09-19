@@ -25,7 +25,7 @@ test.describe('Create Ticket end to end', () => {
     const summary = `${runTag()} projector in the lecture hall flickers`
     const description = 'The HDMI cable appears loose whenever the projector warms up properly.'
 
-    await actAs(page, requester.id)
+    await actAs(page, requester)
     await page.goto('/tickets/new')
 
     // --- Validation failure: messages, focus, and no request at all (AC-11) ---
@@ -83,7 +83,7 @@ test.describe('Create Ticket end to end', () => {
     const { categories, systems } = await getReferenceData(request)
     const summary = `${runTag()} scanner will not pair over bluetooth`
 
-    await actAs(page, requester.id)
+    await actAs(page, requester)
     await page.goto('/tickets/new')
 
     const uploads: string[] = []

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
-import { REQUESTER_ID_KEY } from '../../src/lib/requesterContext'
+import { isAuthMe, isCommentThread, signedInRequester } from '../helpers/auth'
 
 const requesters = [
   { id: 1, fullName: 'Nadia Charoen', email: 'nadia@toktickit.test', department: 'Registrar' },
@@ -35,7 +35,8 @@ const notFound = () =>
 
 function stubApi(onDetail: (url: string) => Promise<Response>) {
   const fetchMock = vi.fn((url: string) => {
-    if (url.startsWith('/api/requesters')) return Promise.resolve(ok(requesters))
+    if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
+    if (isCommentThread(url)) return Promise.resolve(ok([]))
     if (/^\/api\/tickets\/\d+$/.test(url)) return onDetail(url)
     return Promise.resolve(ok({}))
   })
@@ -53,7 +54,6 @@ const renderAt = (path: string) =>
 
 beforeEach(() => {
   localStorage.clear()
-  localStorage.setItem(REQUESTER_ID_KEY, '1')
 })
 
 afterEach(() => vi.unstubAllGlobals())
@@ -97,7 +97,10 @@ describe('UI-20 ticket detail is read-only (AC-43, BR-44)', () => {
     // Ticket data is a definition list, never inputs — not even disabled ones.
     expect(information.querySelectorAll('input, select, textarea')).toHaveLength(0)
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /status|resolve|close|cancel ticket/i })).toBeNull()
+    // Lab 3 adds "Problem appears resolved", a signal to IT that never changes the status (BR-46); every control
+    // that could change the status is still absent.
+    expect(screen.queryByRole('button', { name: /status|^resolve|close|cancel ticket/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Problem appears resolved' })).toBeInTheDocument()
   })
 })
 

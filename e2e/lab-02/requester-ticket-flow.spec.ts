@@ -1,34 +1,25 @@
 import { expect, test } from '@playwright/test'
-import { getRequesters, readTicketNumber, runTag } from './helpers'
+import { actAs, getRequesters, readTicketNumber, runTag } from './helpers'
 
 /**
  * E2E-01 (AC-01 – AC-03, AC-08, AC-09): the whole requester slice in one pass —
- * choose a requester, create a ticket, and find that same ticket number again in
- * My Tickets and on Ticket Detail.
+ * sign in, create a ticket, and find that same ticket number again in My Tickets
+ * and on Ticket Detail. Lab 3 replaced the selector step with a real session (BR-58).
  */
-test('E2E-01 select a requester, create a ticket, then find it again', async ({
+test('E2E-01 sign in as a requester, create a ticket, then find it again', async ({
   page,
   request,
 }) => {
   const [requester] = await getRequesters(request)
   const summary = `${runTag()} laptop battery drains within thirty minutes`
 
-  // --- Requester selection (AC-01, AC-50) ---
-  await page.goto('/select-requester')
-  await expect(page.getByRole('heading', { name: 'Select a Development Requester' })).toBeVisible()
-  await expect(page.getByText(/not a login screen/i)).toBeVisible()
-  await expect(page.getByText(/Authentication and role-based access arrive in Lab 3/i)).toBeVisible()
-
-  const select = page.getByLabel(/Development Requester/)
-  await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled()
-  await select.selectOption(String(requester.id))
-  await page.getByRole('button', { name: 'Continue' }).click()
-
-  // --- Shell shows the testing context, never a signed-in user (AC-03, BR-50) ---
+  // --- Signed in: the root redirects to My Tickets and the shell names the user ---
+  await actAs(page, requester)
+  await page.goto('/')
   await expect(page).toHaveURL(/\/tickets$/)
-  await expect(page.getByText('Testing as:')).toBeVisible()
   await expect(page.getByText(requester.fullName)).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Change Requester' })).toBeVisible()
+  await expect(page.getByText('Testing as:')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Change Requester' })).toHaveCount(0)
 
   // --- Create Ticket (AC-08, AC-09) ---
   await page.getByRole('link', { name: 'Create Ticket' }).click()
@@ -37,9 +28,7 @@ test('E2E-01 select a requester, create a ticket, then find it again', async ({
   // The system fields are shown but never editable.
   await expect(page.getByLabel('Ticket Number')).toHaveAttribute('readonly', '')
   await expect(page.getByLabel('Current Status')).toHaveValue('NEW')
-  await expect(page.getByLabel('Requester')).toHaveValue(
-    `${requester.fullName} — ${requester.department}`,
-  )
+  await expect(page.getByLabel('Requester')).toHaveValue(requester.fullName)
 
   const category = page.getByLabel(/^Category/)
   await category.selectOption({ index: 1 })

@@ -33,6 +33,12 @@ export const validateSummary = (value: string) =>
 export const validateDescription = (value: string) =>
   lengthOf(value) < 20 || lengthOf(value) > 2000 ? MESSAGES.description : undefined
 
+/** Comments and Internal Notes share the Lab 2 long-text bound (BR-44, A-10). */
+export const MESSAGE_MAX_LENGTH = 2000
+
+/** A Comment or Note body: 1–2000 characters after trimming; whitespace-only is empty (BR-44). */
+export const isValidMessageBody = (value: string) => lengthOf(value) >= 1 && lengthOf(value) <= MESSAGE_MAX_LENGTH
+
 export const validateRemovalReason = (value: string) =>
   lengthOf(value) < 5 || lengthOf(value) > 200 ? MESSAGES.removalReason : undefined
 
@@ -66,5 +72,39 @@ export function checkStagedFile(file: { name: string; size: number }): string | 
   if (!PERMITTED_EXTENSIONS.includes(extension)) return 'File type not allowed'
   if (file.size > MAX_FILE_BYTES) return 'File is larger than 5 MB'
 
+  return undefined
+}
+
+/** Login field rules, word-for-word the API's messages (Lab 3 api-spec §3.1). */
+export const LOGIN_MESSAGES = {
+  email: 'Enter a valid email address.',
+  password: 'Enter your password.',
+} as const
+
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export function validateLogin(email: string, password: string) {
+  const errors: { email?: string; password?: string } = {}
+  if (!EMAIL_PATTERN.test(email.trim())) errors.email = LOGIN_MESSAGES.email
+  // Never trimmed: surrounding spaces are part of a password (Lab 3 BR-11).
+  if (password.trim() === '') errors.password = LOGIN_MESSAGES.password
+  return errors
+}
+
+/** Shown under the New password field before any typing (Lab 3 ui-spec §5.2). */
+export const PASSWORD_RULES =
+  'At least 10 characters. Must differ from your current password and from your email address.'
+
+/** Client mirror of the server's new-password rules and messages (Lab 3 BR-11); the server re-checks. */
+export function validateNewPassword(newPassword: string, context: { currentPassword: string; email: string }) {
+  const length = [...newPassword].length
+  const lowered = newPassword.toLowerCase()
+  const email = context.email.toLowerCase()
+
+  if (newPassword.trim() === '') return 'Your password cannot be only spaces.'
+  if (length < 10) return 'Use at least 10 characters.'
+  if (length > 128) return 'Use no more than 128 characters.'
+  if (newPassword === context.currentPassword) return 'Choose a password you have not used here before.'
+  if (lowered === email || lowered === email.split('@')[0]) return 'Your password cannot be your email address.'
   return undefined
 }

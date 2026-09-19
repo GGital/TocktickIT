@@ -25,6 +25,7 @@
   --zen-success-bg: #EAF6EF;
   --zen-neutral: #5A6B62;
   --zen-focus-ring: rgba(11, 122, 70, 0.35);
+  --zen-backdrop: rgba(28, 43, 36, 0.45);
 
   /* --- Spacing, radius, and control metrics (ui-spec §1.3, §2.1) --- */
   --zen-radius-card: 10px;
@@ -170,14 +171,31 @@ a:focus-visible {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  /* Transparent by default so the outlined statuses are the same size as the filled ones. */
+  border: 1px solid transparent;
 }
 
+/* Priority — Requested and IT share these; the "Requested:" / "IT:" prefix tells them apart (Lab 3 §1.2). */
 .zen-badge-low { background-color: var(--zen-readonly-bg); color: var(--zen-neutral); }
 .zen-badge-medium { background-color: var(--zen-pale); color: var(--zen-primary); }
 .zen-badge-high { background-color: var(--zen-warning-bg); color: var(--zen-warning); }
 .zen-badge-urgent { background-color: var(--zen-error-bg); color: var(--zen-error); }
-.zen-badge-new { background-color: var(--zen-primary); color: var(--zen-surface); }
 .zen-badge-removed { background-color: var(--zen-readonly-bg); color: var(--zen-text-muted); }
+
+/* Status — eight values, deliberately quieter than priority (Lab 3 ui-spec §1.2). No new colour value. */
+.zen-badge-new { background-color: var(--zen-primary); color: var(--zen-surface); }
+.zen-badge-open { background-color: var(--zen-secondary); color: var(--zen-surface); }
+.zen-badge-in-progress { background-color: var(--zen-surface); color: var(--zen-secondary); border-color: var(--zen-secondary); }
+.zen-badge-waiting { background-color: color-mix(in srgb, var(--zen-warning) 12%, transparent); color: var(--zen-warning); }
+.zen-badge-resolved { background-color: var(--zen-pale); color: var(--zen-success); }
+.zen-badge-closed { background-color: var(--zen-readonly-bg); color: var(--zen-text); }
+.zen-badge-reopened { background-color: var(--zen-surface); color: var(--zen-warning); border-color: var(--zen-warning); }
+.zen-badge-cancelled { background-color: var(--zen-readonly-bg); color: color-mix(in srgb, var(--zen-text) 70%, transparent); }
+
+/* Role */
+.zen-badge-role-requester { background-color: var(--zen-readonly-bg); color: var(--zen-text); }
+.zen-badge-role-it-staff { background-color: var(--zen-pale); color: var(--zen-secondary); }
+.zen-badge-role-administrator { background-color: var(--zen-primary); color: var(--zen-surface); }
 
 /* --- Callouts (ui-spec §2.5) --- */
 .zen-callout {
@@ -233,7 +251,7 @@ a:focus-visible {
   width: calc(100% - 32px);
 }
 
-.zen-dialog::backdrop { background-color: rgba(28, 43, 36, 0.45); }
+.zen-dialog::backdrop { background-color: var(--zen-backdrop); }
 
 /* Mobile: touch targets stay at least 44px (ui-spec §8, §9) */
 @media (max-width: 767.98px) {
@@ -278,8 +296,16 @@ a:focus-visible {
   border: 1px solid var(--zen-surface);
 }
 
-.zen-requester { font-size: 0.9375rem; }
-.zen-requester-department { opacity: 0.85; font-size: 0.875rem; }
+.zen-user { font-size: 0.9375rem; }
+
+/* On the green bar every badge gets a light outline, so the solid Administrator badge never disappears into it. */
+.zen-header .zen-badge { border-color: var(--zen-surface); }
+
+.zen-header-link { color: var(--zen-surface); text-underline-offset: 3px; }
+.zen-header-link:hover { color: var(--zen-surface); }
+
+/* The forbidden state sits centred and narrow, unlike the full-width not-found card (ui-spec §2.5). */
+.zen-forbidden { max-width: 560px; margin: 48px auto; }
 
 /* Secondary button sitting on the green bar. */
 .zen-on-primary {
@@ -321,4 +347,165 @@ label:has(+ input[type="file"]:focus-visible) {
   border-color: var(--zen-secondary);
   outline: 3px solid var(--zen-focus-ring);
   outline-offset: 1px;
+}
+
+/* --- Login and Change Password (Lab 3 ui-spec §4, §5): centred card, no shell --- */
+.zen-auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.zen-auth-card { width: 100%; max-width: 420px; }
+.zen-auth-card-wide { max-width: 480px; }
+
+/* The reveal toggle sits beside its input and never shrinks it off-screen (ui-spec §2.1). */
+.zen-password { display: flex; gap: 8px; }
+.zen-password .zen-control { flex: 1 1 auto; min-width: 0; }
+.zen-reveal { flex: 0 0 auto; }
+
+@media (max-width: 767.98px) {
+  .zen-auth { align-items: flex-start; }
+}
+
+/* --- IT Staff Ticket Queue (Lab 3 ui-spec §7) --- */
+.zen-badge-flag { background-color: var(--zen-pale); color: var(--zen-success); border-color: var(--zen-success); }
+
+/* Sort headers are real buttons that look like the header text they replace (ui-spec §11). */
+.zen-sort {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+.zen-sort:hover { color: var(--zen-primary); }
+.zen-sort:focus-visible { outline: 3px solid var(--zen-focus-ring); outline-offset: 2px; border-radius: 4px; }
+
+.zen-queue-row { cursor: pointer; }
+/* The Summary is the one flexible column: it truncates so the other columns keep their width and the whole
+   table fits its card without sideways scrolling (ui-spec §7.1, §7.2). */
+.zen-queue td, .zen-queue th { padding: 12px 10px; }
+.zen-queue-summary { max-width: 14rem; }
+@media (max-width: 991.98px) {
+  .zen-queue td, .zen-queue th { padding: 10px 6px; }
+  .zen-queue-summary { max-width: 7rem; }
+}
+.zen-queue-row:hover td { background-color: var(--zen-pale); }
+/* The flag sub-row belongs to the Ticket above it, so the divider sits under the pair, not between them. */
+.zen-queue tbody tr.zen-queue-row:has(+ .zen-flag-row) td { border-bottom-width: 0; }
+.zen-flag-row td { padding-top: 0; }
+
+/* Status and More filters: native <details> disclosures (ui-spec §7.4). */
+.zen-disclosure { position: relative; margin-bottom: 20px; }
+.zen-disclosure > summary { list-style: none; }
+.zen-disclosure > summary::-webkit-details-marker { display: none; }
+.zen-disclosure[open] > summary { background-color: var(--zen-pale); }
+.zen-disclosure-panel {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 16rem;
+  padding: 16px;
+  background-color: var(--zen-surface);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-card);
+  box-shadow: var(--zen-shadow);
+}
+.zen-check { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+
+/* --- IT Staff Ticket Detail (Lab 3 ui-spec §8) --- */
+/* Read-only values sit on the read-only ground, so they never look like the editable operations controls (AC-65). */
+.zen-readonly-value {
+  background-color: var(--zen-readonly-bg);
+  border-radius: var(--zen-radius-control);
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+}
+
+/* The Internal panel: warning border and heading, plus a heavier left edge that still reads in greyscale (§8.3). */
+/* RadioGroup wraps FormField in a second .zen-field; only the outer one should space the field. */
+.zen-field .zen-field { margin-bottom: 0; }
+
+.zen-internal { border-color: var(--zen-warning); border-width: 2px; border-left-width: 6px; }
+.zen-internal h2 { color: var(--zen-warning); }
+.zen-internal-suffix { font-size: 0.9375rem; font-weight: 600; }
+
+.zen-message { border-top: 1px solid var(--zen-border); padding: 12px 0; }
+.zen-message-meta { font-size: 0.875rem; color: var(--zen-text-muted); margin-bottom: 4px; }
+/* Line breaks come from CSS, never from generated markup (BR-45). */
+.zen-message-body { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 0; }
+.zen-composer .zen-textarea { min-height: 6rem; }
+.zen-counter-over { color: var(--zen-error); font-weight: 600; }
+
+@media (max-width: 767.98px) {
+  /* On a phone the panels open inline rather than floating over the list. */
+  .zen-disclosure { width: 100%; }
+  .zen-disclosure-panel { position: static; margin-top: 8px; }
+  .zen-check { min-height: 44px; }
+}
+
+/* --- Administrator User Management (Lab 3 ui-spec §9) --- */
+.zen-badge-account-active { background-color: var(--zen-pale); color: var(--zen-success); }
+.zen-badge-account-inactive { background-color: var(--zen-readonly-bg); color: var(--zen-text); }
+
+/* Long addresses truncate and expose the full value through title (ui-spec §9.1). */
+.zen-users-email { max-width: 18rem; }
+@media (max-width: 991.98px) {
+  .zen-users-email { max-width: 11rem; }
+  .zen-users td, .zen-users th { padding: 10px 8px; }
+}
+
+/* The one-time initial password: plain text, easy to select whole (ui-spec §9.2). */
+.zen-one-time {
+  display: inline-block;
+  padding: 8px 12px;
+  background-color: var(--zen-readonly-bg);
+  border-radius: var(--zen-radius-control);
+  font-size: 1.0625rem;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.zen-dialog-form { max-width: 560px; }
+
+/* Mobile: every dialog — forms and confirmations alike — becomes full-screen with its actions pinned at the bottom
+   (Lab 3 ui-spec §10, RESP-05). */
+@media (max-width: 767.98px) {
+  .zen-dialog {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  /* A column, so the actions sit at the bottom even when the content is short. */
+  .zen-dialog[open] { display: flex; flex-direction: column; }
+  .zen-dialog > form { display: flex; flex-direction: column; flex: 1 0 auto; }
+  .zen-dialog-actions {
+    position: sticky;
+    bottom: -24px;
+    margin: auto -24px -24px;
+    padding: 12px 24px;
+    background-color: var(--zen-surface);
+    border-top: 1px solid var(--zen-border);
+  }
+}
+
+/* My Tickets under the Lab 3 shell (visual pass D-01): at desktop and tablet widths the columns fit their card instead of
+   pushing a column out of view — the Ticket Number stays on one line and the Summary truncates. */
+.zen-tickets td:first-child { white-space: nowrap; }
+.zen-tickets td, .zen-tickets th { padding: 12px 10px; }
+.zen-tickets .zen-filename { max-width: 16rem; }
+@media (max-width: 991.98px) {
+  .zen-tickets td, .zen-tickets th { padding: 10px 8px; }
+  .zen-tickets .zen-filename { max-width: 9rem; }
 }

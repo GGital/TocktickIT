@@ -3,12 +3,8 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
-import { REQUESTER_ID_KEY, setRequesterId } from '../../src/lib/requesterContext'
+import { isAuthMe, signedInRequester } from '../helpers/auth'
 
-const requesters = [
-  { id: 1, fullName: 'Nadia Charoen', email: 'nadia@toktickit.test', department: 'Registrar' },
-  { id: 2, fullName: 'Anucha Pimwan', email: 'anucha@toktickit.test', department: 'Engineering' },
-]
 const categories = [{ id: 2, name: 'Hardware' }]
 const systems = [{ id: 7, name: 'Corporate Laptop' }]
 
@@ -42,7 +38,7 @@ const ok = (body: unknown) =>
 /** `onList` decides what the ticket-list request returns for a given URL. */
 function stubApi(onList: (url: string) => Promise<Response>) {
   const fetchMock = vi.fn((url: string) => {
-    if (url.startsWith('/api/requesters')) return Promise.resolve(ok(requesters))
+    if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
     if (url.startsWith('/api/categories')) return Promise.resolve(ok(categories))
     if (url.startsWith('/api/related-systems')) return Promise.resolve(ok(systems))
     if (url.startsWith('/api/tickets')) return onList(url)
@@ -70,7 +66,6 @@ const renderAt = (path: string) =>
 
 beforeEach(() => {
   localStorage.clear()
-  localStorage.setItem(REQUESTER_ID_KEY, '1')
 })
 
 afterEach(() => vi.unstubAllGlobals())
@@ -168,40 +163,5 @@ describe('UI-18 the list request fails (AC-40)', () => {
   })
 })
 
-describe('UI-19 switching requester (AC-04, BR-12)', () => {
-  it('drops the previous rows before the new data resolves and resets the query', async () => {
-    let release: ((value: Response) => void) | null = null
-
-    const fetchMock = stubApi((url) => {
-      // The first requester's list resolves immediately; the second is held open so
-      // the intermediate state is observable.
-      if (url.includes('search=battery')) {
-        return Promise.resolve(ok(page([ticket(41, 'Laptop battery drains')])))
-      }
-      return new Promise<Response>((resolve) => {
-        release = resolve
-      })
-    })
-
-    renderAt('/tickets?search=battery&page=2')
-    expect(await rowText('Laptop battery drains')).toBeInTheDocument()
-
-    setRequesterId(2)
-
-    // Requester A's rows are gone immediately, before B's data arrives.
-    await waitFor(() => expect(rowCount('Laptop battery drains')).toBe(0))
-    // The refreshed request is issued only after the query has been reset.
-    await waitFor(() => expect(release).not.toBeNull())
-
-    // It carries neither the previous search term nor page 2.
-    const latest = listCalls(fetchMock).at(-1)!
-    expect(latest).not.toContain('search=battery')
-    expect(latest).not.toContain('page=2')
-
-    release!(ok(page([ticket(77, 'Second requester ticket')])))
-
-    const table = await screen.findByRole('table')
-    expect(within(table).getByText('Second requester ticket')).toBeInTheDocument()
-    expect(screen.getByLabelText('Search')).toHaveValue('')
-  })
-})
+// UI-19 (switching requester) is replaced by its authenticated equivalent in tests/lab-03/AuthSession.test.tsx:
+// a lost session unmounts the list at once, so another user's sign-in always starts clean (BR-58).

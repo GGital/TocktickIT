@@ -14,7 +14,7 @@ test('E2E-05 the My Tickets toolbar drives the server-side list', async ({ page,
   // categories vary so the filters have something to narrow.
   const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const
   for (let index = 0; index < 12; index += 1) {
-    await createTicket(request, requester.id, {
+    await createTicket(request, requester, {
       summary: `${tag} seeded list ticket number ${String(index + 1).padStart(2, '0')}`,
       categoryId: categories[index % categories.length].id,
       relatedSystemId: systems[index % systems.length].id,
@@ -23,7 +23,7 @@ test('E2E-05 the My Tickets toolbar drives the server-side list', async ({ page,
   }
 
   // One ticket nothing else matches, for the single-result assertions.
-  await createTicket(request, requester.id, {
+  await createTicket(request, requester, {
     summary: `${tag} unmistakable kingfisher ticket`,
     // The run tag sits inside the description so the search below is scoped to this
     // run: the database keeps every ticket a previous run created.
@@ -33,7 +33,7 @@ test('E2E-05 the My Tickets toolbar drives the server-side list', async ({ page,
     requestedPriority: 'URGENT',
   })
 
-  await actAs(page, requester.id)
+  await actAs(page, requester)
   const rows = page.getByRole('table').getByRole('row')
 
   // --- Search narrows to this run, and paging splits it (AC-34, AC-36) ---
@@ -90,7 +90,6 @@ test('E2E-05 the My Tickets toolbar drives the server-side list', async ({ page,
 
   // --- An unsupported value is refused rather than silently coerced (AC-39) ---
   const invalid = await request.get(`http://localhost:3000/api/tickets?pageSize=999`, {
-    headers: { 'X-Requester-Id': String(requester.id) },
   })
   expect(invalid.status()).toBe(400)
   expect((await invalid.json()).error.code).toBe('INVALID_QUERY_PARAMETER')

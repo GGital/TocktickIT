@@ -1,13 +1,21 @@
-import { afterAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import request from 'supertest'
 import app from '../../src/app.js'
 import { prisma } from '../../src/prisma.js'
+import { signInSeededUser, signOutAll } from '../helpers/session.js'
+
+// Lab 3: reference data requires an authenticated session (api-spec §3.5).
+let cookie: string
+beforeAll(async () => {
+  cookie = await signInSeededUser()
+})
 
 // Rows created here are deleted again so the suite is re-runnable against a seeded database.
 const inactiveCategoryName = 'ZZ Inactive Test Category'
 const inactiveSystemName = 'ZZ Inactive Test System'
 
 afterAll(async () => {
+  await signOutAll()
   await prisma.category.deleteMany({ where: { name: inactiveCategoryName } })
   await prisma.relatedSystem.deleteMany({ where: { name: inactiveSystemName } })
   await prisma.$disconnect()
@@ -15,7 +23,7 @@ afterAll(async () => {
 
 describe('API-01 GET /api/categories (AC-10, BR-45)', () => {
   it('returns the four seeded categories in id order', async () => {
-    const res = await request(app).get('/api/categories')
+    const res = await request(app).get('/api/categories').set('Cookie', cookie)
 
     expect(res.status).toBe(200)
     expect(res.body).toEqual([
@@ -29,7 +37,7 @@ describe('API-01 GET /api/categories (AC-10, BR-45)', () => {
   it('never returns an inactive category', async () => {
     await prisma.category.create({ data: { name: inactiveCategoryName, isActive: false } })
 
-    const res = await request(app).get('/api/categories')
+    const res = await request(app).get('/api/categories').set('Cookie', cookie)
 
     expect(res.status).toBe(200)
     expect(res.body.map((category: { name: string }) => category.name)).not.toContain(
@@ -38,7 +46,7 @@ describe('API-01 GET /api/categories (AC-10, BR-45)', () => {
   })
 
   it('forbids caching so one requester never sees another requester data', async () => {
-    const res = await request(app).get('/api/categories')
+    const res = await request(app).get('/api/categories').set('Cookie', cookie)
 
     expect(res.headers['cache-control']).toBe('no-store')
   })
@@ -46,7 +54,7 @@ describe('API-01 GET /api/categories (AC-10, BR-45)', () => {
 
 describe('API-02 GET /api/related-systems (AC-10, BR-45)', () => {
   it('returns at least the seven seeded systems in alphabetical order', async () => {
-    const res = await request(app).get('/api/related-systems')
+    const res = await request(app).get('/api/related-systems').set('Cookie', cookie)
 
     expect(res.status).toBe(200)
     expect(res.body.length).toBeGreaterThanOrEqual(7)
@@ -60,7 +68,7 @@ describe('API-02 GET /api/related-systems (AC-10, BR-45)', () => {
   it('never returns an inactive related system', async () => {
     await prisma.relatedSystem.create({ data: { name: inactiveSystemName, isActive: false } })
 
-    const res = await request(app).get('/api/related-systems')
+    const res = await request(app).get('/api/related-systems').set('Cookie', cookie)
 
     expect(res.body.map((system: { name: string }) => system.name)).not.toContain(
       inactiveSystemName,

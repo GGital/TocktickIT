@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import request from 'supertest'
 import app from '../../src/app.js'
 import { prisma } from '../../src/prisma.js'
+import { asUser, signIn } from '../helpers/session.js'
 
 const emailA = 'my-tickets-a@toktickit.test'
 const emailB = 'my-tickets-b@toktickit.test'
@@ -16,7 +17,7 @@ const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const
 const list = (query = '', requesterId: number = requesterA) =>
   request(app)
     .get(`/api/tickets${query}`)
-    .set('X-Requester-Id', String(requesterId))
+    .set('Cookie', asUser(requesterId))
 
 const ids = (body: { data: { id: number }[] }) => body.data.map((ticket) => ticket.id)
 
@@ -44,6 +45,7 @@ async function seedTicket(
       summary: overrides.summary ?? `Fixture ticket number ${created} for the list suite`,
       description: overrides.description ?? 'Baseline description used by the my-tickets suite.',
       requestedPriority: overrides.requestedPriority ?? 'MEDIUM',
+      itPriority: overrides.requestedPriority ?? 'MEDIUM',
       // createdAt is set explicitly so sorting and paging are deterministic.
       createdAt: overrides.createdAt ?? new Date(Date.UTC(2026, 0, created)),
     },
@@ -52,19 +54,21 @@ async function seedTicket(
 
 beforeAll(async () => {
   const [a, b] = await Promise.all([
-    prisma.requesterUser.upsert({
+    prisma.user.upsert({
       where: { email: emailA },
-      update: { isActive: true },
-      create: { email: emailA, fullName: 'List Owner A', department: 'QA' },
+      update: { isActive: true, mustChangePassword: false },
+      create: { email: emailA, fullName: 'List Owner A', department: 'QA', passwordHash: 'unusable-lab2-fixture', mustChangePassword: false },
     }),
-    prisma.requesterUser.upsert({
+    prisma.user.upsert({
       where: { email: emailB },
-      update: { isActive: true },
-      create: { email: emailB, fullName: 'List Owner B', department: 'QA' },
+      update: { isActive: true, mustChangePassword: false },
+      create: { email: emailB, fullName: 'List Owner B', department: 'QA', passwordHash: 'unusable-lab2-fixture', mustChangePassword: false },
     }),
   ])
   requesterA = a.id
   requesterB = b.id
+  // Lab 3: identity is the session, not the retired X-Requester-Id header (BR-18, BR-58).
+  await Promise.all([signIn(requesterA), signIn(requesterB)])
 
   categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { id: 'asc' } })
   systems = await prisma.relatedSystem.findMany({ where: { isActive: true }, orderBy: { id: 'asc' } })
@@ -85,7 +89,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.ticket.deleteMany({ where: { requesterId: { in: [requesterA, requesterB] } } })
-  await prisma.requesterUser.deleteMany({ where: { email: { in: [emailA, emailB] } } })
+  await prisma.user.deleteMany({ where: { email: { in: [emailA, emailB] } } })
   await prisma.$disconnect()
 })
 

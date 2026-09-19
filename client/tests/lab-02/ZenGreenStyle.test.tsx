@@ -6,9 +6,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import '../../src/styles/zen-theme.css'
 import AppRoutes from '../../src/AppRoutes'
-import Badge from '../../src/components/Badge'
+import PriorityBadge from '../../src/components/PriorityBadge'
+import StatusBadge from '../../src/components/StatusBadge'
 import Button from '../../src/components/Button'
-import { REQUESTER_ID_KEY } from '../../src/lib/requesterContext'
+import { isAuthMe, signedInRequester } from '../helpers/auth'
 
 // Vitest runs with the client project root as cwd.
 const srcDir = join(process.cwd(), 'src')
@@ -83,6 +84,8 @@ describe('STYLE-06 disabled and busy controls (ui-spec §2.1)', () => {
   })
 })
 
+// Lab 3 replaced the Lab 2 Badge kinds with PriorityBadge and StatusBadge (Lab 3 ui-spec §12); the Lab 2 rule —
+// own text plus the documented class — is asserted on the components that now render these badges.
 describe('STYLE-07 badges (AC-48, ui-spec §2.4)', () => {
   it.each([
     ['LOW', 'zen-badge-low'],
@@ -90,7 +93,7 @@ describe('STYLE-07 badges (AC-48, ui-spec §2.4)', () => {
     ['HIGH', 'zen-badge-high'],
     ['URGENT', 'zen-badge-urgent'],
   ] as const)('renders %s with its own text and documented class', (value, className) => {
-    const { container } = render(<Badge kind="priority" value={value} />)
+    const { container } = render(<PriorityBadge kind="requested" value={value} />)
     const badge = container.firstElementChild as HTMLElement
 
     expect(badge).toHaveClass('zen-badge', className)
@@ -99,11 +102,11 @@ describe('STYLE-07 badges (AC-48, ui-spec §2.4)', () => {
   })
 
   it('renders the NEW status badge with its own text', () => {
-    const { container } = render(<Badge kind="status" value="NEW" />)
+    const { container } = render(<StatusBadge value="NEW" />)
     const badge = container.firstElementChild as HTMLElement
 
     expect(badge).toHaveClass('zen-badge', 'zen-badge-new')
-    expect(badge.textContent).toBe('NEW')
+    expect(badge.textContent).toBe('New')
   })
 })
 
@@ -135,11 +138,7 @@ function renderCreateTicket() {
   vi.stubGlobal(
     'fetch',
     vi.fn((url: string) => {
-      if (url.startsWith('/api/requesters')) {
-        return Promise.resolve(
-          ok([{ id: 1, fullName: 'Nadia Charoen', email: 'n@t.test', department: 'Registrar' }]),
-        )
-      }
+      if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
       if (url.startsWith('/api/categories')) return Promise.resolve(ok([{ id: 2, name: 'Hardware' }]))
       if (url.startsWith('/api/related-systems')) {
         return Promise.resolve(ok([{ id: 7, name: 'Corporate Laptop' }]))
@@ -158,7 +157,6 @@ function renderCreateTicket() {
 describe('Create Ticket field styling (STYLE-02, 03, 04)', () => {
   beforeEach(() => {
     localStorage.clear()
-    localStorage.setItem(REQUESTER_ID_KEY, '1')
   })
 
   afterEach(() => vi.unstubAllGlobals())

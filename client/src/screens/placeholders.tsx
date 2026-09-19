@@ -1,5 +1,5 @@
-// Route placeholders for the Lab 2 screens. Each is replaced by its own issue;
-// they exist so the route skeleton and its links are real and navigable now.
+// Route placeholders for screens owned by a later issue. They exist so the routes, the role
+// navigation, and the role guard that point at them are real and navigable now.
 function Placeholder({ title }: { title: string }) {
   return (
     <div className="zen-card">
