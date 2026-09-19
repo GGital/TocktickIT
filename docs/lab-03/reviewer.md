@@ -3,7 +3,7 @@
 Repository under review: https://github.com/GGital/TocktickIT
 Branching: the engineering contract and every Lab 3 Issue were built on their own branch and merged into
 `lab3-staging` through a reviewed Pull Request. No commit was pushed directly to `main` or to `lab3-staging`.
-Review data below was read from the GitHub API on 17 September 2026.
+Review data below was read from the GitHub API on 19 September 2026.
 
 ## My Reviewer
 
@@ -58,9 +58,13 @@ request, and the two properties it named each ended with a dedicated test.
 | Partner GitHub username | [@MeldyRose](https://github.com/MeldyRose) |
 | Partner repository | https://github.com/MeldyRose/TokTickIT-Individual-Sprints |
 
-I reviewed all five Lab 3 Pull Requests on my partner's repository. Two were sent back with **Request changes**
-for security defects I reproduced against their running API, and both were fixed on the branch and re-approved.
-Every Pull Request ended with a formal GitHub **Approve** review.
+I reviewed all ten Lab 3 Pull Requests on my partner's repository. Six were approved on first submission. Four
+were sent back with **Request changes** — two for security defects, one for a React Rules-of-Hooks fault and one
+for a broken build — and each was reproduced first, against their running API or in their own test runner, before
+I asked for anything. Three of the four were fixed on the branch and re-approved; the fourth was raised this
+morning and is still with them.
+
+Every review was made from a running copy of their branch, not from reading the diff alone.
 
 | Pull Request I reviewed | Comment I gave | Their response |
 |---|---|---|
@@ -70,10 +74,17 @@ Every Pull Request ended with a formal GitHub **Approve** review.
 | [#42](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/42) — re-review after the fix | **Approved 15 Sept.** Checked the fix and the guard test, not just the reply: "Login response is now { user: userProfile } only — token no longer leaks into the JSON body … Test added (auth.api.test.ts:51): `expect(res.body).not.toHaveProperty("token")` — locks the fix in so it can't silently regress." | Merged 15 Sept. |
 | [#43](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/43) — login and mandatory password change UI | **Approved 16 Sept.** "Verified in browser against a live seeded environment": the login states, that an initial-password account is blocked behind the change modal with the background inert ("verified clicks behind the overlay don't leak through"), the live password checklist, and the header after a successful change. Attached working screenshots. | Merged 16 Sept. |
 | [#44](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/44) — ticket screens on the authenticated identity, and comments | **Changes requested 17 Sept.** One blocking authentication bypass, shown with requests made against their API without any session cookie: `resolveAuthUser()` fell back to the `X-Requester-Id` header and even invented a user for an unknown id, so `GET /api/tickets` with `X-Requester-Id: admin-user-001` returned all 12 Tickets and a guessed staff id returned Internal Note content. Pointed out why their AC-03 test missed it — "it only sends the header together with a valid session" — and asked for header-only tests expecting `401`. Also listed three should-fix items (missing-identity `400` instead of `401`, "Problem Appears Resolved" accepted on closed Tickets, and staff status changes skipping the transition matrix). | They replied: "I refactored the auth resolver to rely strictly on session cookies and return `401` Unauthorized whenever a session is missing … cleaned up the client code in `api.ts` and `AuthContext.tsx` to completely drop `localStorage` identity fallbacks and headers … fixed the status handling … added dedicated security probing tests in `requester-regression.api.test.ts`." |
-| [#44](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/44) — re-review after the fix | **Approved 17 Sept.** Re-probed the running API: inactive and logged-out sessions answer `401`; ownership (one Requester sees 1 Ticket, another 2, IT Staff all 12, cross-owner reads `404`); Internal Notes `403` for Requesters even on their own Ticket; comment length bounds. Left two non-blocking clean-ups: "`GET /api/requesters` has no login check" and "The client still sends `X-Requester-Id` in 7 helpers." | Approved and open at the time of writing, awaiting merge into their `lab3-staging`. |
+| [#44](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/44) — re-review after the fix | **Approved 17 Sept.** Re-probed the running API: inactive and logged-out sessions answer `401`; ownership (one Requester sees 1 Ticket, another 2, IT Staff all 12, cross-owner reads `404`); Internal Notes `403` for Requesters even on their own Ticket; comment length bounds. Left two non-blocking clean-ups: "`GET /api/requesters` has no login check" and "The client still sends `X-Requester-Id` in 7 helpers." | Merged 17 Sept. |
+| [#45](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/45) — IT Staff Ticket Queue API and responsive UI | **Approved 17 Sept.** Exercised the queue against their seeded database rather than reading it: "IT Staff see all 45 tickets, a Requester sees only their own 2. A Requester passing `owner=me` or `owner=staff-user-001` still gets only their own scope." Also checked case-insensitive search, each filter and combination, both sort directions, non-overlapping pages with correct metadata, and that at 375 px the table becomes stacked cards with `scrollWidth === clientWidth === 375`. | Merged 18 Sept. |
+| [#46](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/46) — ownership, IT Priority and status workflow | **Approved 17 Sept.** Walked one ticket through all fifteen transition cases against the running server and reported each: the permitted chain `NEW → OPEN → IN_PROGRESS → WAITING_FOR_REQUESTER → RESOLVED → REOPENED → RESOLVED → CLOSED`, and the refusals `NEW → CLOSED`, `OPEN → NEW`, `CLOSED → REOPENED` and the rest, with `CLOSED` and `CANCELLED` terminal. Confirmed `requestedPriority` stayed `MEDIUM` while `itPriority` changed, and that moving the matrix into `statusMatrix.ts` removed the copy inlined in `app.ts`. | Merged 18 Sept. |
+| [#47](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/47) — public comments and role-restricted internal notes | **Changes requested 18 Sept.** The backend passed every probe, but `InternalNotesSection` returned early *above* its `useEffect`, so the component ran six hooks while `user` was `null` and seven once `/api/auth/me` resolved. I reproduced it — "Error: Rendered more hooks than during the previous render" — explained that it only survives today because nothing imports the component yet, gave the diff that computes `isStaff` and moves the `return null` below the hooks, and asked for a test that renders with `user: null` first. | They applied the fix and added the auth-loading test. |
+| [#47](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/47) — re-review after the fix | **Approved 18 Sept.** Re-ran the reproduction and the suites, and confirmed no request is fired for a Requester or while auth is still loading, so BR-04 still holds. | Merged 18 Sept. |
+| [#48](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/48) — user management API and UI | **Approved 18 Sept**, with one test-only fix requested. Verified the role matrix, duplicate emails in mixed case, both Administrator safety rules, password reset, and that `destroyUserSessions()` really kills a live session (`/api/auth/me` going `200 → 401`). Then showed their BR-18 test was state-dependent: with two active Administrators it deactivated the wrong one and returned `401` instead of `400` — "1 active admin: 13/13 pass; 2 active admins: 1 failed" — and proposed pinning the test to the authenticated account inside `try/finally`. | They fixed the test and disabled the self/last-Administrator controls in the modal. |
+| [#48](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/48) — confirmation after the fix | **Approved 18 Sept.** Re-ran the full server suite in parallel with two active Administrators present — the exact condition that used to fail — and got 86/86, with both accounts still active afterwards, so nothing leaks into later runs. | Merged 18 Sept. |
+| [#49](https://github.com/MeldyRose/TokTickIT-Individual-Sprints/pull/49) — E2E integration testing and release validation | **Changes requested 19 Sept.** `npm run build` fails, because the build is `tsc && vite build` and the new `Responsive.test.tsx` has three type errors: `'"src/api"' has no exported member 'AdminUserListResponse'`, and `currentUserRole` and `currentAdminId` are not props of the components they are passed to. | Open at the time of writing, waiting on their fix. |
 
 ## Kanban
 
-Every Lab 3 Issue from #43 to #59 moved to **Done** on the GitHub Project board as its Pull Request merged; all
-seventeen are closed. #60 (this documentation) and #61 (release integration) are the two still open at the time
-of writing.
+Lab 3 has eighteen Issues: #43, the engineering contract, and #45 – #61 from the backlog it produced. Each moved
+to **Done** on the GitHub Project board as its Pull Request merged, and sixteen are now closed — #43 and #45 – #59.
+The two still open are #60, this documentation pass, and #61, the release of `lab3-staging` into `main`.

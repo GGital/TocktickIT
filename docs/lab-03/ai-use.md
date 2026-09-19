@@ -6,8 +6,8 @@ smallest solution that works.
 
 The work ran in two sessions with two roles:
 - **Specification agent session** (12–14 Sept): turned the stakeholder request into the four contract documents in
-  `docs/lab-03/`, then broke the contract into GitHub Issues #45–#61 and put them in order.
-- **Coding agent session** (13–17 Sept): implemented those Issues one at a time as the software engineer, each on its
+  `docs/lab-03/`, then broke the contract into the seventeen GitHub Issues #45–#61 and put them in order.
+- **Coding agent session** (13–19 Sept): implemented those Issues one at a time as the software engineer, each on its
   own branch. The agent wrote the tests before the code and confirmed they failed first. I committed, pushed, and
   opened every Pull Request myself.
 
@@ -21,12 +21,12 @@ lines. Most implementation prompts were therefore just "Complete this issue" fol
 | Prompt Name | Actual Prompt Text |
 |---|---|
 | Assign the specification role | *You're Specification AI Agent who are specialized at transform stakeholder requests provided into the engineering contract until the requirements, business rules, acceptance criteria, and test scenarios are sufficiently detailed and complete before implementation begins. Your task: You're required to transform the given stakeholder request into engineering contract with the format of what is provided* (followed by the Lab 3 stakeholder request) *You may look into the document of the previous lab to see the format of how it should be and what it should be covered* |
-| | **My Reflection:** This was the Lab 2 prompt with one change: I pointed at the previous lab's documents instead of pasting a template. As a result, the Lab 3 contract kept the Lab 2 numbering style (FR, BR, AC, and A-nn assumptions) and extended the existing documents rather than starting over. The agent read the handout, the Lab 2 contract, and the current code before writing. It then asked four questions instead of seventeen, because Lab 2 had already settled most of the ground. |
+| | **My Reflection:** This was the Lab 2 prompt with one change: I pointed at the previous lab's documents instead of pasting a template. As a result, the Lab 3 contract kept the Lab 2 numbering style (FR, BR, AC, and A-nn assumptions) and extended the existing documents rather than starting over. The agent read the Lab 2 contract, and the current code before writing. It then asked four questions instead of seventeen, because Lab 2 had already settled most of the ground. |
 | Override one recommended default | Answers to the agent's four questions: *All four docs (Recommended)* · *httpOnly session cookie + DB Session table (Recommended)* · *node:crypto scrypt (Recommended)* · *Full IT Staff powers + user admin* (the recommendation was *Read-only on tickets + full user admin*) |
 | | **My Reflection:** I accepted three recommendations and overrode the fourth. The handout lets an Administrator be a Ticket Owner and read Internal Notes, so read-only Tickets would have contradicted it. This one answer shaped the authorization matrix, the owner select (active IT Staff *or* Administrator), and the last-Administrator rule. Choosing a server-side session over a JWT in `localStorage` also paid off later: it is exactly the XSS issue I flagged in my partner's PR #42. |
 | Turn the contract into a backlog | *I would like you to list issues with the md of them* |
 | | **My Reflection:** This returned 17 Issues, each with bullets, the real test IDs from `tests.md`, the AC numbers covered, and one `Exit:` sentence. It matched the style of my Lab 2 Issues without being told. Those `Exit:` lines were the most useful output of the whole sprint. Every one is a single observable fact, for example "two overlapping deactivations of the last two Administrators still leave one active". That made it clear when an Issue was really done. |
-| Order the work, then parallelise it | *From the provided issues, I would like you to provide the order of issues for implementation* → *Is there something that can be done in parallel? I would like to this faster* |
+| Order the work, then parallelise it | *From the provided issues, I would like you to provide the order of issues for implementation* and *Is there something that can be done in parallel? I would like to this faster* |
 | | **My Reflection:** The first answer was one long dependency chain. The second one was better because the agent checked what was actually merged instead of guessing. It found that #46 had mounted `requireSession` only on `/api/auth`, so #47 was small and was the only thing the backend waited on. It split the rest into a backend lane and a screens lane that meet at `api-spec.md`, since component tests mock `fetch` and a screen does not need its API merged. That is why PRs #64–#71 could all be reviewed on 15 September. |
 
 ### Coding Agent
@@ -45,22 +45,3 @@ lines. Most implementation prompts were therefore just "Complete this issue" fol
 | | **My Reflection:** From here on, each PR draft showed the red run before the green one, plus a mutation check. The agent broke the code on purpose and confirmed that a test failed. This caught weak tests that were passing for the wrong reason. In #59, the concurrent last-Administrator test first stopped at the first refusal, so removing the advisory lock still passed. In this issue, the STYLE-01 colour scan matched no rules under jsdom and passed on nothing. A RESP-01 table check also ran before the data loaded. Each was rewritten until the deliberate break made it fail. Without the mutation step, all three would have been green and useless. |
 | Close the sprint with evidence | *I would like you to complete this issue Visual inspection and documentation · Complete the `ui-spec.md` §13 visual checklist against the captured screenshots, not from memory …* *Exit: every checklist item names the evidence file that proves it.* *You may look into previous docs to see repo that I have given reviews and information* |
 | | **My Reflection:** "Not from memory" and "names the evidence file" made the agent look at the screenshots instead of the code. Doing that found D-01: the Requester's My Tickets table hid its status column at tablet width, and RESP-01 had missed it. It also found two checklist lines with no test behind them (keyboard operation of the Queue filters and `aria-required` on the new forms), and tests were added instead of the claims being softened. Running the README from a fresh clone found that npm 11 blocks Prisma's install scripts, which would have stopped anyone setting up the project. It also stopped at Prisma's safety guard on `migrate reset` instead of working around it, and left that command for me to run. |
-
-## Overall Reflection
-
-**Specification agent.** Asking for questions first mattered less in Lab 3 because Labs 1 and 2 had settled most
-decisions. The real value was in the backlog. Seventeen Issues, each with test IDs and a one-sentence `Exit:`,
-turned the rest of the sprint into mostly copy and paste. My one override (Administrator ticket powers) shows why a
-recommended default still needs a human to check it against the handout.
-
-**Coding agent.** The agent was fast and consistent. Its most useful habit, though, was checking its own tests with
-mutations, and I only got that reliably after asking for TDD explicitly. The failures it caught were never in
-feature code. They were tests that could not fail: a race test that stopped early, a style scan that found no
-rules, and a layout check that ran too soon. I would ask for mutation checks from the first Issue next time. The
-other lesson was about verification environments. The shared development database had hundreds of test-run
-Tickets, so the final screenshots and test outputs come from a clean clone with a fresh database. Only that setup
-exposed the npm 11 install problem.
-
-**Where I stayed in charge.** I kept every commit, push, Pull Request, merge, and destructive database command. I
-also made every choice between two valid designs. The agent raised each of those choices as a question instead of
-deciding for me.
