@@ -636,52 +636,103 @@ Deleted in Lab 3: `RequesterGuard`, `useCurrentRequester`, `requesterContext`, a
 
 ## 13. Visual inspection checklist
 
-Completed against the captured screenshots in §14, not from memory. Every box starts unchecked and is ticked
-only from real evidence, naming the file that proves it.
+Completed on 17 September 2026 against the screenshots in §14, opened and read one by one — not from memory.
+Every box names the file that proves it; paths are relative to `artifacts/lab-03/screenshots/`. A 🔍 marks a
+property a still image cannot show, which is instead proven by the named automated test. The capture came from a
+clean clone of `lab3-staging` running against a freshly migrated and seeded database (`tests.md` §6.5).
 
 **Colour and theme**
-- [ ] Every Lab 3 screen resolves its colours to Zen Green tokens; no hard-coded value was introduced
-- [ ] The Login and Change Password cards match the Lab 2 card treatment
-- [ ] The Internal Notes panel is distinguishable from the Public Comments panel in a greyscale rendering
+- [x] Every Lab 3 screen resolves its colours to Zen Green tokens; no hard-coded value was introduced —
+  `authentication/login-initial.desktop.png`, `staff-queue/loaded.desktop.png`, `staff-ticket-detail/loaded.tablet.png`,
+  `user-management/list.tablet.png`; 🔍 STYLE-01 (no colour literal outside the `:root` token block, every
+  `var(--…)` defined) and Lab 2 STYLE-08 (no literal in any component). This pass moved the last one, the dialog
+  backdrop, into a token (D-04)
+- [x] The Login and Change Password cards match the Lab 2 card treatment — `authentication/login-initial.desktop.png`,
+  `authentication/change-password-mandatory.tablet.png`: white `zen-card` surface, the same border, radius, and
+  shadow as the Lab 2 cards in `artifacts/lab-02/screenshots/ticket-detail/`
+- [x] The Internal Notes panel is distinguishable from the Public Comments panel in a greyscale rendering —
+  `staff-ticket-detail/greyscale.desktop.png`: with colour removed the Internal panel keeps its heavier left edge,
+  the "⚠ Not visible to the Requester" suffix, the "Internal — not visible to the Requester." label, and a lock on
+  the note; 🔍 STYLE-05, UI-26
 
 **Identity and navigation**
-- [ ] The shell shows the authenticated name and the role badge for all three roles
-- [ ] Each role sees only its permitted destinations, and no disabled placeholder for the others
-- [ ] Logout is visible at all three viewports without opening a menu
+- [x] The shell shows the authenticated name and the role badge for all three roles — Requester
+  `authentication/shell-signed-in.desktop.png`, IT Staff `staff-queue/loaded.desktop.png`, Administrator
+  `user-management/list.tablet.png`
+- [x] Each role sees only its permitted destinations, and no disabled placeholder for the others — Requester: My
+  Tickets, Create Ticket (`authentication/shell-signed-in.tablet.png`); IT Staff: Ticket Queue only
+  (`staff-queue/loaded.tablet.png`); Administrator: Ticket Queue, User Management (`user-management/list.tablet.png`);
+  🔍 UI-11 – UI-13 (absent from the DOM, not hidden)
+- [x] Logout is visible at all three viewports without opening a menu — `authentication/shell-signed-in.desktop.png`,
+  `…tablet.png`, `…mobile.png` (beside the closed ☰ menu button), `user-management/list.mobile.png`
 
 **Fields**
-- [ ] Read-only ticket fields on Staff Ticket Detail remain visually distinct from the editable operations panel
-- [ ] Required fields carry the red asterisk and `aria-required` on Login, Change Password, and the user dialog
-- [ ] Password rules are visible before typing on the Change Password screen
+- [x] Read-only ticket fields on Staff Ticket Detail remain visually distinct from the editable operations panel —
+  `staff-ticket-detail/loaded.tablet.png`, `staff-ticket-detail/invalid-transition.mobile.png`: values on the grey
+  read-only ground, controls on white; 🔍 STYLE-06
+- [x] Required fields carry the red asterisk and `aria-required` on Login, Change Password, and the user dialog —
+  `authentication/login-initial.desktop.png`, `authentication/change-password-mandatory.tablet.png`,
+  `user-management/last-administrator.mobile.png`; 🔍 UI-36 (`aria-required` on the Login fields, the three Change
+  Password fields, and every create-user field and group)
+- [x] Password rules are visible before typing on the Change Password screen —
+  `authentication/change-password-mandatory.tablet.png` (all three fields empty, rules already shown)
 
 **Validation and feedback**
-- [ ] Field-level messages sit immediately below their field on every new form
-- [ ] The login failure message is identical for a wrong password and for an inactive account
-- [ ] The duplicate-email, self-deactivation, and last-Administrator messages each appear in the right place
+- [x] Field-level messages sit immediately below their field on every new form —
+  `authentication/change-password-validation.mobile.png`, `user-management/duplicate-email.desktop.png`
+- [x] The login failure message is identical for a wrong password and for an inactive account —
+  `authentication/login-invalid.mobile.png` and `authentication/login-inactive.mobile.png` (same callout, same
+  words); 🔍 E2E-02 compares the three failure screens byte for byte
+- [x] The duplicate-email, self-deactivation, and last-Administrator messages each appear in the right place —
+  below Email in `user-management/duplicate-email.desktop.png`; at the top of the dialog, controls reset, in
+  `user-management/self-deactivation.tablet.png` and `user-management/last-administrator.mobile.png` (a simulated
+  response — D-03)
 
 **Badges and states**
-- [ ] All eight status badges render with their documented treatment and readable text
-- [ ] Requested Priority and IT Priority are distinguishable by their label prefix alone
-- [ ] The "Requester says resolved" flag appears on both the Queue row and Ticket Detail
+- [x] All eight status badges render with their documented treatment and readable text —
+  `staff-queue/seeded-statuses.desktop.png`, `…tablet.png`, `…mobile.png` (New, Open, In Progress, Waiting for
+  Requester, Resolved ✓, Closed, Reopened, Cancelled on the nine seeded Tickets); 🔍 STYLE-02
+- [x] Requested Priority and IT Priority are distinguishable by their label prefix alone —
+  `staff-ticket-detail/loaded.tablet.png` ("IT: HIGH" beside "Requested: HIGH"),
+  `staff-ticket-detail/greyscale.desktop.png` ("IT: URGENT" beside "Requested: MEDIUM" with no colour); 🔍 STYLE-03
+- [x] The "Requester says resolved" flag appears on both the Queue row and Ticket Detail — row:
+  `staff-queue/seeded-statuses.desktop.png` (TKT-2026-000005) and `…mobile.png`; detail:
+  `staff-ticket-detail/loaded.tablet.png`; 🔍 E2E-07
 
 **Layout integrity**
-- [ ] No horizontal page scroll at 1280 × 800, 820 × 1180, or 375 × 812 on any Lab 3 screen
-- [ ] No clipped label, no overlapping message, no hidden primary action
-- [ ] The Queue table and the user table both truncate long values rather than widening the page
+- [x] No horizontal page scroll at 1280 × 800, 820 × 1180, or 375 × 812 on any Lab 3 screen — every file in §14 was
+  captured only after the check passed; 🔍 RESP-01 (`scrollWidth <= clientWidth` on eight screens at three
+  viewports)
+- [x] No clipped label, no overlapping message, no hidden primary action — `staff-ticket-detail/loaded.tablet.png`,
+  `user-management/last-administrator.mobile.png` (full-screen dialog, actions pinned),
+  `authentication/shell-signed-in.tablet.png` after D-01; 🔍 RESP-01 (no table hiding a column) and RESP-05
+- [x] The Queue table and the user table both truncate long values rather than widening the page —
+  `staff-queue/loaded.desktop.png` (Summary ellipsis), `user-management/list.tablet.png` (Email ellipsis),
+  `user-management/list.mobile.png`
 
 **Accessibility**
-- [ ] Focus is visible on every control of every new screen
-- [ ] Login, Change Password, and the Queue filters are fully operable from the keyboard
-- [ ] Sortable Queue headers expose `aria-sort`
+- [x] Focus is visible on every control of every new screen — `authentication/login-initial.desktop.png` (focus ring
+  on the email field), `authentication/change-password-validation.mobile.png` (New password); 🔍 STYLE-07 (a
+  `:focus-visible` outline on password fields, reveal toggles, Queue sort headers, and dialog actions, and no
+  `outline: none` without a replacement)
+- [x] Login, Change Password, and the Queue filters are fully operable from the keyboard — 🔍 UI-05 (Login from the
+  keyboard alone), UI-36 (Change Password submitted from the keyboard; every Queue filter reached with Tab), and the
+  AC-67 test in `e2e/lab-03/staff-ticket-flow.spec.ts` (Queue search, Status preset, and IT Priority operated by
+  keyboard in a real browser); a still image cannot show key presses
+- [x] Sortable Queue headers expose `aria-sort` — `staff-queue/loaded.desktop.png` (the ▼ on IT Priority is the
+  visible half); 🔍 UI-22 and E2E-04 assert the attribute
 
 ### 13.1 Deviations found during this pass
 
-_To be completed during the visual inspection. Each deviation is recorded as `D-01`, `D-02`, … with the screen,
-the impact, and the verdict, and mirrored into `tests.md` §4.1._
+Mirrored into `tests.md` §4.2.
 
-| # | Deviation | Where | Impact |
-|---|---|---|---|
-| | | | |
+| # | Deviation | Where | Impact | Verdict |
+|---|---|---|---|---|
+| D-01 | At 820 px the Lab 2 My Tickets table, now under the Lab 3 shell, pushed its **Current Status** column past the card edge — reachable only by scrolling inside the card — and wrapped each Ticket Number onto three lines. The page itself did not scroll, so RESP-01 as first written passed. The desktop table was also 21 px wider than its card | `authentication/shell-signed-in.tablet.png` (before: the version in commit `0251833`) | A Requester on a tablet could not see a Ticket's status without scrolling sideways inside the table | **Fixed.** Ticket Numbers no longer wrap and the Summary truncates at each width (`zen-tickets`); both tables now fit with 0 px hidden. RESP-01 additionally fails if any table overflows its card — confirmed to fail with the fix removed |
+| D-02 | Pagination wraps onto a second row when there are many pages | `authentication/shell-signed-in.tablet.png` (11 pages), `staff-queue/loaded.mobile.png` (6 pages) | Cosmetic; every page button stays visible and reachable, nothing overlaps | **Accepted.** The Lab 2 `Pagination` component, unchanged by Lab 3; a compact page range is a candidate for a later sprint |
+| D-03 | The `last-administrator` capture answers its PATCH with the API's own `409` body instead of reaching the refusal for real | `user-management/last-administrator.*.png` | None on behaviour; the image is staged | **Accepted.** Over HTTP the refusal happens only when two Administrators remove each other at once. E2E-09 performs that race for real in two browsers, and API-94 proves it at the API |
+| D-04 | The dialog `::backdrop` colour was a literal `rgba(…)` outside the `:root` token block | `client/src/styles/zen-theme.css` (found by STYLE-01, visible behind every dialog, e.g. `user-management/duplicate-email.desktop.png`) | None visually; broke the one-file token rule of §1.1 | **Fixed.** Now `var(--zen-backdrop)`, the same value, so no new colour was introduced |
+| D-05 | Evidence captures exist beyond the §14 inventory: `staff-queue/seeded-statuses.*` and `staff-ticket-detail/greyscale.desktop.png` (added by this pass), the `requester-ticket-detail/` folder (#56), and `authentication/change-password-success`, `forbidden`, `shell-it-staff`, `shell-administrator` (#49, #50) | `artifacts/lab-03/screenshots/` | None; §14 still holds in full (RESP-06) | **Accepted.** No §14 state shows all eight statuses together, the greyscale proof, the Requester conversation, or the shell for each role, so each was kept as evidence |
 
 ---
 

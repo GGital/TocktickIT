@@ -282,7 +282,7 @@ export default function MyTickets() {
         // does not jump between pages (ui-spec §6.5).
         <div aria-busy={loading || undefined} className={loading ? 'zen-dimmed' : undefined}>
           <div className="zen-card d-none d-md-block p-0 overflow-x-auto">
-            <table className="table mb-0">
+            <table className="table mb-0 zen-tickets">
               <thead>
                 <tr>
                   <th scope="col">Ticket Number</th>

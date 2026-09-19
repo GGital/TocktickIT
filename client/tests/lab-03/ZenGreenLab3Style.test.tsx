@@ -201,3 +201,102 @@ describe('Staff Ticket Detail surfaces (Lab 3 ui-spec §8)', () => {
     })
   })
 })
+
+// --- STYLE-01 and STYLE-07 read the theme itself: jsdom keeps the declared values, so the stylesheet is the evidence.
+
+type Rule = CSSStyleRule & { cssRules?: CSSRuleList }
+
+/** Every style rule in the loaded stylesheets, including those nested inside @media blocks. */
+const allStyleRules = () => {
+  const walk = (rules: CSSRuleList): CSSStyleRule[] =>
+    // A style rule is checked first: jsdom gives every style rule a (nesting) cssRules list too.
+    [...rules].flatMap((rule) => ('selectorText' in rule ? [rule as CSSStyleRule] : (rule as Rule).cssRules ? walk((rule as Rule).cssRules!) : []))
+  return [...document.styleSheets].flatMap((sheet) => walk(sheet.cssRules))
+}
+
+const declarations = (rule: CSSStyleRule) =>
+  Array.from({ length: rule.style.length }, (_, index) => rule.style[index]).map((property) => [property, rule.style.getPropertyValue(property)] as const)
+
+const COLOUR_PROPERTY = /color|background|border|outline|shadow|fill|stroke/
+const COLOUR_LITERAL = /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklch)\(|\b(?:white|black|red|green|blue|gray|grey|orange|yellow)\b/i
+
+describe('STYLE-01 every colour resolves to a Zen Green token (AC-65)', () => {
+  it('declares no colour literal outside the :root token block', () => {
+    // Guards against a walker that silently finds nothing: the theme has well over a hundred rules.
+    expect(allStyleRules().length).toBeGreaterThan(100)
+    const literals = allStyleRules()
+      .filter((rule) => rule.selectorText !== ':root')
+      .flatMap((rule) =>
+        declarations(rule)
+          .filter(([property, value]) => COLOUR_PROPERTY.test(property) && COLOUR_LITERAL.test(value))
+          .map(([property, value]) => `${rule.selectorText} { ${property}: ${value} }`),
+      )
+    expect(literals).toEqual([])
+  })
+
+  it('references only custom properties that the :root block defines', () => {
+    const root = allStyleRules().find((rule) => rule.selectorText === ':root')!
+    const defined = new Set(declarations(root).map(([property]) => property))
+    const referenced = allStyleRules().flatMap((rule) =>
+      declarations(rule).flatMap(([, value]) => [...value.matchAll(/var\((--[\w-]+)/g)].map((match) => match[1])),
+    )
+    expect(referenced.length).toBeGreaterThan(50)
+    expect([...new Set(referenced)].filter((name) => !defined.has(name))).toEqual([])
+  })
+})
+
+describe('STYLE-07 focus stays visible on the Lab 3 controls (AC-67)', () => {
+  /** The :focus-visible rule that would style this element, with its outline value. */
+  const focusOutline = (element: Element) => {
+    for (const rule of allStyleRules()) {
+      for (const part of rule.selectorText.split(',')) {
+        if (!part.includes(':focus-visible')) continue
+        const base = part.replace(/:focus-visible/g, '').trim() || '*'
+        const outline = rule.style.getPropertyValue('outline')
+        if (element.matches(base) && outline && !/^(none|0)/.test(outline)) return outline
+      }
+    }
+    return null
+  }
+
+  it('gives password fields, reveal toggles, Queue sort headers, and dialog actions a visible focus ring', async () => {
+    const { default: PasswordField } = await import('../../src/components/PasswordField')
+    const { default: ConfirmDialog } = await import('../../src/components/ConfirmDialog')
+    render(
+      <>
+        <PasswordField id="style07-password" label="Password" />
+        <table>
+          <thead>
+            <tr>
+              <th aria-sort="descending">
+                <button type="button" className="zen-sort">IT Priority</button>
+              </th>
+            </tr>
+          </thead>
+        </table>
+        <ConfirmDialog open title="Resolve ticket?" confirmLabel="Resolve ticket" onConfirm={() => undefined} onCancel={() => undefined}>
+          <p>Body</p>
+        </ConfirmDialog>
+      </>,
+    )
+
+    const controls = {
+      'password field': screen.getByLabelText('Password'),
+      'reveal toggle': screen.getByRole('button', { name: 'Show password' }),
+      'Queue sort header': screen.getByRole('button', { name: 'IT Priority' }),
+      'dialog cancel': screen.getByRole('button', { name: 'Cancel', hidden: true }),
+      'dialog confirm': screen.getByRole('button', { name: 'Resolve ticket', hidden: true }),
+    }
+    for (const [name, element] of Object.entries(controls)) {
+      expect(focusOutline(element), name).toContain('var(--zen-focus-ring)')
+    }
+  })
+
+  it('never removes an outline without putting a replacement indicator in its place', () => {
+    const removed = allStyleRules().filter((rule) =>
+      declarations(rule).some(([property, value]) => /^outline(-style|-width)?$/.test(property) && /^(none|0(px)?)$/.test(value.trim())),
+    )
+    const unreplaced = removed.filter((rule) => !declarations(rule).some(([property]) => property === 'box-shadow' || property.startsWith('border')))
+    expect(unreplaced.map((rule) => rule.selectorText)).toEqual([])
+  })
+})
