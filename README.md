@@ -66,11 +66,57 @@ package is approved. `server/package.json` approves Prisma's and esbuild's scrip
 every Ticket, Attachment, and identifier survives. Each migrated Lab 2 user becomes a Requester whose password
 is the local-development initial password below and who must change it at first login.
 
+#### Upgrading to Lab 4 — back up first
+
+The Lab 4 migration (`20261020100000_add_actions_taken_and_workflow_fields`) is additive: it adds the
+`ActionTaken` table and the Ticket columns `version`, `resolvedAt`, and `publicActivityAt`, and keeps every
+existing row and id. On a database that already holds data, take a backup **before** `migrate deploy`:
+
+```bash
+pg_dump --format=custom --file=toktickit-before-lab4.dump "postgresql://USER:PASSWORD@localhost:5432/toktickit"
+```
+
+The backfill sets `version = 1`, sets `resolvedAt = updatedAt` for Tickets already `RESOLVED` or `CLOSED`
+(approximate — the best evidence a Lab 3 database holds), and sets `publicActivityAt` to the latest of the Ticket's
+creation, its latest Public Comment, and its latest attachment upload or removal. Internal Notes never count.
+
+#### Recovering from the Lab 4 migration
+
+`prisma/migrations/20261020100000_add_actions_taken_and_workflow_fields/down.sql` reverses the migration and
+restores the exact Lab 3 schema. It drops every Action Taken, keeps all Lab 3 data, and removes the migration's
+row from `_prisma_migrations`, so a later `migrate deploy` applies it again. `migrate deploy` never runs it.
+
+```bash
+npx prisma db execute --file prisma/migrations/20261020100000_add_actions_taken_and_workflow_fields/down.sql
+```
+
+`psql "postgresql://USER:PASSWORD@localhost:5432/toktickit" < prisma/migrations/20261020100000_add_actions_taken_and_workflow_fields/down.sql`
+does the same. `prisma migrate resolve --rolled-back` is not needed and does not work here — Prisma accepts it only
+for a migration that failed. If the database itself is damaged, restore the backup instead:
+
+```bash
+pg_restore --clean --if-exists --dbname="postgresql://USER:PASSWORD@localhost:5432/toktickit" toktickit-before-lab4.dump
+```
+
+#### Seed data
+
 The seed is idempotent — running it again creates no duplicates and changes no identifiers. It seeds
-**4 Categories**, **7 Related Systems**, **10 users** across the three roles, **9 Tickets** covering all eight
-statuses, all four IT Priorities, assigned and unassigned ownership, one Requester-flagged Ticket, and
-**9 messages** (Public Comments and Internal Notes). Re-running it returns every seeded account to the state in
-this table.
+**4 Categories**, **7 Related Systems**, **12 users** across the three roles, **10 Tickets** covering all eight
+statuses, all four IT Priorities, assigned and unassigned ownership, one Requester-flagged Ticket, one Ticket
+created today, **9 messages** (Public Comments and Internal Notes), and **11 Actions Taken**. Re-running it
+returns every seeded account to the state in this table and every seeded action to its documented content.
+
+The Actions Taken cover what the Lab 4 demonstration needs:
+
+| Ticket | Status | Actions | Shows |
+|---|---|---|---|
+| Registrar office printer shows offline | Open | 1 | Ready to resolve |
+| Library catalogue kiosk freezes on search | In Progress | 5 | Non-owner performer, completed follow-up, voided action, outstanding follow-up — resolution blocked |
+| VPN disconnects every few minutes | Waiting for Requester | 2 | — |
+| Grade submission app times out | Resolved | 1 | Resolved 2 days ago (inside the 7-day window) |
+| Install a PDF reader on the shared laptop | Closed | 1 | Completed follow-up; resolved 12 days ago (outside the window) |
+| Wi-Fi keeps disconnecting in the reading room | Reopened | 1 | — |
+| Projector in lecture room 3 shows no signal | New | 0 | Created today (Bangkok); kept today on every re-run |
 
 #### Local-development credentials
 
@@ -92,6 +138,8 @@ Every seeded account signs in with the password **`TokTick-Local-Dev-1`**.
 | `prasert.it@toktickit.dev` | IT Staff | Yes | Yes | Manual testing |
 | `former.it@toktickit.dev` | IT Staff | **No** | Yes | Inactive staff, never an eligible owner |
 | `admin@toktickit.dev` | Administrator | Yes | No | E2E Administrator |
+| `empty.requester@toktickit.dev` | Requester | Yes | No | All-zero Requester Dashboard (no Tickets) |
+| `quiet.it@toktickit.dev` | IT Staff | Yes | No | All-zero IT Staff counts (owns nothing, no actions) |
 
 The E2E suite re-arms `kittipong.w@` through the Administrator API before it uses it, so the account is back to
 "must change password" after every run.
