@@ -64,11 +64,19 @@ const listFor = (ticketId: number, visibility: MessageVisibility) =>
     select: messageSelect,
   })
 
-/** Appends one message and refreshes the Ticket's updatedAt in the same transaction. */
+/**
+ * Appends one message and refreshes the Ticket's updatedAt in the same transaction. Only a Public Comment moves
+ * publicActivityAt, so the Requester's ordering never reveals an Internal Note (BR-45).
+ */
 async function append(ticketId: number, authorId: number, visibility: MessageVisibility, body: string) {
+  const now = new Date()
   const [message] = await prisma.$transaction([
     prisma.ticketMessage.create({ data: { ticketId, authorId, visibility, body }, select: messageSelect }),
-    prisma.ticket.update({ where: { id: ticketId }, data: { updatedAt: new Date() }, select: { id: true } }),
+    prisma.ticket.update({
+      where: { id: ticketId },
+      data: { updatedAt: now, ...(visibility === 'PUBLIC' ? { publicActivityAt: now } : {}) },
+      select: { id: true },
+    }),
   ])
   return message
 }
@@ -134,7 +142,7 @@ export async function flagAppearsResolved(req: Request, res: Response) {
     // The "not yet flagged" condition is part of the update itself, so two simultaneous requests cannot both win.
     const { count } = await tx.ticket.updateMany({
       where: { id, requesterId, requesterResolvedFlaggedAt: null },
-      data: { requesterResolvedFlaggedAt: new Date() },
+      data: { requesterResolvedFlaggedAt: new Date(), publicActivityAt: new Date() },
     })
     if (count === 0) {
       const owned = await tx.ticket.findFirst({ where: { id, requesterId }, select: { id: true } })
