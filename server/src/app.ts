@@ -9,6 +9,14 @@ import {
   requireRole,
   resolveSession,
 } from './auth.js'
+import {
+  completeFollowUp,
+  createAction,
+  listRequesterActions,
+  listStaffActions,
+  updateAction,
+  voidAction,
+} from './actions.js'
 import { createUser, listUsers, setInitialPassword, updateUser } from './adminUsers.js'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
@@ -99,6 +107,9 @@ app.get('/api/tickets/:id', getTicket)
 app.get('/api/tickets/:id/comments', listComments)
 app.post('/api/tickets/:id/comments', postComment)
 
+// Actions Taken, read-only and non-voided, on the caller's own Ticket (api-spec §3.1, BR-42).
+app.get('/api/tickets/:id/actions', listRequesterActions)
+
 // --- Staff routes: the /api/staff role guard above has already refused a Requester (BR-23, A-16). ---
 app.get('/api/staff/tickets', listQueue)
 app.get('/api/staff/tickets/:id', getStaffTicket)
@@ -108,6 +119,12 @@ app.patch('/api/staff/tickets/:id/status', updateStatus)
 app.get('/api/staff/assignees', listAssignees)
 app.get('/api/staff/tickets/:id/internal-notes', listInternalNotes)
 app.post('/api/staff/tickets/:id/internal-notes', postInternalNote)
+// Actions Taken (api-spec §3.2 – §3.6). Voided, never deleted: there is deliberately no DELETE route (BR-21).
+app.get('/api/staff/tickets/:id/actions', listStaffActions)
+app.post('/api/staff/tickets/:id/actions', createAction)
+app.patch('/api/staff/tickets/:id/actions/:actionId', updateAction)
+app.post('/api/staff/tickets/:id/actions/:actionId/complete-follow-up', completeFollowUp)
+app.post('/api/staff/tickets/:id/actions/:actionId/void', voidAction)
 
 // --- Administrator routes: the /api/admin role guard above has already refused every other role (BR-22). There is
 // deliberately no DELETE: deactivation is the only removal mechanism (BR-53). ---
