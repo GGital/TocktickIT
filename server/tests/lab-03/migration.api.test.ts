@@ -66,6 +66,9 @@ const migrationDirectories = () =>
     .map((entry) => entry.name)
     .sort()
 
+/** Index of the first Lab 3 migration; everything before it is Lab 2, later labs follow it. */
+const lab3Start = () => migrationDirectories().findIndex((name) => name.endsWith(LAB3_MIGRATIONS[0]))
+
 describe('Lab 3 migrations (BR-55, BR-56)', () => {
   const emptyDb = 'toktickit_lab3_migrate_empty'
   const lab2Db = 'toktickit_lab3_migrate_lab2'
@@ -85,8 +88,9 @@ describe('Lab 3 migrations (BR-55, BR-56)', () => {
     dropDatabase(lab2Db)
   }, 60_000)
 
-  it('ships the three Lab 3 migrations last, in the documented order', () => {
-    const lab3 = migrationDirectories().slice(-3)
+  // Lab 4 migrations now follow these (Lab 4 BR-78 pattern: updated, not deleted).
+  it('ships the three Lab 3 migrations after Lab 2, in the documented order', () => {
+    const lab3 = migrationDirectories().slice(lab3Start(), lab3Start() + 3)
     expect(lab3.map((name) => name.replace(/^\d+_/, ''))).toEqual(LAB3_MIGRATIONS)
   })
 
@@ -100,7 +104,7 @@ describe('Lab 3 migrations (BR-55, BR-56)', () => {
       // Stage the Lab 2 state with the Lab 2 migrations alone, exactly as a Lab 2 deployment has it.
       lab2Only = mkdtempSync(path.join(tmpdir(), 'toktickit-lab2-'))
       cpSync('prisma/schema.prisma', path.join(lab2Only, 'schema.prisma'))
-      for (const name of migrationDirectories().filter((dir) => !LAB3_MIGRATIONS.some((m) => dir.endsWith(m)))) {
+      for (const name of migrationDirectories().slice(0, lab3Start())) {
         cpSync(path.join('prisma/migrations', name), path.join(lab2Only, 'migrations', name), { recursive: true })
       }
       cpSync('prisma/migrations/migration_lock.toml', path.join(lab2Only, 'migrations', 'migration_lock.toml'))
