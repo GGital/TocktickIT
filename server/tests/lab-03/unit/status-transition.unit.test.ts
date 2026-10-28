@@ -57,8 +57,10 @@ describe('UNIT-09 an unassigned Ticket (BR-30, api-spec §3.13 step 5)', () => {
     expect(isPermittedTransition('NEW', 'CANCELLED', false)).toBe(true)
   })
 
-  it.each(pairs)('%s → %s unassigned is permitted only when the matrix allows it and the target is OPEN or CANCELLED', (from, to) => {
-    const expected = MATRIX[from].includes(to) && (to === 'OPEN' || to === 'CANCELLED')
+  // Lab 4 BR-33 replaces api-spec §3.13 step 5: only IN_PROGRESS and WAITING_FOR_REQUESTER need an owner here.
+  // RESOLVED needs one too, but the resolution gate refuses it as UNASSIGNED (Lab 4 UNIT-02, API-31).
+  it.each(pairs)('%s → %s unassigned is permitted only when the matrix allows it and the target needs no owner', (from, to) => {
+    const expected = MATRIX[from].includes(to) && to !== 'IN_PROGRESS' && to !== 'WAITING_FOR_REQUESTER'
     expect(isPermittedTransition(from, to, false)).toBe(expected)
   })
 })
