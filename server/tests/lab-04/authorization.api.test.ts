@@ -27,15 +27,20 @@ const createBody = () => ({
   followUpRequired: false,
 })
 
-// Every Lab 4 route that exists so far. The dashboard routes join this list in #83.
+// Every Lab 4 route under /api/staff; with the two below, every protected Lab 4 route.
 const STAFF_ACTION_ROUTES: Route[] = [
   { method: 'get', path: (t) => `/api/staff/tickets/${t}/actions` },
   { method: 'post', path: (t) => `/api/staff/tickets/${t}/actions`, body: createBody() },
   { method: 'patch', path: (t, a) => `/api/staff/tickets/${t}/actions/${a}`, body: { expectedVersion: 1, result: 'Changed' } },
   { method: 'post', path: (t, a) => `/api/staff/tickets/${t}/actions/${a}/complete-follow-up`, body: { expectedVersion: 1 } },
   { method: 'post', path: (t, a) => `/api/staff/tickets/${t}/actions/${a}/void`, body: { expectedVersion: 1, reason: 'Probe' } },
+  { method: 'get', path: () => '/api/staff/dashboard' },
 ]
-const LAB4_ROUTES: Route[] = [{ method: 'get', path: (t) => `/api/tickets/${t}/actions` }, ...STAFF_ACTION_ROUTES]
+const LAB4_ROUTES: Route[] = [
+  { method: 'get', path: (t) => `/api/tickets/${t}/actions` },
+  { method: 'get', path: () => '/api/dashboard/requester' },
+  ...STAFF_ACTION_ROUTES,
+]
 
 const call = (route: Route, ticket: number, action: number, cookie?: string) => {
   const req = request(app)[route.method](route.path(ticket, action))
@@ -103,7 +108,7 @@ afterAll(async () => {
 })
 
 describe('Lab 4 authorization (BR-72, AC-18)', () => {
-  it('API-64 refuses a Requester on all five staff action routes of their own Ticket, writing nothing', async () => {
+  it('API-64 refuses a Requester on every staff route, including the actions of their own Ticket, writing nothing', async () => {
     const before = await snapshot()
 
     for (const route of STAFF_ACTION_ROUTES) {

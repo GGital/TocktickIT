@@ -209,7 +209,7 @@ export async function listTickets(req: Request, res: Response) {
     ...(query.categoryId ? { categoryId: query.categoryId } : {}),
     ...(query.relatedSystemId ? { relatedSystemId: query.relatedSystemId } : {}),
     ...(query.requestedPriority ? { requestedPriority: query.requestedPriority } : {}),
-    ...(query.status ? { status: query.status } : {}),
+    ...(query.statuses ? { status: { in: query.statuses } } : {}),
     // Filters and search combine with AND; the OR only spreads the term across
     // the three searchable columns (BR-35, BR-36).
     ...(query.search

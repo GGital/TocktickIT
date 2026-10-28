@@ -6,6 +6,7 @@ import { parseQueueQuery, STATUSES } from './queueQuery.js'
 import { isPermittedTransition } from './statusTransition.js'
 import { PRIORITIES, QueryParameterError } from './ticketQuery.js'
 import { findTicketDetail, parseId } from './tickets.js'
+import { followUpTickets, outstandingFollowUp } from './dashboard.js'
 
 /** QueueTicketSummary (api-spec §2.5): a name identifies the Requester; no email on a triage list. */
 const queueSelect = {
@@ -22,6 +23,8 @@ const queueSelect = {
   requesterResolvedFlaggedAt: true,
   createdAt: true,
   updatedAt: true,
+  // Lab 4 (api-spec §3.10): the follow-up badge.
+  _count: { select: { actions: { where: outstandingFollowUp } } },
 } as const
 
 /**
@@ -48,6 +51,7 @@ export async function listQueue(req: Request, res: Response) {
     ...(query.flaggedResolved !== undefined
       ? { requesterResolvedFlaggedAt: query.flaggedResolved ? { not: null } : null }
       : {}),
+    ...(query.followUp ? followUpTickets(query.followUp === 'mine' ? req.user!.id : undefined) : {}),
     ...(query.search
       ? {
           OR: [
@@ -72,9 +76,11 @@ export async function listQueue(req: Request, res: Response) {
 
   res.json({
     // A page past the end is an empty page with correct metadata, not an error (BR-62).
-    data: rows.map(({ requesterResolvedFlaggedAt, ...row }) => ({
+    data: rows.map(({ requesterResolvedFlaggedAt, _count, ...row }) => ({
       ...row,
       requesterResolvedFlagged: requesterResolvedFlaggedAt !== null,
+      // A cancelled Ticket's follow-ups stop counting anywhere (BR-50).
+      outstandingFollowUps: row.status === 'CANCELLED' ? 0 : _count.actions,
     })),
     meta: {
       page: query.page,
