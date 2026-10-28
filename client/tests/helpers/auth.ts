@@ -11,3 +11,6 @@ export const isAuthMe = (url: string) => url === '/api/auth/me'
 
 /** Lab 3 Ticket Detail also loads the Public Comment thread; Lab 2 suites answer it with an empty list. */
 export const isCommentThread = (url: string) => /^\/api\/tickets\/\d+\/comments$/.test(url)
+
+/** Lab 4 Ticket Detail also loads the Requester's Actions Taken; earlier suites answer it with an empty list. */
+export const isActionList = (url: string) => /^\/api\/tickets\/\d+\/actions$/.test(url)
