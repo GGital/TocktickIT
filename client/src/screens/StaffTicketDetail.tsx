@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import ActionsTakenPanel from '../components/ActionsTakenPanel'
 import Badge from '../components/Badge'
 import Button from '../components/Button'
 import Callout from '../components/Callout'
@@ -387,6 +388,9 @@ export default function StaffTicketDetail() {
           <Information ticket={ticket} />
         </div>
       </div>
+
+      {/* The work record sits between the ticket and the conversations (ui-spec §6.1). */}
+      <ActionsTakenPanel ticket={ticket} onChanged={() => loadTicket(true)} />
 
       <Conversation
         ticketId={ticket.id}

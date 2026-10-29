@@ -8,6 +8,7 @@ import Callout from '../components/Callout'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Conversation from '../components/Conversation'
 import EmptyState from '../components/EmptyState'
+import RequesterActionsList from '../components/RequesterActionsList'
 import { SkeletonCard } from '../components/Skeleton'
 import { ApiError, apiFetch } from '../lib/apiClient'
 import { useCurrentUser } from '../lib/auth'
@@ -233,6 +234,8 @@ export default function TicketDetail() {
         attachments={ticket.attachments}
         onChanged={loadTicket}
       />
+
+      <RequesterActionsList ticketId={ticket.id} />
 
       {/* One thread, because for a Requester there is only one kind of message. No Internal Notes panel, placeholder,
           or count of hidden messages exists here, and the notes route is never requested (Lab 3 ui-spec §6, BR-24). */}

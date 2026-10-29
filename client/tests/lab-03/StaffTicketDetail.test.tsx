@@ -69,6 +69,8 @@ beforeEach(() => {
     'GET /api/staff/assignees': () => response(200, assignees),
     'GET /api/tickets/41/comments': () => response(200, comments),
     'GET /api/staff/tickets/41/internal-notes': () => response(200, notes),
+    // Lab 4: the Actions Taken panel loads with the page.
+    'GET /api/staff/tickets/41/actions': () => response(200, []),
   }
   fetchMock = vi.fn((url: string, init: RequestInit = {}) => {
     const key = `${init.method ?? 'GET'} ${url}`
