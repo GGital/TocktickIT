@@ -13,4 +13,5 @@ artifacts/playwright-report/
 artifacts/lab-02/playwright-report/
 artifacts/lab-02/playwright-output/
 artifacts/lab-03/playwright-output/
+artifacts/lab-04/playwright-output/
 test-results/

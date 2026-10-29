@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { ACTION_MESSAGES, validateAction, type ActionPayload } from '../../../src/lib/actionValidation'
+import { ACTION_MESSAGES, defaultActionAt, validateAction, type ActionPayload } from '../../../src/lib/actionValidation'
+import { fromBangkokInput } from '../../../src/lib/formatBangkok'
 
 // The same accept / reject set as the server's UNIT-04 – UNIT-06 (server/src/actionInput.ts).
 const now = new Date('2026-10-20T03:00:00.000Z')
@@ -71,5 +72,17 @@ describe('UNIT-13 the client action validator mirrors the server bounds (AC-39, 
     expect(check({ actionAt: '2026-09-30T23:59:00Z' })).toEqual({ actionAt: ACTION_MESSAGES.beforeTicket })
     expect(check({ actionAt: '2026-10-20T03:04:00Z' })).toEqual({})
     expect(check({ actionAt: '2026-10-20T03:06:00Z' })).toEqual({ actionAt: ACTION_MESSAGES.future })
+  })
+})
+
+describe('the default action time is valid on a Ticket opened this minute (BR-06)', () => {
+  it('rounds up to the next minute when the input’s dropped seconds would put it before the Ticket', () => {
+    const value = defaultActionAt('2026-10-20T03:00:40.000Z', Date.parse('2026-10-20T03:00:52.000Z'))
+    expect(value).toBe('2026-10-20T10:01')
+    expect(validateAction(valid({ actionAt: fromBangkokInput(value) }), { now: new Date('2026-10-20T03:00:52.000Z'), ticketCreatedAt: '2026-10-20T03:00:40.000Z' })).toEqual({})
+  })
+
+  it('is the current Bangkok minute otherwise', () => {
+    expect(defaultActionAt(ticketCreatedAt, Date.parse('2026-10-20T03:00:52.000Z'))).toBe('2026-10-20T10:00')
   })
 })

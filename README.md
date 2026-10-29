@@ -262,15 +262,27 @@ npm run e2e:lab2
 npm run e2e:lab3
 ```
 
-The Lab 4 Playwright project (`npm run e2e:lab4`) and its screenshots arrive with issue #88.
+```bash
+npm run e2e:lab4
+```
 
 ```bash
 npm run e2e:screenshots
 ```
 
-The Playwright run writes 102 Lab 3 screenshots to `artifacts/lab-03/screenshots/` — 34 documented states at
-1280×800, 820×1180, and 375×812 — and 48 Lab 2 screenshots (16 states) to `artifacts/lab-02/screenshots/`. The
-committed Lab 2 set is that sprint's evidence; restore it with `git checkout -- artifacts/lab-02` after a run.
+The Lab 4 project walks every flow in a real browser: Actions Taken by two staff members, the resolution gate from
+blocked to resolved, closed, and reopened, two-window stale edits, dashboard counts against the lists they open, a
+full Lab 1 – 4 walk-through per role that fails on any console error or 404, slow-network and offline saves, and a
+keyboard-only path to Resolve. It also checks every Lab 4 screen at the three viewports.
+
+The Playwright run writes 97 Lab 4 screenshots to `artifacts/lab-04/screenshots/` — 33 states from ui-spec §14 at
+1280×800, 820×1180, and 375×812, with the greyscale check at desktop only — 102 Lab 3 screenshots (34 states) to
+`artifacts/lab-03/screenshots/`, and 48 Lab 2 screenshots (16 states) to `artifacts/lab-02/screenshots/`. The
+committed Lab 2 and Lab 3 sets are those sprints' evidence; restore them with
+`git checkout -- artifacts/lab-02/screenshots artifacts/lab-03/screenshots` after a run.
+
+Run the Playwright projects on a freshly migrated and seeded database (see above): every spec adds Tickets, and the
+dashboard and screenshot specs read whatever the database already holds.
 
 ## Screens
 
@@ -371,9 +383,10 @@ server/                        Node.js + Express + TypeScript
                                errors.ts, actions.ts, actionInput.ts, dashboard.ts, health.ts
   tests/lab-01/ … lab-04/      API tests per lab, with unit/ for pure helpers
   uploads/                     Attachment storage — git-ignored, never served statically
-e2e/lab-02/ lab-03/            Playwright specs and shared helpers
+e2e/lab-02/ lab-03/ lab-04/    Playwright specs and shared helpers
 artifacts/lab-02/screenshots/  Committed Lab 2 screenshots, 3 viewports per state
 artifacts/lab-03/screenshots/  Committed Lab 3 screenshots, 3 viewports per state
+artifacts/lab-04/screenshots/  Committed Lab 4 screenshots, 3 viewports per state
 docs/lab-01/ … lab-04/         Documentation per lab
 ```
 

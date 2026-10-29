@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import ActionsTakenPanel from '../components/ActionsTakenPanel'
 import Badge from '../components/Badge'
@@ -129,6 +129,17 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
 
   useEffect(() => setSavedBlockers(null), [ticket.version])
 
+  // The confirmation hands focus back to Save status, which is disabled while saving, so the browser drops it to
+  // the page. Once the save settles it goes back there, or to the heading when no further status exists (AC-51).
+  const refocus = useRef(false)
+  useEffect(() => {
+    if (busy !== null || !refocus.current) return
+    refocus.current = false
+    if (document.activeElement !== document.body) return
+    const save = document.getElementById('saveStatus') as HTMLButtonElement | null
+    ;(save && !save.disabled ? save : document.getElementById('operations-heading'))?.focus()
+  }, [busy])
+
   /**
    * Sends one operation with the version the user is looking at (BR-28); the response is the updated Ticket, so
    * badges and controls refresh from one source. A stale answer is never resent: the user chooses again (BR-30).
@@ -186,6 +197,7 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
 
   async function saveStatus(to: TicketStatus) {
     setConfirming(false)
+    refocus.current = true
     await send('status', 'status', { status: to }, `Status changed to ${STATUS_LABELS[to]}.`, STATUS_LABELS[to], (code) => {
       if (code !== 'INVALID_STATUS_TRANSITION') return null
       // Someone else may have changed the Ticket; reload so the select offers what is permitted now.
@@ -226,7 +238,9 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
         </div>
       )}
       <section className="zen-card" aria-labelledby="operations-heading">
-        <h2 id="operations-heading">Operations</h2>
+        <h2 id="operations-heading" tabIndex={-1}>
+          Operations
+        </h2>
         <p role="status" className="visually-hidden">
           {announcement}
         </p>
@@ -302,6 +316,7 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
           {/* Enabled even before a status is chosen: disabling it when the dialog resets the select would drop the
               focus the dialog hands back to it (ui-spec §2.4). With nothing chosen it moves focus to the select. */}
           <Button
+            id="saveStatus"
             variant="secondary"
             disabled={targets.length === 0}
             busy={busy === 'status'}

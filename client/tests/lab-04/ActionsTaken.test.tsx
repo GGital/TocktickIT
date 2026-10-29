@@ -556,3 +556,25 @@ describe('UI-21 a retry reuses the clientRequestId; a new form gets a new one (B
     expect(next).not.toBe(first)
   })
 })
+
+describe('an action recorded in the Ticket’s first minute can still be edited (BR-06)', () => {
+  it('does not judge the unchanged time, which the input shows without its seconds, and does not send it', async () => {
+    // The API stores seconds; the form shows 14:40, which on its own would read as before the Ticket at 14:40:30.
+    current = ticket({ createdAt: '2026-10-19T07:40:30.000Z' })
+    actions = actions.map((row) => (row.id === 215 ? { ...row, actionAt: '2026-10-19T07:40:45.000Z' } : row))
+    handlers['PATCH /api/staff/tickets/41/actions/215'] = (body) => response(200, { ...actions[1], ...body, version: 3 })
+    const user = userEvent.setup()
+    renderAt('/staff/tickets/41')
+    const panel = await loadedPanel()
+
+    await user.click(within(await openMenu(user, panel, '19 Oct 2026 14:40')).getByRole('menuitem', { name: 'Edit' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit action' })
+    const result = within(dialog).getByRole('textbox', { name: 'Result' })
+    await user.clear(result)
+    await user.type(result, 'Stable all day.')
+    await user.click(within(dialog).getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(api.calls('PATCH', '/api/staff/tickets/41/actions/215')).toHaveLength(1))
+    expect(api.calls('PATCH', '/api/staff/tickets/41/actions/215')[0]).toEqual({ expectedVersion: 2, result: 'Stable all day.' })
+  })
+})
