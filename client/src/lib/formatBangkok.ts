@@ -24,3 +24,16 @@ export const toBangkokInput = (iso: string) => new Date(new Date(iso).getTime() 
 
 /** A datetime-local value back to ISO-8601 with the Bangkok offset the API requires (BR-06). */
 export const fromBangkokInput = (local: string) => `${local}:00+07:00`
+
+const RELATIVE = new Intl.RelativeTimeFormat('en', { numeric: 'auto', style: 'short' })
+
+/** "2 hr. ago" — shown only beside the absolute time, never instead of it (ui-spec §9). */
+export function timeAgo(iso: string) {
+  const minutes = Math.round((Date.parse(iso) - Date.now()) / 60_000)
+  if (Math.abs(minutes) < 60) return RELATIVE.format(minutes, 'minute')
+  if (Math.abs(minutes) < 60 * 24) return RELATIVE.format(Math.round(minutes / 60), 'hour')
+  return RELATIVE.format(Math.round(minutes / (60 * 24)), 'day')
+}
+
+/** "Updated 11:00 (Bangkok)": when a dashboard's numbers were counted (BR-49). */
+export const updatedAt = (iso: string) => `Updated ${formatBangkok(iso).slice(-5)} (Bangkok)`

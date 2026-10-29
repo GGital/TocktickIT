@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Button from '../components/Button'
 import Callout from '../components/Callout'
+import DrilldownNotice from '../components/DrilldownNotice'
 import EmptyState from '../components/EmptyState'
 import ForbiddenState from '../components/ForbiddenState'
 import RoleBadge, { AccountBadge } from '../components/RoleBadge'
@@ -22,7 +24,10 @@ export default function UserManagement() {
   const me = useCurrentUser()!
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
-  const [role, setRole] = useState<Role | ''>('')
+  // The role filter lives in the URL, so a dashboard's /admin/users?role=… opens filtered (FR-23).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const role = (searchParams.get('role') ?? '') as Role | ''
+  const setRole = (next: Role | '') => setSearchParams(next ? { role: next } : {}, { replace: true })
   const [users, setUsers] = useState<ManagedUser[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [failure, setFailure] = useState<'forbidden' | 'error' | null>(null)
@@ -155,6 +160,8 @@ export default function UserManagement() {
           <Callout variant="success">{announcement}</Callout>
         </div>
       )}
+
+      <DrilldownNotice onClear={clear} />
 
       <div className="row g-3 align-items-end">
         <div className="col-md-7 col-lg-5">

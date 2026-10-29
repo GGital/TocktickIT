@@ -13,14 +13,26 @@ export const ROLE_LABELS: Record<Role, string> = {
  * Navigation derived from the role (ui-spec §2.2). A destination missing here is never rendered for that role —
  * not disabled, not hidden by CSS. The API refuses the operation regardless (BR-23).
  */
-export const NAVIGATION: Record<Role, { to: string; label: string; end?: boolean }[]> = {
+type NavItem = { to: string; label: string; active: (pathname: string) => boolean }
+
+const exactly = (to: string) => (pathname: string) => pathname === to
+const within = (to: string) => (pathname: string) => pathname === to || pathname.startsWith(`${to}/`)
+
+const DASHBOARD = { to: '/dashboard', label: 'Dashboard', active: exactly('/dashboard') }
+const STAFF_DASHBOARD = { to: '/staff/dashboard', label: 'Dashboard', active: exactly('/staff/dashboard') }
+// /staff/dashboard sits under /staff but is not the Queue, so the Queue owns /staff/tickets and its details only.
+const QUEUE = { to: '/staff/tickets', label: 'Ticket Queue', active: within('/staff/tickets') }
+
+/**
+ * Dashboard first for every role (FR-24). A detail route highlights its parent: /tickets/:id is My Tickets, while
+ * /tickets/new is Create Ticket (FR-25).
+ */
+export const NAVIGATION: Record<Role, NavItem[]> = {
   REQUESTER: [
-    { to: '/tickets', label: 'My Tickets', end: true },
-    { to: '/tickets/new', label: 'Create Ticket' },
+    DASHBOARD,
+    { to: '/tickets', label: 'My Tickets', active: (pathname) => within('/tickets')(pathname) && pathname !== '/tickets/new' },
+    { to: '/tickets/new', label: 'Create Ticket', active: exactly('/tickets/new') },
   ],
-  IT_STAFF: [{ to: '/staff/tickets', label: 'Ticket Queue' }],
-  ADMINISTRATOR: [
-    { to: '/staff/tickets', label: 'Ticket Queue' },
-    { to: '/admin/users', label: 'User Management' },
-  ],
+  IT_STAFF: [STAFF_DASHBOARD, QUEUE],
+  ADMINISTRATOR: [STAFF_DASHBOARD, QUEUE, { to: '/admin/users', label: 'User Management', active: within('/admin/users') }],
 }
