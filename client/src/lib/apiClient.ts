@@ -3,18 +3,22 @@ export class ApiError extends Error {
   status: number
   code: string
   fields?: { field: string; message: string }[]
+  /** Only on RESOLUTION_BLOCKED (Lab 4 api-spec §1.2). */
+  blockers?: string[]
 
   constructor(
     status: number,
     code: string,
     message: string,
     fields?: { field: string; message: string }[],
+    blockers?: string[],
   ) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
     this.fields = fields
+    this.blockers = blockers
   }
 }
 
@@ -39,7 +43,7 @@ async function toApiError(response: Response) {
   // INVALID_CREDENTIALS and belongs to the Login form (BR-01, FR-05).
   if (code === 'UNAUTHENTICATED') unauthenticatedListeners.forEach((listener) => listener())
 
-  return new ApiError(response.status, code, message, body?.error?.fields)
+  return new ApiError(response.status, code, message, body?.error?.fields, body?.error?.blockers)
 }
 
 /**

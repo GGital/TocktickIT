@@ -26,6 +26,8 @@ type Ticket = {
   status: TicketStatus
   /** Set when the Requester reported the problem resolved; cleared when IT resolves, closes, or reopens (BR-46). */
   requesterResolvedFlaggedAt: string | null
+  /** When IT last resolved it; cleared on reopen (Lab 4 BR-38). */
+  resolvedAt: string | null
   createdAt: string
   updatedAt: string
   attachments: Attachment[]
@@ -184,6 +186,7 @@ export default function TicketDetail() {
         <h1 className="zen-mono mb-0">{ticket.ticketNumber}</h1>
         <PriorityBadge kind="requested" value={ticket.requestedPriority} />
         <StatusBadge value={ticket.status} />
+        {ticket.resolvedAt && <span className="zen-help mt-0">Resolved on {bangkokTime(ticket.resolvedAt)}</span>}
       </div>
       <p className="zen-help">
         Created {bangkokTime(ticket.createdAt)} · Last updated {bangkokTime(ticket.updatedAt)}

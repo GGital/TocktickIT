@@ -13,7 +13,32 @@ const assignees = [
   { id: 3, fullName: 'Chai Admin', role: 'ADMINISTRATOR' },
 ]
 
-const ticket = (overrides: Record<string, unknown> = {}) => ({
+// Lab 4: the staff detail carries the workflow the API computes (api-spec §2.3). This mirrors it for a Ticket with
+// recorded work, so every Lab 3 expectation about the offered targets still holds.
+const NEXT: Record<string, string[]> = {
+  NEW: ['OPEN', 'IN_PROGRESS', 'CANCELLED'],
+  OPEN: ['IN_PROGRESS', 'WAITING_FOR_REQUESTER', 'RESOLVED', 'CANCELLED'],
+  IN_PROGRESS: ['OPEN', 'WAITING_FOR_REQUESTER', 'RESOLVED', 'CANCELLED'],
+  WAITING_FOR_REQUESTER: ['IN_PROGRESS', 'RESOLVED', 'CANCELLED'],
+  RESOLVED: ['CLOSED', 'REOPENED'],
+  CLOSED: ['REOPENED'],
+  REOPENED: ['IN_PROGRESS', 'WAITING_FOR_REQUESTER', 'RESOLVED', 'CANCELLED'],
+  CANCELLED: [],
+}
+const ticket = (overrides: Record<string, unknown> = {}) => {
+  const base = lab3Ticket(overrides)
+  const needsOwner = ['IN_PROGRESS', 'WAITING_FOR_REQUESTER', 'RESOLVED']
+  return {
+    version: 1,
+    resolvedAt: null,
+    actionSummary: { total: 1, voided: 0, outstandingFollowUps: 0 },
+    allowedTransitions: NEXT[base.status].filter((to) => base.assignee || !needsOwner.includes(to)),
+    resolutionBlockers: [],
+    ...base,
+  }
+}
+
+const lab3Ticket = (overrides: Record<string, unknown> = {}) => ({
   id: 41,
   ticketNumber: 'TKT-2026-000041',
   summary: 'VPN disconnects every few minutes',
@@ -179,7 +204,7 @@ describe('UI-24 the status select lists only permitted targets (BR-35)', () => {
     await user.selectOptions(within(panel).getByRole('combobox', { name: 'Status' }), 'IN_PROGRESS')
     await user.click(within(panel).getByRole('button', { name: 'Save status' }))
 
-    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/status')).toEqual([{ status: 'IN_PROGRESS' }]))
+    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/status')).toEqual([{ status: 'IN_PROGRESS', expectedVersion: 1 }]))
     expect(await screen.findByText('Status changed to In Progress.')).toHaveAttribute('role', 'status')
     expect(within(screen.getByTestId('ticket-badges')).getByText('In Progress')).toHaveClass('zen-badge')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -225,7 +250,7 @@ describe('UI-25 RESOLVED, CLOSED, and CANCELLED require confirmation (AC-44, BR-
     const dialog = await screen.findByRole('dialog', { name: 'Resolve ticket TKT-2026-000041?' })
     await user.click(within(dialog).getByRole('button', { name: 'Resolve ticket' }))
 
-    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/status')).toEqual([{ status: 'RESOLVED' }]))
+    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/status')).toEqual([{ status: 'RESOLVED', expectedVersion: 1 }]))
     expect(await screen.findByText('Status changed to Resolved.')).toBeInTheDocument()
   })
 })
@@ -329,7 +354,7 @@ describe('UI-27 the assignment controls (ui-spec §8.2)', () => {
 
     await user.click(within(panel).getByRole('button', { name: 'Claim' }))
 
-    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/assignment')).toEqual([{ assigneeId: 'me' }]))
+    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/assignment')).toEqual([{ assigneeId: 'me', expectedVersion: 1 }]))
     expect(await screen.findByText('Ticket claimed.')).toBeInTheDocument()
     expect(within(panel).getByRole('combobox', { name: 'Ticket owner' })).toHaveValue('7')
     expect(within(panel).queryByRole('button', { name: 'Claim' })).not.toBeInTheDocument()
@@ -352,7 +377,7 @@ describe('UI-27 the assignment controls (ui-spec §8.2)', () => {
     await waitFor(() => expect(select).toHaveValue('3'))
     await user.click(within(panel).getByRole('button', { name: 'Unassign' }))
 
-    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/assignment')).toEqual([{ assigneeId: 3 }, { assigneeId: null }]))
+    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/assignment')).toEqual([{ assigneeId: 3, expectedVersion: 1 }, { assigneeId: null, expectedVersion: 1 }]))
     await waitFor(() => expect(select).toHaveValue(''))
   })
 })
@@ -402,7 +427,7 @@ describe('IT Priority (AC-39, BR-31)', () => {
 
     await user.click(within(panel).getByRole('radio', { name: 'Urgent' }))
 
-    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/priority')).toEqual([{ itPriority: 'URGENT' }]))
+    await waitFor(() => expect(calls('PATCH', '/api/staff/tickets/41/priority')).toEqual([{ itPriority: 'URGENT', expectedVersion: 1 }]))
     expect(await screen.findByText('IT Priority saved.')).toBeInTheDocument()
     const badges = screen.getByTestId('ticket-badges')
     expect(within(badges).getByText('IT: URGENT')).toBeInTheDocument()

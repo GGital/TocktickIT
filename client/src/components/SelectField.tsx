@@ -2,7 +2,7 @@ import type { SelectHTMLAttributes } from 'react'
 import FormField from './FormField'
 import { describedBy, type FieldProps } from './fieldIds'
 
-export type Option = { value: string; label: string }
+export type Option = { value: string; label: string; disabled?: boolean }
 
 type SelectFieldProps = FieldProps &
   Omit<SelectHTMLAttributes<HTMLSelectElement>, 'id' | 'required'> & {
@@ -34,7 +34,7 @@ export default function SelectField({
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}
