@@ -32,6 +32,7 @@
   --zen-radius-control: 8px;
   --zen-control-height: 42px;
   --zen-shadow: 0 1px 2px rgba(28, 43, 36, 0.06);
+  --zen-shadow-raised: 0 4px 12px rgba(28, 43, 36, 0.12);
 
   /* --- Bootstrap mapping (ui-spec §1.1) --- */
   --bs-primary: var(--zen-primary);
@@ -578,4 +579,36 @@ label:has(+ input[type="file"]:focus-visible) {
   .zen-actions-record { width: 100%; }
   .zen-row-menu, .zen-row-menu-trigger { display: block; width: 100%; }
   .zen-row-menu-list { left: 0; right: 0; }
+}
+
+/* --- Lab 4 dashboards (ui-spec §2.1 – §2.3, §4, §5) --- */
+/* The whole card is one link: it keeps text colour, raises one shadow step on hover, and takes the focus ring. */
+.zen-metric { display: flex; flex-direction: column; height: 100%; color: var(--zen-text); text-decoration: none; transition: box-shadow 0.15s ease; }
+.zen-metric:hover { box-shadow: var(--zen-shadow-raised); color: var(--zen-text); }
+.zen-metric:focus-visible { outline: 3px solid var(--zen-focus-ring); outline-offset: 2px; }
+/* Emphasis for the two "someone is needed now" cards when non-zero; the label still says it in words (AC-52). */
+.zen-metric-attention { border-left-color: var(--zen-warning); border-left-width: 4px; }
+.zen-metric-label { font-size: 1rem; font-weight: 600; color: var(--zen-text); margin-bottom: 4px; }
+.zen-metric-number { font-weight: 700; line-height: 1.2; color: var(--zen-primary); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+.zen-metric-zero { color: var(--zen-text); }
+.zen-metric-more { margin-top: auto; text-align: right; color: var(--zen-secondary); font-weight: 600; }
+.zen-metric-count { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.zen-breakdown-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 0; border-top: 1px solid var(--zen-border); color: var(--zen-text); text-decoration: none; }
+li:first-child > .zen-breakdown-row { border-top: 0; }
+.zen-breakdown-row:hover { background-color: var(--zen-pale); color: var(--zen-text); }
+
+.zen-dashboard-row { border-top: 1px solid var(--zen-border); padding: 10px 0; }
+.zen-dashboard-row:first-child { border-top: 0; padding-top: 0; }
+.zen-dashboard-summary { min-width: 0; flex: 1 1 12rem; }
+
+/* My Tickets status chips (ui-spec §8): pressed state shown by fill and by aria-pressed, not colour alone. */
+.zen-chip { min-height: 44px; padding: 6px 14px; border: 1px solid var(--zen-border); border-radius: 999px; background-color: var(--zen-surface); color: var(--zen-text); }
+.zen-chip:hover { background-color: var(--zen-pale); }
+.zen-chip:focus-visible { outline: 3px solid var(--zen-focus-ring); outline-offset: 1px; }
+.zen-chip-pressed { background-color: var(--zen-pale); border-color: var(--zen-secondary); color: var(--zen-primary); font-weight: 600; }
+.zen-chip-pressed::before { content: "✓ "; }
+
+@media (max-width: 767.98px) {
+  .zen-dashboard-action { width: 100%; }
 }

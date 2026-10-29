@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { bee, malee, renderAt, response, staffActions, staffUser, stubApi, ticket } from '../helpers/actions'
+import { bee, malee, renderAt, requesterUser, response, staffActions, staffUser, stubApi, ticket } from '../helpers/actions'
+import { requesterDashboard, staffDashboard } from '../helpers/dashboard'
 
 beforeEach(() => {
   stubApi({
@@ -130,5 +131,28 @@ describe('A11Y-04 the row menu (AC-51)', () => {
     expect(screen.queryByRole('menu')).toBeNull()
     expect(trigger).toHaveFocus()
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  })
+})
+
+describe('A11Y-01 dashboard landmarks and card names (ui-spec §11)', () => {
+  it.each([
+    ['IT Staff', staffUser, '/staff/dashboard', 'GET /api/staff/dashboard', staffDashboard(), 6],
+    ['Requester', requesterUser, '/dashboard', 'GET /api/dashboard/requester', requesterDashboard(), 3],
+  ] as const)('%s: main with h1, cards as a list of links named with label and count', async (_who, user, path, route, body, count) => {
+    stubApi({ 'GET /api/auth/me': () => response(200, user), [route]: () => response(200, body) })
+    renderAt(path)
+
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    const main = screen.getByRole('main')
+    expect(main).toContainElement(heading)
+    const group = await within(main).findByRole('region', { name: 'At a glance' })
+    const list = within(group).getByRole('list')
+    expect(within(list).getAllByRole('listitem')).toHaveLength(count)
+    for (const link of within(list).getAllByRole('link')) {
+      expect(link.getAttribute('aria-label')).toMatch(/^.+: \d+\. View list$/)
+      expect(link.querySelector('.zen-metric-more [aria-hidden="true"]')).toHaveTextContent('→')
+    }
+    // Every list on the dashboard is its own titled section.
+    expect(within(main).getAllByRole('region').length).toBeGreaterThan(1)
   })
 })

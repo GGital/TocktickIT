@@ -1,7 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import Badge from '../components/Badge'
 import Button from '../components/Button'
 import Callout from '../components/Callout'
+import DrilldownNotice from '../components/DrilldownNotice'
 import EmptyState from '../components/EmptyState'
 import ForbiddenState from '../components/ForbiddenState'
 import Pagination from '../components/Pagination'
@@ -11,6 +13,7 @@ import { SkeletonCard, SkeletonRows } from '../components/Skeleton'
 import StatusBadge, { ResolutionFlagBadge } from '../components/StatusBadge'
 import { ApiError, apiFetch } from '../lib/apiClient'
 import { useCurrentUser } from '../lib/auth'
+import { timeAgo } from '../lib/formatBangkok'
 import { OPEN_WORK, PRIORITIES, STATUS_LABELS, TICKET_STATUSES, type TicketStatus } from '../lib/ticketLabels'
 
 type Reference = { id: number; name: string }
@@ -29,6 +32,8 @@ type QueueRow = {
   itPriority: Priority
   status: TicketStatus
   requesterResolvedFlagged: boolean
+  /** Lab 4 (api-spec §3.10). */
+  outstandingFollowUps: number
   createdAt: string
   updatedAt: string
 }
@@ -40,7 +45,11 @@ type Result = {
 
 type SortField = 'ticketNumber' | 'createdAt' | 'itPriority' | 'status' | 'updatedAt'
 
-const FILTER_KEYS = ['search', 'status', 'itPriority', 'assignee', 'requestedPriority', 'categoryId', 'relatedSystemId', 'flaggedResolved']
+const FILTER_KEYS = ['search', 'status', 'itPriority', 'assignee', 'followUp', 'requestedPriority', 'categoryId', 'relatedSystemId', 'flaggedResolved']
+
+/** The follow-up badge on a row (ui-spec §1.2); nothing when there is none. */
+const followUps = (count: number) =>
+  count > 0 && <Badge tone="followup-outstanding">{count === 1 ? '1 follow-up' : `${count} follow-ups`}</Badge>
 
 // The heading counts are three fixed Queue requests read for their totals — the only analytics in Lab 3 (X-06).
 const OPEN_WORK_QUERY = OPEN_WORK.map((status) => `status=${status}`).join('&')
@@ -56,14 +65,8 @@ const isResult = (value: unknown): value is Result =>
 const createdDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short' })
 
-const relativeTime = new Intl.RelativeTimeFormat('en', { numeric: 'auto', style: 'short' })
-/** "2 hr. ago" — age and activity are how a queue is triaged (ui-spec §7.1). */
-function updatedAgo(iso: string) {
-  const minutes = Math.round((Date.parse(iso) - Date.now()) / 60_000)
-  if (Math.abs(minutes) < 60) return relativeTime.format(minutes, 'minute')
-  if (Math.abs(minutes) < 60 * 24) return relativeTime.format(Math.round(minutes / 60), 'hour')
-  return relativeTime.format(Math.round(minutes / (60 * 24)), 'day')
-}
+// Age and activity are how a queue is triaged (ui-spec §7.1).
+const updatedAgo = timeAgo
 
 /** IT Staff Ticket Queue (ui-spec §7). Every query runs server-side; the URL holds the state. */
 export default function TicketQueue() {
@@ -210,6 +213,8 @@ export default function TicketQueue() {
         {counts ? `${counts.open} open · ${counts.unassigned} unassigned · ${counts.waiting} waiting for requester` : ' '}
       </p>
 
+      <DrilldownNotice onClear={clearFilters} />
+
       <section className="zen-card mb-3" aria-label="Queue filters">
         <label className="zen-label" htmlFor="queue-search">
           Search
@@ -269,6 +274,18 @@ export default function TicketQueue() {
               { value: 'unassigned', label: 'Unassigned' },
               { value: 'me', label: 'Assigned to me' },
               ...staff.map((person) => ({ value: String(person.id), label: person.fullName })),
+            ]}
+          />
+
+          <SelectField
+            id="followUp"
+            label="Follow-ups"
+            placeholder="Any"
+            value={searchParams.get('followUp') ?? ''}
+            onChange={(event) => update({ followUp: event.target.value })}
+            options={[
+              { value: 'outstanding', label: 'Outstanding' },
+              { value: 'mine', label: 'Mine outstanding' },
             ]}
           />
 
@@ -403,6 +420,7 @@ export default function TicketQueue() {
                       </span>
                       {/* Tablet folds Category under the Summary (ui-spec §7.2). */}
                       <span className="zen-help d-lg-none">{row.category.name}</span>
+                      {followUps(row.outstandingFollowUps)}
                     </td>
                     <td className="d-none d-lg-table-cell">{row.category.name}</td>
                     <td className="text-nowrap">
@@ -440,6 +458,7 @@ export default function TicketQueue() {
                   <p className="d-flex flex-wrap align-items-center gap-2 mb-1">
                     <StatusBadge value={row.status} />
                     <span className="zen-help">{row.category.name}</span>
+                    {followUps(row.outstandingFollowUps)}
                   </p>
                   <p className="zen-help mb-0">
                     Owner: {row.assignee?.fullName ?? 'Unassigned'} · Updated {updatedAgo(row.updatedAt)}

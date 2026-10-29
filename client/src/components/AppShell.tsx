@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import Button from './Button'
 import Callout from './Callout'
 import RoleBadge from './RoleBadge'
@@ -43,8 +43,8 @@ export default function AppShell() {
     }
   }
 
-  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `zen-nav-link ${isActive ? 'zen-nav-link-active' : ''}`
+  // The active style and aria-current always travel together (ui-spec §3).
+  const navLinkClass = (active: boolean) => `zen-nav-link ${active ? 'zen-nav-link-active' : ''}`
 
   return (
     <>
@@ -89,11 +89,14 @@ export default function AppShell() {
             // Full width only as the open mobile panel; beside the wordmark from 768 px up.
             className={`${navOpen ? 'd-flex w-100' : 'd-none'} d-md-flex flex-column flex-md-row gap-3`}
           >
-            {NAVIGATION[user.role].map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
-                {item.label}
-              </NavLink>
-            ))}
+            {NAVIGATION[user.role].map((item) => {
+              const active = item.active(location.pathname)
+              return (
+                <Link key={item.to} to={item.to} className={navLinkClass(active)} aria-current={active ? 'page' : undefined}>
+                  {item.label}
+                </Link>
+              )
+            })}
           </nav>
         </div>
       </header>
