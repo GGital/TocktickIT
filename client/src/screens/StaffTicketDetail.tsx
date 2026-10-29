@@ -20,6 +20,7 @@ import { ApiError, apiFetch } from '../lib/apiClient'
 import { useCurrentUser } from '../lib/auth'
 import type { Role } from '../lib/roles'
 import { PRIORITIES, STATUS_LABELS, type TicketStatus } from '../lib/ticketLabels'
+import { formatBangkok } from '../lib/formatBangkok'
 
 type Person = { id: number; fullName: string }
 
@@ -50,8 +51,6 @@ type StaffTicket = {
 
 type Blocker = 'UNASSIGNED' | 'NO_ACTIONS' | 'OUTSTANDING_FOLLOW_UPS'
 
-const bangkokTime = (iso: string) =>
-  new Date(iso).toLocaleString('en-GB', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' })
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 const PRIORITY_LABELS: Record<Priority, string> = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', URGENT: 'Urgent' }
@@ -344,13 +343,13 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
 function Information({ ticket }: { ticket: StaffTicket }) {
   const rows: [string, ReactNode, string?][] = [
     ['Ticket Number', ticket.ticketNumber, 'zen-mono'],
-    ['Ticket Date', bangkokTime(ticket.createdAt)],
+    ['Ticket Date', formatBangkok(ticket.createdAt)],
     ['Requester', ticket.requester.department ? `${ticket.requester.fullName} — ${ticket.requester.department}` : ticket.requester.fullName],
     ['Category', ticket.category.name],
     ['Related System', ticket.relatedSystem.name],
     ['Requested Priority', <PriorityBadge key="requested" kind="requested" value={ticket.requestedPriority} />],
-    ['Last updated', bangkokTime(ticket.updatedAt)],
-    ['Resolved at', ticket.resolvedAt ? bangkokTime(ticket.resolvedAt) : '—'],
+    ['Last updated', formatBangkok(ticket.updatedAt)],
+    ['Resolved at', ticket.resolvedAt ? formatBangkok(ticket.resolvedAt) : '—'],
     ['Summary', ticket.summary],
     ['Description', ticket.description, 'zen-description'],
   ]
@@ -382,7 +381,7 @@ function Information({ ticket }: { ticket: StaffTicket }) {
               <span className="zen-filename text-truncate" title={attachment.originalFilename}>
                 {attachment.originalFilename}
               </span>
-              <span className="zen-help mt-0">{bangkokTime(attachment.uploadedAt)}</span>
+              <span className="zen-help mt-0">{formatBangkok(attachment.uploadedAt)}</span>
               {attachment.isRemoved && <Badge tone="removed">Removed</Badge>}
             </li>
           ))}
@@ -472,7 +471,7 @@ export default function StaffTicketDetail() {
         </div>
       </div>
       {ticket.requesterResolvedFlaggedAt && (
-        <p className="zen-help mb-3">Requester reported it resolved {bangkokTime(ticket.requesterResolvedFlaggedAt)}</p>
+        <p className="zen-help mb-3">Requester reported it resolved {formatBangkok(ticket.requesterResolvedFlaggedAt)}</p>
       )}
 
       {/* Operations come first in the document, so tablet and mobile show them under the badges and above the

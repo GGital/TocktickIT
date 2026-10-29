@@ -37,3 +37,9 @@ export function timeAgo(iso: string) {
 
 /** "Updated 11:00 (Bangkok)": when a dashboard's numbers were counted (BR-49). */
 export const updatedAt = (iso: string) => `Updated ${formatBangkok(iso).slice(-5)} (Bangkok)`
+
+/** The date part of the same format, "20 Oct 2026", for list columns that show a day, not a moment. */
+export function formatBangkokDate(iso: string) {
+  const part = Object.fromEntries(FORMAT.formatToParts(new Date(iso)).map(({ type, value }) => [type, value]))
+  return `${part.day} ${part.month} ${part.year}`
+}

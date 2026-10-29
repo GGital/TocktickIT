@@ -72,8 +72,9 @@ test.describe('E2E-08 an Administrator creates a user who then signs in (AC-53, 
     await newcomerPage.getByLabel('Confirm new password').fill(PASSWORD)
     await newcomerPage.getByRole('button', { name: 'Save new password' }).click()
 
-    await expect(newcomerPage).toHaveURL(/\/tickets$/)
-    await expect(newcomerPage.getByRole('heading', { name: 'My Tickets' })).toBeVisible()
+    // Lab 4 BR-79: a Requester's home is the Dashboard.
+    await expect(newcomerPage).toHaveURL(/\/dashboard$/)
+    await expect(newcomerPage.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
     await newcomer.close()
   })
 })

@@ -1,12 +1,21 @@
-// Route placeholders for screens owned by a later issue. They exist so the routes, the role
-// navigation, and the role guard that point at them are real and navigable now.
-function Placeholder({ title }: { title: string }) {
+import { Link } from 'react-router-dom'
+import { homeFor, useCurrentUser } from '../lib/auth'
+
+/**
+ * The one screen left in this file (ui-spec §3, FR-31): an unknown address inside the shell. It names nothing about
+ * what might have been there and offers one way back.
+ */
+export function NotFoundScreen() {
+  const user = useCurrentUser()
   return (
-    <div className="zen-card">
-      <h1>{title}</h1>
-      <p className="zen-muted">This screen is not implemented yet.</p>
+    <div className="zen-card zen-empty">
+      <h1>Page not found</h1>
+      <p>This address does not match any page. Check the link, or go back to your dashboard.</p>
+      {user && (
+        <Link to={homeFor(user.role)} className="btn btn-primary">
+          Go to your dashboard
+        </Link>
+      )}
     </div>
   )
 }
-
-export const NotFoundScreen = () => <Placeholder title="Page not found" />

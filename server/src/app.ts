@@ -20,6 +20,7 @@ import {
 import { createUser, listUsers, setInitialPassword, updateUser } from './adminUsers.js'
 import { requesterDashboard, staffDashboard } from './dashboard.js'
 import { sendError } from './errors.js'
+import { health } from './health.js'
 import { prisma } from './prisma.js'
 import {
   downloadAttachment,
@@ -55,9 +56,8 @@ app.use('/api', (_req, res, next) => {
   next()
 })
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'TokTickIT API' })
-})
+// Public, before the session stack: reachability says nothing about any user (BR-84).
+app.get('/api/health', health(prisma))
 
 // Login is the only route reachable without a session (api-spec §3.1).
 app.post('/api/auth/login', login)

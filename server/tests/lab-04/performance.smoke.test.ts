@@ -12,6 +12,8 @@ import { createMigratedDatabase, dropDatabase } from '../helpers/database.js'
 const PERF_DB = 'toktickit_lab4_perf'
 const TICKETS = 2_000
 const ACTIONS_PER_TICKET = 3
+// PERF-02: one Ticket also carries a long work log.
+const LONG_LOG = 50
 const CALLS = 20
 const BUDGET_MS = 500
 const STATUSES: TicketStatus[] = ['NEW', 'OPEN', 'IN_PROGRESS', 'WAITING_FOR_REQUESTER', 'RESOLVED', 'CLOSED', 'REOPENED', 'CANCELLED']
@@ -21,6 +23,7 @@ const DAY = 24 * 60 * 60 * 1000
 let app: Express
 let prisma: PrismaClient
 let cookieFor: (userId: number) => string
+let longLogTicketId: number
 const users = { requester: 0, staff: 0, other: 0, admin: 0 }
 
 beforeAll(async () => {
@@ -91,6 +94,19 @@ beforeAll(async () => {
       }),
     ),
   })
+
+  longLogTicketId = tickets[0].id
+  await prisma.actionTaken.createMany({
+    data: Array.from({ length: LONG_LOG }, (_, n) => ({
+      ticketId: longLogTicketId,
+      clientRequestId: randomUUID(),
+      actionAt: new Date(now - (LONG_LOG - n) * 60_000),
+      description: `Long work log entry ${n}`,
+      result: 'Logged.',
+      followUpRequired: false,
+      performedById: users.staff,
+    })),
+  })
 }, 300_000)
 
 afterAll(async () => {
@@ -116,7 +132,7 @@ async function measure(path: string, userId: number) {
 describe('PERF-01 dashboards at 2,000 Tickets / 6,000 actions (A-21, BR-47)', () => {
   it('the data set is in place', async () => {
     expect(await prisma.ticket.count()).toBe(TICKETS)
-    expect(await prisma.actionTaken.count()).toBe(TICKETS * ACTIONS_PER_TICKET)
+    expect(await prisma.actionTaken.count()).toBe(TICKETS * ACTIONS_PER_TICKET + LONG_LOG)
   })
 
   it.each([
@@ -127,6 +143,13 @@ describe('PERF-01 dashboards at 2,000 Tickets / 6,000 actions (A-21, BR-47)', ()
     const { p95, largest } = await measure(path, users[role])
     expect(p95).toBeLessThan(BUDGET_MS)
     expect(largest).toBeLessThan(20 * 1024)
+  }, 60_000)
+})
+
+describe('PERF-02 the staff action list of a Ticket with 50+ actions (BR-23)', () => {
+  it('p95 < 300 ms', async () => {
+    const { p95 } = await measure(`/api/staff/tickets/${longLogTicketId}/actions`, users.staff)
+    expect(p95).toBeLessThan(300)
   }, 60_000)
 })
 

@@ -13,7 +13,7 @@ import { SkeletonCard, SkeletonRows } from '../components/Skeleton'
 import StatusBadge, { ResolutionFlagBadge } from '../components/StatusBadge'
 import { ApiError, apiFetch } from '../lib/apiClient'
 import { useCurrentUser } from '../lib/auth'
-import { timeAgo } from '../lib/formatBangkok'
+import { formatBangkokDate, timeAgo } from '../lib/formatBangkok'
 import { OPEN_WORK, PRIORITIES, STATUS_LABELS, TICKET_STATUSES, type TicketStatus } from '../lib/ticketLabels'
 
 type Reference = { id: number; name: string }
@@ -62,8 +62,6 @@ const COUNT_PATHS = {
 const isResult = (value: unknown): value is Result =>
   Array.isArray((value as Result)?.data) && typeof (value as Result)?.meta?.totalItems === 'number'
 
-const createdDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short' })
 
 // Age and activity are how a queue is triaged (ui-spec §7.1).
 const updatedAgo = timeAgo
@@ -413,7 +411,7 @@ export default function TicketQueue() {
                     <td className="zen-mono text-nowrap">
                       <Link to={`/staff/tickets/${row.id}`}>{row.ticketNumber}</Link>
                     </td>
-                    <td className="d-none d-lg-table-cell text-nowrap">{createdDate(row.createdAt)}</td>
+                    <td className="d-none d-lg-table-cell text-nowrap">{formatBangkokDate(row.createdAt)}</td>
                     <td className="zen-queue-summary">
                       <span className="d-block text-truncate" title={row.summary}>
                         {row.summary}

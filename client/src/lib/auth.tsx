@@ -29,7 +29,6 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-/** The route each role lands on after signing in (ui-spec §4.3). */
 /** Each role's Dashboard is its home: the wordmark and the post-login redirect go there (BR-79). */
 export const homeFor = (role: AuthenticatedUser['role']) => (role === 'REQUESTER' ? '/dashboard' : '/staff/dashboard')
 
