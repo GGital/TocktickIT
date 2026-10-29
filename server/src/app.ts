@@ -18,6 +18,7 @@ import {
   voidAction,
 } from './actions.js'
 import { createUser, listUsers, setInitialPassword, updateUser } from './adminUsers.js'
+import { requesterDashboard, staffDashboard } from './dashboard.js'
 import { sendError } from './errors.js'
 import { prisma } from './prisma.js'
 import {
@@ -67,6 +68,7 @@ app.post('/api/auth/login', login)
 app.use('/api', resolveSession, requireAuth, requirePasswordChangeComplete)
 app.use('/api/staff', requireRole('IT_STAFF', 'ADMINISTRATOR'))
 app.use('/api/admin', requireRole('ADMINISTRATOR'))
+app.use('/api/dashboard', requireRole('REQUESTER'))
 
 app.post('/api/auth/logout', logout)
 app.get('/api/auth/me', currentUser)
@@ -109,6 +111,10 @@ app.post('/api/tickets/:id/comments', postComment)
 
 // Actions Taken, read-only and non-voided, on the caller's own Ticket (api-spec §3.1, BR-42).
 app.get('/api/tickets/:id/actions', listRequesterActions)
+
+// Role dashboards (api-spec §3.13, §3.14): each prefix guard above admits exactly the roles it serves (AC-36).
+app.get('/api/dashboard/requester', requesterDashboard)
+app.get('/api/staff/dashboard', staffDashboard)
 
 // --- Staff routes: the /api/staff role guard above has already refused a Requester (BR-23, A-16). ---
 app.get('/api/staff/tickets', listQueue)

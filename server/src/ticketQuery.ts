@@ -1,5 +1,14 @@
 export const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const
-const STATUSES = ['NEW'] as const
+export const STATUSES = [
+  'NEW',
+  'OPEN',
+  'IN_PROGRESS',
+  'WAITING_FOR_REQUESTER',
+  'RESOLVED',
+  'CLOSED',
+  'REOPENED',
+  'CANCELLED',
+] as const
 const SORT_FIELDS = ['createdAt', 'updatedAt', 'ticketNumber', 'requestedPriority'] as const
 const SORT_ORDERS = ['asc', 'desc'] as const
 export const PAGE_SIZES = [10, 20, 50] as const
@@ -9,7 +18,7 @@ export type TicketListQuery = {
   categoryId?: number
   relatedSystemId?: number
   requestedPriority?: (typeof PRIORITIES)[number]
-  status?: (typeof STATUSES)[number]
+  statuses?: (typeof STATUSES)[number][]
   sortBy: (typeof SORT_FIELDS)[number]
   sortOrder: (typeof SORT_ORDERS)[number]
   page: number
@@ -52,6 +61,20 @@ export function readEnum<T extends readonly string[]>(
   return value
 }
 
+/** `status` is repeatable on both lists (Lab 3 BR-60, Lab 4 FR-23): repeats form an OR set, each value validated. */
+export function readStatuses(query: Record<string, unknown>) {
+  const raw = query.status
+  if (raw === undefined) return undefined
+
+  const values = (Array.isArray(raw) ? raw : [raw]).filter((value) => value !== '')
+  for (const value of values) {
+    if (typeof value !== 'string' || !(STATUSES as readonly string[]).includes(value)) {
+      throw new QueryParameterError('status', `status must be one of ${STATUSES.join(', ')}.`)
+    }
+  }
+  return values.length > 0 ? [...new Set(values as (typeof STATUSES)[number][])] : undefined
+}
+
 export function readPositiveInt(query: Record<string, unknown>, name: string): number | undefined {
   const value = readSingle(query, name)
   if (value === undefined || value === '') return undefined
@@ -83,7 +106,7 @@ export function parseTicketListQuery(query: Record<string, unknown>): TicketList
     categoryId: readPositiveInt(query, 'categoryId'),
     relatedSystemId: readPositiveInt(query, 'relatedSystemId'),
     requestedPriority: readEnum(query, 'requestedPriority', PRIORITIES),
-    status: readEnum(query, 'status', STATUSES),
+    statuses: readStatuses(query),
     sortBy: readEnum(query, 'sortBy', SORT_FIELDS) ?? 'createdAt',
     sortOrder: readEnum(query, 'sortOrder', SORT_ORDERS) ?? 'desc',
     page,

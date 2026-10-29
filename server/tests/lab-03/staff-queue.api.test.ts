@@ -138,6 +138,8 @@ describe('API-43 the Queue lists every Requester’s Tickets (AC-28, FR-18)', ()
       itPriority: 'HIGH',
       status: 'OPEN',
       requesterResolvedFlagged: false,
+      // Lab 4 api-spec §3.10 adds the follow-up badge count to QueueTicketSummary.
+      outstandingFollowUps: 0,
       createdAt: '2026-01-02T00:00:00.000Z',
       updatedAt: expect.any(String),
     })
