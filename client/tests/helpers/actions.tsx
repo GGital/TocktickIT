@@ -29,6 +29,13 @@ export const ticket = (overrides: Record<string, unknown> = {}) => ({
   createdAt: '2026-09-04T02:20:00.000Z',
   updatedAt: '2026-10-19T08:02:31.000Z',
   attachments: [],
+  // The Lab 4 staff additions (api-spec §2.3): owned, with recorded work, so the gate passes.
+  version: 1,
+  resolvedAt: null,
+  publicActivityAt: '2026-10-19T08:02:31.000Z',
+  actionSummary: { total: 3, voided: 0, outstandingFollowUps: 0 },
+  allowedTransitions: ['OPEN', 'WAITING_FOR_REQUESTER', 'RESOLVED', 'CANCELLED'],
+  resolutionBlockers: [],
   ...overrides,
 })
 
