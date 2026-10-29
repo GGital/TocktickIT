@@ -14,6 +14,9 @@ const never = () => new Promise<Response>(() => undefined)
 
 afterEach(() => vi.unstubAllGlobals())
 
+/** Sets a field in one change event: typing key by key overran the 5 s test timeout under full-suite load. */
+const fill = (field: HTMLElement, value: string) => fireEvent.change(field, { target: { value } })
+
 /** Two submit events on one form in the same tick, before React can re-render the busy state. */
 const submitTwice = (form: HTMLFormElement) =>
   act(() => {
@@ -36,8 +39,8 @@ describe('AC-45 rapid repeated submits produce one write', () => {
     await within(category).findByRole('option', { name: 'Hardware' })
     await user.selectOptions(category, '2')
     await user.selectOptions(screen.getByLabelText(/^Related System/), '7')
-    await user.type(screen.getByLabelText(/^Ticket Summary/), 'Laptop battery drains within thirty minutes')
-    await user.type(screen.getByLabelText(/^Description/), 'The battery drops from full to fifteen percent within half an hour.')
+    fill(screen.getByLabelText(/^Ticket Summary/), 'Laptop battery drains within thirty minutes')
+    fill(screen.getByLabelText(/^Description/), 'The battery drops from full to fifteen percent within half an hour.')
 
     await submitTwice(screen.getByRole('button', { name: 'Submit Ticket' }).closest('form')!)
     expect(api.calls('POST', '/api/tickets')).toHaveLength(1)
@@ -54,11 +57,11 @@ describe('AC-45 rapid repeated submits produce one write', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Create user' }))
     const form = await screen.findByRole('dialog')
-    await user.type(within(form).getByLabelText(/^Full name/), 'Malee Srisuk')
-    await user.type(within(form).getByLabelText(/^Email address/), 'malee.srisuk@toktickit.test')
+    fill(within(form).getByLabelText(/^Full name/), 'Malee Srisuk')
+    fill(within(form).getByLabelText(/^Email address/), 'malee.srisuk@toktickit.test')
     await user.click(within(form).getByRole('radio', { name: 'IT Staff' }))
     await user.click(within(form).getByRole('radio', { name: 'Active' }))
-    await user.type(within(form).getByLabelText(/^Initial password/), 'first-login-2026')
+    fill(within(form).getByLabelText(/^Initial password/), 'first-login-2026')
 
     await submitTwice(form.querySelector('form')!)
     expect(api.calls('POST', '/api/admin/users')).toHaveLength(1)
