@@ -254,8 +254,7 @@ describe('API-71 legacy Tickets after the migration (BR-75)', () => {
     expect(res.body.status).toBe('CLOSED')
   })
 
-  // ponytail: enabled by #82, which adds the resolution gate to PATCH …/status.
-  it.skip('refuses to resolve a legacy active Ticket until an action is recorded', async () => {
+  it('refuses to resolve a legacy active Ticket until an action is recorded', async () => {
     const res = await request(app)
       .patch(`/api/staff/tickets/${activeId}/status`)
       .set('Cookie', asUser(staffId))

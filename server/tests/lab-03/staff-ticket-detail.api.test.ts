@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import request from 'supertest'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { RequestedPriority, TicketStatus } from '@prisma/client'
@@ -72,8 +73,23 @@ const row = (id: number) => prisma.ticket.findUniqueOrThrow({ where: { id } })
 
 const as = (userId: number, req: request.Test) => req.set('Cookie', asUser(userId))
 const detail = (id: number | string, userId = staff.id) => as(userId, request(app).get(`/api/staff/tickets/${id}`))
-const patch = (id: number | string, action: 'assignment' | 'priority' | 'status', body: unknown, userId = staff.id) =>
-  as(userId, request(app).patch(`/api/staff/tickets/${id}/${action}`)).send(body as object)
+// Lab 4 BR-78: every write carries the Ticket's current version. The Lab 3 assertions themselves are unchanged.
+const currentVersion = async (id: number | string) =>
+  (await prisma.ticket.findUnique({ where: { id: Number(id) || 0 }, select: { version: true } }))?.version ?? 1
+const patch = async (id: number | string, action: 'assignment' | 'priority' | 'status', body: object, userId = staff.id) =>
+  as(userId, request(app).patch(`/api/staff/tickets/${id}/${action}`)).send({ ...body, expectedVersion: await currentVersion(id) })
+
+// Lab 4 BR-35: a Ticket resolves only with recorded work, so the Lab 3 resolve cases record one action first.
+const workData = (ticketId: number) => ({
+  ticketId,
+  clientRequestId: randomUUID(),
+  actionAt: new Date(),
+  description: 'Recorded so the resolution gate passes.',
+  result: 'Fixed.',
+  followUpRequired: false,
+  performedById: staff.id,
+})
+const recordWork = (ticketId: number) => prisma.actionTaken.create({ data: workData(ticketId) })
 
 const unknownTicketId = async () => (await prisma.ticket.findFirstOrThrow({ orderBy: { id: 'desc' } })).id + 1000
 const unknownUserId = async () => (await prisma.user.findFirstOrThrow({ orderBy: { id: 'desc' } })).id + 1000
@@ -315,6 +331,7 @@ describe('API-66 the Requester-resolution flag (AC-43, BR-46)', () => {
     ['RESOLVED', 'CLOSED'],
   ] as const)('%s → %s also clears the flag', async (from, to) => {
     const ticket = await createTicket({ status: from, assigneeId: staff.id, flagged: true })
+    if (to === 'RESOLVED') await recordWork(ticket.id)
     const res = await patch(ticket.id, 'status', { status: to })
     expect(res.status).toBe(200)
     expect(res.body.requesterResolvedFlaggedAt).toBeNull()
@@ -385,6 +402,7 @@ describe('the status endpoint enforces every pair of the matrix (BR-35, BR-36, e
       select: { id: true, ticketNumber: true },
     })
     const idOf = new Map(tickets.map((ticket) => [ticket.ticketNumber, ticket.id]))
+    await prisma.actionTaken.createMany({ data: tickets.map((ticket) => workData(ticket.id)) })
 
     const outcomes: string[] = []
     for (const [index, [from, to]] of pairs.entries()) {
