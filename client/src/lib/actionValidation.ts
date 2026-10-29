@@ -1,3 +1,5 @@
+import { fromBangkokInput, toBangkokInput } from './formatBangkok'
+
 /**
  * Client mirror of the Action Taken field rules (api-spec §3.3, server/src/actionInput.ts). The server stays
  * authoritative; this answers before a round trip, with the API's messages word for word.
@@ -36,6 +38,15 @@ const within = (value: string | null, min: number, max: number) => {
 }
 
 /** Every offending field at once (BR-13). */
+/**
+ * The form's starting `datetime-local` value: now, in Bangkok. The input has no seconds, so on a Ticket opened in
+ * this same minute "now" would read as before it (BR-06); it rounds up a minute instead, well inside the skew.
+ */
+export function defaultActionAt(ticketCreatedAt: string, now = Date.now()) {
+  const value = toBangkokInput(new Date(now).toISOString())
+  return new Date(fromBangkokInput(value)) < new Date(ticketCreatedAt) ? toBangkokInput(new Date(now + 60_000).toISOString()) : value
+}
+
 export function validateAction(values: ActionPayload, context: { now?: Date; ticketCreatedAt: string }): ActionErrors {
   const { now = new Date(), ticketCreatedAt } = context
   const errors: ActionErrors = {}

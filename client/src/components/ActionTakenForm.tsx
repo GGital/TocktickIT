@@ -7,7 +7,7 @@ import StaleCallout from './StaleCallout'
 import TextArea from './TextArea'
 import TextField from './TextField'
 import { ApiError, apiFetch } from '../lib/apiClient'
-import { validateAction, type ActionErrors, type ActionField, type ActionPayload } from '../lib/actionValidation'
+import { defaultActionAt, validateAction, type ActionErrors, type ActionField, type ActionPayload } from '../lib/actionValidation'
 import { formatBangkok, fromBangkokInput, toBangkokInput } from '../lib/formatBangkok'
 import type { Role } from '../lib/roles'
 
@@ -105,7 +105,7 @@ export default function ActionTakenForm({ ticketId, ticketCreatedAt, action, me,
   const titleId = useId()
   const [clientRequestId] = useState(() => crypto.randomUUID())
   const [values, setValues] = useState<Values>(() =>
-    action ? fromAction(action) : { actionAt: toBangkokInput(new Date().toISOString()), description: '', result: '', followUp: '', followUpNote: '', attachmentNotes: '' },
+    action ? fromAction(action) : { actionAt: defaultActionAt(ticketCreatedAt), description: '', result: '', followUp: '', followUpNote: '', attachmentNotes: '' },
   )
   // The stored version the edit is based on; replaced only by an explicit stale-recovery choice.
   const [base, setBase] = useState(action)
@@ -169,15 +169,17 @@ export default function ActionTakenForm({ ticketId, ticketCreatedAt, action, me,
     // A second click before React re-renders the busy button still sends nothing (BR-82).
     if (inFlight.current) return
     const payload = toPayload(values)
+    const stored = against && toPayload(fromAction(against))
     const found = validateAction(payload, { ticketCreatedAt })
+    // An unchanged time is never sent, and the input shows it without seconds, so it is not judged again (BR-06).
+    if (stored && payload.actionAt === stored.actionAt) delete found.actionAt
     setErrors(found)
     setNotice(null)
     if (Object.keys(found).length > 0) return
 
     let body: object
-    if (against) {
+    if (stored) {
       // Edit sends only what differs from the stored action; an unchanged form closes without a request.
-      const stored = toPayload(fromAction(against))
       const changes = Object.fromEntries(Object.entries(payload).filter(([key, value]) => value !== stored[key as ActionField]))
       if (Object.keys(changes).length === 0) return onClose()
       body = { expectedVersion: against.version, ...changes }

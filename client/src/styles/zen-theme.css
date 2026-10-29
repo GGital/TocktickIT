@@ -566,10 +566,13 @@ label:has(+ input[type="file"]:focus-visible) {
 .zen-action-card:first-child { border-top: 0; padding-top: 0; }
 
 .zen-dialog-action { max-width: 640px; }
+/* Tablet only: on mobile this dialog is full-screen like every other (ui-spec §10), so the rule must not reach it. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .zen-dialog-action { width: 90%; }
+}
 
 /* Tablet and mobile: each row becomes a card; one markup, so nothing is duplicated for assistive technology (§6.6). */
 @media (max-width: 991.98px) {
-  .zen-dialog-action { width: 90%; }
   .zen-actions-table thead { display: none; }
   .zen-actions-table, .zen-actions-table tbody, .zen-actions-table tr, .zen-actions-table td { display: block; width: 100%; }
   .zen-actions-table tr { border-top: 1px solid var(--zen-border); padding: 12px 0; }
