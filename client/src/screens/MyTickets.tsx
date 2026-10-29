@@ -11,6 +11,7 @@ import SelectField from '../components/SelectField'
 import { SkeletonCard, SkeletonRows } from '../components/Skeleton'
 import { apiFetch } from '../lib/apiClient'
 import { STATUS_LABELS, TICKET_STATUSES } from '../lib/ticketLabels'
+import { formatBangkokDate } from '../lib/formatBangkok'
 
 type Reference = { id: number; name: string }
 
@@ -49,13 +50,6 @@ const SORT_OPTIONS = [
 
 const FILTER_KEYS = ['search', 'categoryId', 'relatedSystemId', 'requestedPriority', 'status']
 
-const bangkokDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', {
-    timeZone: 'Asia/Bangkok',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
 
 /** My Tickets (ui-spec §6). Every query runs server-side; the URL holds the state
  * so a filtered view can be reloaded, shared, and screenshotted (BR-34). */
@@ -337,8 +331,8 @@ export default function MyTickets() {
                     <td>
                       <StatusBadge value={ticket.status} />
                     </td>
-                    <td>{bangkokDate(ticket.createdAt)}</td>
-                    <td className="d-none d-lg-table-cell">{bangkokDate(ticket.updatedAt)}</td>
+                    <td>{formatBangkokDate(ticket.createdAt)}</td>
+                    <td className="d-none d-lg-table-cell">{formatBangkokDate(ticket.updatedAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -364,7 +358,7 @@ export default function MyTickets() {
                     {ticket.category.name} · {ticket.relatedSystem.name}
                   </p>
                   <p className="zen-help mb-0">
-                    {bangkokDate(ticket.createdAt)}
+                    {formatBangkokDate(ticket.createdAt)}
                     {ticket.attachmentCount > 0 && <> · 📎 {ticket.attachmentCount}</>}
                   </p>
                 </Link>

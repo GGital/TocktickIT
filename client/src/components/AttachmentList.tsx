@@ -4,6 +4,7 @@ import Button from './Button'
 import Callout from './Callout'
 import ConfirmDialog from './ConfirmDialog'
 import { ApiError, apiFetch, apiFetchBlob } from '../lib/apiClient'
+import { formatBangkok } from '../lib/formatBangkok'
 
 export type Attachment = {
   id: number
@@ -33,12 +34,6 @@ const formatSize = (bytes: number) =>
     ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
     : `${Math.max(1, Math.round(bytes / 1024))} KB`
 
-const bangkokTime = (iso: string) =>
-  new Date(iso).toLocaleString('en-GB', {
-    timeZone: 'Asia/Bangkok',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
 
 /** Loads an image preview through the ownership-checked download route (A-15). */
 function Thumbnail({ attachment }: { attachment: Attachment }) {
@@ -237,7 +232,7 @@ export default function AttachmentList({ ticketId, attachments, onChanged }: Att
                 {attachment.originalFilename}
               </span>
               <span className="zen-help mb-0">{formatSize(attachment.sizeBytes)}</span>
-              <span className="zen-help mb-0">{bangkokTime(attachment.uploadedAt)}</span>
+              <span className="zen-help mb-0">{formatBangkok(attachment.uploadedAt)}</span>
 
               <span className="ms-auto d-flex gap-2">
                 <Button
@@ -281,7 +276,7 @@ export default function AttachmentList({ ticketId, attachments, onChanged }: Att
                 </div>
                 {/* Metadata is retained; no download, preview, or remove control exists. */}
                 <p className="zen-help mb-0">
-                  {attachment.removalReason} · {bangkokTime(attachment.removedAt!)}
+                  {attachment.removalReason} · {formatBangkok(attachment.removedAt!)}
                   {attachment.removedBy && <> · {attachment.removedBy.fullName}</>}
                 </p>
               </li>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AttachmentSection, { type StagedFile } from '../components/AttachmentSection'
 import Button from '../components/Button'
@@ -11,6 +11,7 @@ import { RequiredLegend } from '../components/FormField'
 import { ApiError, apiFetch } from '../lib/apiClient'
 import { useCurrentUser } from '../lib/auth'
 import { validateTicketForm, type FieldErrors, type TicketFormValues } from '../lib/validation'
+import { formatBangkok } from '../lib/formatBangkok'
 
 type Reference = { id: number; name: string }
 
@@ -44,12 +45,6 @@ const FIELD_LABELS: Record<keyof TicketFormValues, string> = {
   requestedPriority: 'Requested Priority',
 }
 
-const bangkok = (iso: string) =>
-  new Date(iso).toLocaleString('en-GB', {
-    timeZone: 'Asia/Bangkok',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
 
 /** Live character counter; turns amber near the limit (ui-spec §5.2). */
 const counter = (value: string, max: number, warnAt: number) => (
@@ -65,6 +60,8 @@ export default function CreateTicket() {
   const [errors, setErrors] = useState<FieldErrors>({})
   const [staged, setStaged] = useState<StagedFile[]>([])
   const [submitting, setSubmitting] = useState(false)
+  // A second submit before React re-renders the busy button still sends nothing (BR-82, AC-45).
+  const inFlight = useRef(false)
   const [failure, setFailure] = useState<{ duplicate: boolean; message: string } | null>(null)
   const [created, setCreated] = useState<{ ticket: CreatedTicket; uploads: UploadResult[] } | null>(
     null,
@@ -110,6 +107,7 @@ export default function CreateTicket() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (inFlight.current) return
 
     const found = validateTicketForm(values)
     setErrors(found)
@@ -120,6 +118,7 @@ export default function CreateTicket() {
       return
     }
 
+    inFlight.current = true
     setSubmitting(true)
     setFailure(null)
 
@@ -153,6 +152,7 @@ export default function CreateTicket() {
             : 'The ticket could not be submitted. Check your connection and try again.',
       })
     } finally {
+      inFlight.current = false
       setSubmitting(false)
     }
   }
@@ -169,7 +169,7 @@ export default function CreateTicket() {
           <dt className="col-sm-3">Ticket Number</dt>
           <dd className="col-sm-9 zen-mono zen-ticket-number">{created.ticket.ticketNumber}</dd>
           <dt className="col-sm-3">Submitted</dt>
-          <dd className="col-sm-9">{bangkok(created.ticket.createdAt)}</dd>
+          <dd className="col-sm-9">{formatBangkok(created.ticket.createdAt)}</dd>
           {created.uploads.length > 0 && (
             <>
               <dt className="col-sm-3">Attachments</dt>

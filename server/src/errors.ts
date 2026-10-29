@@ -38,6 +38,7 @@ export const ERROR_STATUS = {
   UNSUPPORTED_FILE_TYPE: 415,
   TOO_MANY_ATTEMPTS: 429,
   INTERNAL_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
 } as const
 
 export type ErrorCode = keyof typeof ERROR_STATUS

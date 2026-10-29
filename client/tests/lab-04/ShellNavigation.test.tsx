@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
 import { requesterDashboard, staffDashboard } from '../helpers/dashboard'
-import { requesterUser, response, staffUser } from '../helpers/actions'
+import { apiError, requesterUser, response, staffUser } from '../helpers/actions'
 
 const adminUser = { id: 3, fullName: 'Chai Admin', email: 'chai@toktickit.test', role: 'ADMINISTRATOR', mustChangePassword: false }
 const users = { REQUESTER: requesterUser, IT_STAFF: staffUser, ADMINISTRATOR: adminUser } as const
@@ -62,7 +62,8 @@ beforeEach(() => {
         '/api/staff/tickets': page([queueRow]),
         '/api/admin/users': [],
       }
-      return Promise.resolve(response(200, path in body ? body[path] : []))
+      // Unmocked routes answer 404, as in stubApi: a 200 `[]` passed for a Ticket and crashed StaffTicketDetail.
+      return Promise.resolve(path in body ? response(200, body[path]) : apiError(404, 'NOT_MOCKED', path))
     }),
   )
 })

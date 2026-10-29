@@ -7,6 +7,7 @@ import {
   postMessage,
   runTag,
   signInAs,
+  recordAction,
   staffPatch,
   type ViewportName,
 } from './helpers'
@@ -33,6 +34,8 @@ test.describe('Lab 3 responsive behaviour', () => {
     assigned = await seed('wireless keeps dropping in the east wing meeting rooms during video calls')
     await staffPatch(request, assigned.id, 'assignment', { assigneeId: 'me' })
     await staffPatch(request, assigned.id, 'priority', { itPriority: 'URGENT' })
+    // Lab 4 BR-35: recorded work, so RESP-05 can open the Resolve confirmation.
+    await recordAction(request, assigned.id)
     await postMessage(request, 'requester', assigned.id, 'comment', 'It drops roughly every ten minutes, usually mid-call.')
     await postMessage(request, 'staff', assigned.id, 'note', 'Access point firmware scheduled for upgrade on Friday.')
 

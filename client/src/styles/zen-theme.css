@@ -393,9 +393,12 @@ label:has(+ input[type="file"]:focus-visible) {
 .zen-queue td, .zen-queue th { padding: 12px 10px; }
 .zen-queue-summary { max-width: 14rem; }
 @media (max-width: 991.98px) {
-  .zen-queue td, .zen-queue th { padding: 10px 6px; }
+  /* 4 px a side: six columns at their narrowest (an Administrator owner, a Cancelled badge) still fit 820 px. */
+  .zen-queue td, .zen-queue th { padding: 10px 4px; }
   .zen-queue-summary { max-width: 7rem; }
 }
+/* The Lab 4 follow-up badge shares the narrow Summary column, so it may wrap rather than widen the table. */
+.zen-queue-summary .zen-badge { max-width: 100%; white-space: normal; }
 .zen-queue-row:hover td { background-color: var(--zen-pale); }
 /* The flag sub-row belongs to the Ticket above it, so the divider sits under the pair, not between them. */
 .zen-queue tbody tr.zen-queue-row:has(+ .zen-flag-row) td { border-bottom-width: 0; }
