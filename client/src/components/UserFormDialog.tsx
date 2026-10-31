@@ -51,6 +51,8 @@ type UserFormDialogProps = {
 export default function UserFormDialog({ user, selfId, onSaved, onClose }: UserFormDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
+  // A second submit before React re-renders the busy button still sends nothing (BR-82, AC-45).
+  const inFlight = useRef(false)
   const titleId = useId()
 
   const [fullName, setFullName] = useState(user?.fullName ?? '')
@@ -119,6 +121,7 @@ export default function UserFormDialog({ user, selfId, onSaved, onClose }: UserF
 
   async function submit(event?: FormEvent) {
     event?.preventDefault()
+    if (inFlight.current) return
     const found = validate(user === null)
     setErrors(found)
     setNotice(null)
@@ -135,6 +138,7 @@ export default function UserFormDialog({ user, selfId, onSaved, onClose }: UserF
       : { ...values, initialPassword: passwordRef.current!.value }
     if (user && Object.keys(changes).length === 0) return onClose()
 
+    inFlight.current = true
     setBusy(true)
     try {
       if (user) {
@@ -153,18 +157,21 @@ export default function UserFormDialog({ user, selfId, onSaved, onClose }: UserF
     } catch (error) {
       if (!applyRefusal(error)) setNotice({ variant: 'error', text: 'The user was not saved.', retry: () => void submit() })
     } finally {
+      inFlight.current = false
       setBusy(false)
     }
   }
 
   async function issuePassword(event?: FormEvent) {
     event?.preventDefault()
+    if (inFlight.current) return
     const password = passwordRef.current?.value ?? ''
     const rule = validateNewPassword(password, { currentPassword: '', email: user!.email })
     setErrors(rule ? { initialPassword: rule } : {})
     setNotice(null)
     if (rule) return
 
+    inFlight.current = true
     setBusy(true)
     try {
       const issued = await apiFetch<{ initialPassword: string }>(`/admin/users/${user!.id}/initial-password`, {
@@ -178,6 +185,7 @@ export default function UserFormDialog({ user, selfId, onSaved, onClose }: UserF
     } catch (error) {
       if (!applyRefusal(error)) setNotice({ variant: 'error', text: 'The password was not changed.', retry: () => void issuePassword() })
     } finally {
+      inFlight.current = false
       setBusy(false)
     }
   }

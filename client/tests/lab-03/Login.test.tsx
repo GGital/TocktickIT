@@ -158,7 +158,7 @@ describe('UI-03 invalid credentials (AC-02)', () => {
     succeedAs(requester)
     await user.click(screen.getByRole('button', { name: 'Try again' }))
 
-    expect(await screen.findByRole('heading', { name: 'My Tickets' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
     expect(loginCalls()).toHaveLength(2)
   })
 })
@@ -224,15 +224,16 @@ describe('UI-05 the reveal toggle (AC-67, ui-spec §2.1, §11)', () => {
     await user.tab({ shift: true })
     expect(passwordField()).toHaveFocus()
     await user.keyboard('{Enter}')
-    expect(await screen.findByRole('heading', { name: 'My Tickets' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
   })
 })
 
 describe('Login behaviour (ui-spec §4.3, AC-01, AC-10)', () => {
   it.each([
-    ['REQUESTER', '/tickets'],
-    ['IT_STAFF', '/staff/tickets'],
-    ['ADMINISTRATOR', '/staff/tickets'],
+    // Lab 4 BR-79: each role's home is its Dashboard.
+    ['REQUESTER', '/dashboard'],
+    ['IT_STAFF', '/staff/dashboard'],
+    ['ADMINISTRATOR', '/staff/dashboard'],
   ])('sends a %s to their home route', async (role, home) => {
     succeedAs({ ...requester, role })
     renderAt()
@@ -254,7 +255,7 @@ describe('Login behaviour (ui-spec §4.3, AC-01, AC-10)', () => {
     session = requester
     renderAt()
 
-    expect(await screen.findByRole('heading', { name: 'My Tickets' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
     expect(screen.queryByRole('form', { name: 'Sign in' })).not.toBeInTheDocument()
   })
 
@@ -272,7 +273,7 @@ describe('Login behaviour (ui-spec §4.3, AC-01, AC-10)', () => {
     succeedAs(requester)
     await user.type(passwordField(), PASSWORD)
     await user.click(signInButton())
-    await screen.findByRole('heading', { name: 'My Tickets' })
+    await screen.findByRole('heading', { name: 'Dashboard' })
 
     expect(screen.getByTestId('location').textContent).not.toContain(PASSWORD)
     expect(JSON.stringify({ ...localStorage })).not.toContain(PASSWORD)

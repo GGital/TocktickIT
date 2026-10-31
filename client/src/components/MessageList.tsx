@@ -1,4 +1,5 @@
 import { ROLE_LABELS, type Role } from '../lib/roles'
+import { formatBangkok } from '../lib/formatBangkok'
 
 export type TicketMessage = {
   id: number
@@ -9,8 +10,6 @@ export type TicketMessage = {
   createdAt: string
 }
 
-const bangkokTime = (iso: string) =>
-  new Date(iso).toLocaleString('en-GB', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' })
 
 /**
  * Message cards for one visibility, oldest first as the API returns them (ui-spec §12). Bodies render as text with
@@ -31,7 +30,7 @@ export default function MessageList({ messages, emptyText }: { messages: TicketM
               </>
             )}
             <strong>{message.author.fullName}</strong> · {ROLE_LABELS[message.author.role]} ·{' '}
-            <time dateTime={message.createdAt}>{bangkokTime(message.createdAt)}</time>
+            <time dateTime={message.createdAt}>{formatBangkok(message.createdAt)}</time>
             {message.isSystem && ' · System message'}
           </p>
           <p className="zen-message-body">{message.body}</p>

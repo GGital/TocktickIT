@@ -148,6 +148,12 @@ describe('Staff Ticket Detail surfaces (Lab 3 ui-spec §8)', () => {
     createdAt: '2026-09-04T02:20:00.000Z',
     updatedAt: '2026-09-09T08:02:31.000Z',
     attachments: [],
+    // Lab 4 staff detail additions (api-spec §2.3), as the API now always sends them.
+    version: 1,
+    resolvedAt: null,
+    actionSummary: { total: 0, voided: 0, outstandingFollowUps: 0 },
+    allowedTransitions: ['CANCELLED'],
+    resolutionBlockers: ['UNASSIGNED', 'NO_ACTIONS'],
   }
 
   const renderDetail = () => {

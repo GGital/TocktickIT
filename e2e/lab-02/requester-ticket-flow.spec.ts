@@ -13,16 +13,17 @@ test('E2E-01 sign in as a requester, create a ticket, then find it again', async
   const [requester] = await getRequesters(request)
   const summary = `${runTag()} laptop battery drains within thirty minutes`
 
-  // --- Signed in: the root redirects to My Tickets and the shell names the user ---
+  // --- Signed in: the root redirects home — the Dashboard since Lab 4 (BR-79) — and the shell names the user ---
   await actAs(page, requester)
   await page.goto('/')
-  await expect(page).toHaveURL(/\/tickets$/)
+  await expect(page).toHaveURL(/\/dashboard$/)
   await expect(page.getByText(requester.fullName)).toBeVisible()
   await expect(page.getByText('Testing as:')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Change Requester' })).toHaveCount(0)
 
   // --- Create Ticket (AC-08, AC-09) ---
-  await page.getByRole('link', { name: 'Create Ticket' }).click()
+  // Exact: the Lab 4 Dashboard also offers a "Create ticket" button (BR-79).
+  await page.getByRole('link', { name: 'Create Ticket', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Create Ticket' })).toBeVisible()
 
   // The system fields are shown but never editable.

@@ -5,18 +5,12 @@ import {
   readEnum,
   readPositiveInt,
   readSingle,
+  readStatuses,
+  STATUSES,
 } from './ticketQuery.js'
 
-export const STATUSES = [
-  'NEW',
-  'OPEN',
-  'IN_PROGRESS',
-  'WAITING_FOR_REQUESTER',
-  'RESOLVED',
-  'CLOSED',
-  'REOPENED',
-  'CANCELLED',
-] as const
+export { STATUSES }
+const FOLLOW_UPS = ['outstanding', 'mine'] as const
 const SORT_FIELDS = ['itPriority', 'createdAt', 'updatedAt', 'ticketNumber', 'status'] as const
 const SORT_ORDERS = ['asc', 'desc'] as const
 
@@ -33,25 +27,13 @@ export type QueueQuery = {
   /** A user id, or null for "unassigned". "me" has already been resolved to the session user. */
   assigneeId?: number | null
   flaggedResolved?: boolean
+  /** Tickets with an outstanding follow-up; `mine` keeps only the session user's actions (Lab 4 BR-62). */
+  followUp?: (typeof FOLLOW_UPS)[number]
   sortBy: SortField
   sortOrder: SortOrder
   orderBy: Partial<Record<SortField | 'id', SortOrder>>[]
   page: number
   pageSize: (typeof PAGE_SIZES)[number]
-}
-
-/** `status` is the one repeatable parameter (BR-60, A-14): repeats form an OR set, each value validated. */
-function readStatuses(query: Record<string, unknown>) {
-  const raw = query.status
-  if (raw === undefined) return undefined
-
-  const values = (Array.isArray(raw) ? raw : [raw]).filter((value) => value !== '')
-  for (const value of values) {
-    if (typeof value !== 'string' || !(STATUSES as readonly string[]).includes(value)) {
-      throw new QueryParameterError('status', `status must be one of ${STATUSES.join(', ')}.`)
-    }
-  }
-  return values.length > 0 ? [...new Set(values as (typeof STATUSES)[number][])] : undefined
 }
 
 function readAssignee(query: Record<string, unknown>, sessionUserId: number) {
@@ -101,6 +83,7 @@ export function parseQueueQuery(query: Record<string, unknown>, sessionUserId: n
     relatedSystemId: readPositiveInt(query, 'relatedSystemId'),
     assigneeId: readAssignee(query, sessionUserId),
     flaggedResolved: readBoolean(query, 'flaggedResolved'),
+    followUp: readEnum(query, 'followUp', FOLLOW_UPS),
     sortBy,
     sortOrder,
     orderBy,

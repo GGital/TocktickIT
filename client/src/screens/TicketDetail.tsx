@@ -8,9 +8,11 @@ import Callout from '../components/Callout'
 import ConfirmDialog from '../components/ConfirmDialog'
 import Conversation from '../components/Conversation'
 import EmptyState from '../components/EmptyState'
+import RequesterActionsList from '../components/RequesterActionsList'
 import { SkeletonCard } from '../components/Skeleton'
 import { ApiError, apiFetch } from '../lib/apiClient'
 import { useCurrentUser } from '../lib/auth'
+import { formatBangkok } from '../lib/formatBangkok'
 
 type Ticket = {
   id: number
@@ -25,6 +27,8 @@ type Ticket = {
   status: TicketStatus
   /** Set when the Requester reported the problem resolved; cleared when IT resolves, closes, or reopens (BR-46). */
   requesterResolvedFlaggedAt: string | null
+  /** When IT last resolved it; cleared on reopen (Lab 4 BR-38). */
+  resolvedAt: string | null
   createdAt: string
   updatedAt: string
   attachments: Attachment[]
@@ -36,12 +40,6 @@ type Load =
   | { status: 'not-found' }
   | { status: 'error' }
 
-const bangkokTime = (iso: string) =>
-  new Date(iso).toLocaleString('en-GB', {
-    timeZone: 'Asia/Bangkok',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
 
 /**
  * "Problem appears resolved" (Lab 3 ui-spec §6.2, BR-46). A signal to IT, never a status change. Once flagged the
@@ -57,7 +55,7 @@ function AppearsResolved({ ticket, onFlagged }: { ticket: Ticket; onFlagged: (ti
     return (
       <div className="d-flex flex-wrap align-items-center gap-2 border-top pt-3 mt-4">
         <ResolutionFlagBadge />
-        <span className="zen-help mt-0">Reported {bangkokTime(ticket.requesterResolvedFlaggedAt)}</span>
+        <span className="zen-help mt-0">Reported {formatBangkok(ticket.requesterResolvedFlaggedAt)}</span>
       </div>
     )
   }
@@ -183,9 +181,10 @@ export default function TicketDetail() {
         <h1 className="zen-mono mb-0">{ticket.ticketNumber}</h1>
         <PriorityBadge kind="requested" value={ticket.requestedPriority} />
         <StatusBadge value={ticket.status} />
+        {ticket.resolvedAt && <span className="zen-help mt-0">Resolved on {formatBangkok(ticket.resolvedAt)}</span>}
       </div>
       <p className="zen-help">
-        Created {bangkokTime(ticket.createdAt)} · Last updated {bangkokTime(ticket.updatedAt)}
+        Created {formatBangkok(ticket.createdAt)} · Last updated {formatBangkok(ticket.updatedAt)}
       </p>
 
       {/* A definition list, not disabled inputs: this data is not a form (ui-spec §7.1). */}
@@ -196,7 +195,7 @@ export default function TicketDetail() {
           <dd className="col-sm-9 zen-mono">{ticket.ticketNumber}</dd>
 
           <dt className="col-sm-3">Ticket Date</dt>
-          <dd className="col-sm-9">{bangkokTime(ticket.createdAt)}</dd>
+          <dd className="col-sm-9">{formatBangkok(ticket.createdAt)}</dd>
 
           <dt className="col-sm-3">Requester</dt>
           <dd className="col-sm-9">
@@ -233,6 +232,8 @@ export default function TicketDetail() {
         attachments={ticket.attachments}
         onChanged={loadTicket}
       />
+
+      <RequesterActionsList ticketId={ticket.id} />
 
       {/* One thread, because for a Requester there is only one kind of message. No Internal Notes panel, placeholder,
           or count of hidden messages exists here, and the notes route is never requested (Lab 3 ui-spec §6, BR-24). */}

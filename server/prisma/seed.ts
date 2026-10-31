@@ -47,7 +47,27 @@ const users: SeedUser[] = [
   { email: 'prasert.it@toktickit.dev', fullName: 'Prasert Boonmee', department: null, role: 'IT_STAFF', isActive: true, mustChangePassword: true },
   { email: 'former.it@toktickit.dev', fullName: 'Wichai Departed', department: null, role: 'IT_STAFF', isActive: false, mustChangePassword: true },
   { email: 'admin@toktickit.dev', fullName: 'Suda Administrator', department: null, role: 'ADMINISTRATOR', isActive: true, mustChangePassword: false },
+  // No Tickets and no actions, so the all-zero dashboard states are demonstrable (spec §7.6).
+  { email: 'empty.requester@toktickit.dev', fullName: 'Ploy Newcomer', department: 'Faculty of Arts', role: 'REQUESTER', isActive: true, mustChangePassword: false },
+  { email: 'quiet.it@toktickit.dev', fullName: 'Anan Quiet', department: null, role: 'IT_STAFF', isActive: true, mustChangePassword: false },
 ]
+
+const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * HOUR_MS
+
+type SeedAction = {
+  /** Fixed upsert key: a re-run updates the row instead of duplicating it (BR-77). */
+  clientRequestId: string
+  performer: string
+  /** Offsets from the Ticket's creation, so actionAt stays inside [createdAt, now] on any re-run (BR-06). */
+  hoursAfterCreated: number
+  description: string
+  result: string
+  followUpNote?: string
+  completed?: { by: string; hoursAfterCreated: number }
+  voided?: { by: string; reason: string }
+  attachmentNotes?: string
+}
 
 type SeedMessage = { author: string; visibility: MessageVisibility; body: string; isSystem?: boolean }
 
@@ -63,8 +83,12 @@ type SeedTicket = {
   status: TicketStatus
   assignee: string | null
   flagged?: boolean
+  /** 0 means created today in Bangkok: moved to now on a re-run once that day has passed (spec §7.6). */
   daysAgo: number
+  /** RESOLVED and CLOSED only; recomputed every run so the 7-day window demo holds (BR-57). */
+  resolvedDaysAgo?: number
   messages?: SeedMessage[]
+  actions?: SeedAction[]
 }
 
 // Every status, every IT Priority, owned and unowned. Seed data obeys the rules the API enforces:
@@ -109,6 +133,16 @@ const tickets: SeedTicket[] = [
       { author: 'thanawat.it@toktickit.dev', visibility: 'PUBLIC', body: 'Thanks for reporting this. I will check the print server this afternoon.' },
       { author: 'thanawat.it@toktickit.dev', visibility: 'INTERNAL', body: 'Print spooler on the server stopped after last night\'s patch. Check the service first.' },
     ],
+    // One action, nothing outstanding: ready to resolve (spec §7.6).
+    actions: [
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000001',
+        performer: 'thanawat.it@toktickit.dev',
+        hoursAfterCreated: 4,
+        description: 'Restarted the print spooler service on the registrar print server.',
+        result: 'Printer shows online again for every registrar workstation.',
+      },
+    ],
   },
   {
     summary: 'Library catalogue kiosk freezes on search',
@@ -124,6 +158,50 @@ const tickets: SeedTicket[] = [
     messages: [
       { author: 'malee.it@toktickit.dev', visibility: 'PUBLIC', body: 'I can reproduce the freeze. Working on an update for the kiosk software.' },
       { author: 'malee.it@toktickit.dev', visibility: 'INTERNAL', body: 'Kiosk runs an outdated browser build. Raised IT Priority because it blocks a public service point.' },
+    ],
+    // Many actions: a non-owner performer, a completed and an outstanding follow-up, and a void.
+    // The outstanding follow-up blocks resolution (BR-35).
+    actions: [
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000002',
+        performer: 'malee.it@toktickit.dev',
+        hoursAfterCreated: 2,
+        description: 'Reproduced the freeze with a catalogue search for "history".',
+        result: 'Freeze happens on every search with more than one page of results.',
+      },
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000003',
+        performer: 'thanawat.it@toktickit.dev',
+        hoursAfterCreated: 24,
+        description: 'Checked the kiosk network port and switch logs.',
+        result: 'Network is stable; the freeze is in the kiosk software.',
+        followUpNote: 'Ask the kiosk vendor whether a newer browser build is supported.',
+        completed: { by: 'malee.it@toktickit.dev', hoursAfterCreated: 48 },
+      },
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000004',
+        performer: 'malee.it@toktickit.dev',
+        hoursAfterCreated: 50,
+        description: 'Installed the vendor browser update.',
+        result: 'Update installed.',
+        voided: { by: 'malee.it@toktickit.dev', reason: 'Recorded against the wrong kiosk; see the next action.' },
+      },
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000005',
+        performer: 'malee.it@toktickit.dev',
+        hoursAfterCreated: 72,
+        description: 'Installed the vendor browser update on the entrance kiosk.',
+        result: 'Multi-page searches no longer freeze in testing.',
+        followUpNote: 'Watch the kiosk through one full opening day before resolving.',
+      },
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000006',
+        performer: 'thanawat.it@toktickit.dev',
+        hoursAfterCreated: 96,
+        description: 'Captured the kiosk configuration after the update.',
+        result: 'Configuration recorded for the other kiosks.',
+        attachmentNotes: 'Screenshots in the IT shared drive, folder Kiosks/Entrance.',
+      },
     ],
   },
   {
@@ -142,6 +220,22 @@ const tickets: SeedTicket[] = [
       { author: 'thanawat.it@toktickit.dev', visibility: 'PUBLIC', body: 'Please try the updated VPN profile from the portal and let us know if the drops continue.' },
       { author: 'napat.s@toktickit.dev', visibility: 'PUBLIC', body: 'The requester reported that the problem appears resolved.', isSystem: true },
     ],
+    actions: [
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000007',
+        performer: 'thanawat.it@toktickit.dev',
+        hoursAfterCreated: 24,
+        description: 'Reviewed the VPN gateway logs for the requester account.',
+        result: 'Sessions drop on the old profile\'s idle timeout.',
+      },
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000008',
+        performer: 'thanawat.it@toktickit.dev',
+        hoursAfterCreated: 72,
+        description: 'Published an updated VPN profile with a longer idle timeout.',
+        result: 'Profile available in the portal; waiting for the requester to install it.',
+      },
+    ],
   },
   {
     summary: 'Grade submission app times out on upload',
@@ -158,6 +252,17 @@ const tickets: SeedTicket[] = [
       { author: 'admin@toktickit.dev', visibility: 'PUBLIC', body: 'The upload limit has been raised. Please try the upload again.' },
       { author: 'admin@toktickit.dev', visibility: 'INTERNAL', body: 'Gateway request timeout raised from 60 to 180 seconds for the grade submission route.' },
     ],
+    // Resolved inside the 7-day window (BR-57).
+    resolvedDaysAgo: 2,
+    actions: [
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000009',
+        performer: 'admin@toktickit.dev',
+        hoursAfterCreated: 144,
+        description: 'Raised the gateway timeout for the grade submission route.',
+        result: 'A 40 MB grade sheet uploads in under two minutes.',
+      },
+    ],
   },
   {
     summary: 'Install a PDF reader on the shared laptop',
@@ -170,6 +275,19 @@ const tickets: SeedTicket[] = [
     status: 'CLOSED',
     assignee: 'malee.it@toktickit.dev',
     daysAgo: 14,
+    // Resolved outside the 7-day window (BR-57).
+    resolvedDaysAgo: 12,
+    actions: [
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000010',
+        performer: 'malee.it@toktickit.dev',
+        hoursAfterCreated: 12,
+        description: 'Installed the approved PDF reader on the shared finance laptop.',
+        result: 'Invoices open and can be annotated.',
+        followUpNote: 'Confirm with the finance team that annotation works on their invoices.',
+        completed: { by: 'malee.it@toktickit.dev', hoursAfterCreated: 20 },
+      },
+    ],
   },
   {
     summary: 'Wi-Fi keeps disconnecting in the reading room',
@@ -185,6 +303,16 @@ const tickets: SeedTicket[] = [
     messages: [
       { author: 'prasert.it@toktickit.dev', visibility: 'INTERNAL', body: 'Access point firmware rolled back after the reboot. Schedule a site visit.' },
     ],
+    // The work that earned the first resolution; reopening keeps it.
+    actions: [
+      {
+        clientRequestId: 'a4000000-0000-4000-8000-000000000011',
+        performer: 'prasert.it@toktickit.dev',
+        hoursAfterCreated: 48,
+        description: 'Rebooted the second-floor access point.',
+        result: 'Reading room laptops stayed connected for the rest of the day.',
+      },
+    ],
   },
   {
     summary: 'Duplicate request for a keyboard replacement',
@@ -198,6 +326,19 @@ const tickets: SeedTicket[] = [
     assignee: null,
     daysAgo: 25,
   },
+  {
+    summary: 'Projector in lecture room 3 shows no signal',
+    description: 'The ceiling projector in lecture room 3 shows "no signal" from the lectern PC and from laptops.',
+    requester: 'pimchanok.t@toktickit.dev',
+    category: 'Hardware',
+    relatedSystem: 'Corporate Laptop',
+    requestedPriority: 'HIGH',
+    itPriority: 'HIGH',
+    status: 'NEW',
+    assignee: null,
+    // Created today in Bangkok, so newToday is never zero after seeding (BR-63).
+    daysAgo: 0,
+  },
 ]
 
 /** Same atomic statement the API uses, so seeded numbers never collide with real ones (BR-03). */
@@ -210,6 +351,10 @@ async function nextTicketNumber(year: number) {
   `
   return formatTicketNumber(year, counter.lastValue)
 }
+
+// Bangkok is UTC+07:00 with no daylight saving (BR-49).
+const bangkokDayStart = (instant: Date) =>
+  new Date(`${new Date(instant.getTime() + 7 * HOUR_MS).toISOString().slice(0, 10)}T00:00:00+07:00`)
 
 async function main() {
   // upsert keeps the seed re-runnable: existing rows keep their id instead of being duplicated.
@@ -237,12 +382,18 @@ async function main() {
   for (const seed of tickets) {
     const requesterId = userIds.get(seed.requester)!
     const existing = await prisma.ticket.findFirst({ where: { summary: seed.summary, requesterId } })
+    const now = new Date()
     const workflow = {
       status: seed.status,
       itPriority: seed.itPriority,
       assigneeId: seed.assignee ? userIds.get(seed.assignee)! : null,
       // Keep the original flag time on a re-run rather than churning it.
       requesterResolvedFlaggedAt: seed.flagged ? (existing?.requesterResolvedFlaggedAt ?? new Date()) : null,
+      resolvedAt: seed.resolvedDaysAgo === undefined ? null : new Date(now.getTime() - seed.resolvedDaysAgo * DAY_MS),
+      // The "today" Ticket stays today: a re-run on a later day moves it to now (spec §7.6).
+      ...(seed.daysAgo === 0 && existing && existing.createdAt < bangkokDayStart(now)
+        ? { createdAt: now, publicActivityAt: now }
+        : {}),
     }
 
     const ticket = existing
@@ -257,7 +408,7 @@ async function main() {
             summary: seed.summary,
             description: seed.description,
             requestedPriority: seed.requestedPriority,
-            createdAt: new Date(Date.now() - seed.daysAgo * 24 * 60 * 60 * 1000),
+            createdAt: new Date(now.getTime() - seed.daysAgo * DAY_MS),
           },
         })
 
@@ -272,10 +423,33 @@ async function main() {
       // Append-only table (BR-42): a re-run adds nothing that is already there.
       if (!(await prisma.ticketMessage.findFirst({ where: data }))) await prisma.ticketMessage.create({ data })
     }
+
+    const at = (hoursAfterCreated: number) => new Date(ticket.createdAt.getTime() + hoursAfterCreated * HOUR_MS)
+    for (const { clientRequestId, ...action } of seed.actions ?? []) {
+      const actionAt = at(action.hoursAfterCreated)
+      // Every field is re-applied, so a re-run returns the action to its documented state; the pairs
+      // below always satisfy the follow-up and void CHECK constraints.
+      const data = {
+        ticketId: ticket.id,
+        performedById: userIds.get(action.performer)!,
+        actionAt,
+        description: action.description,
+        result: action.result,
+        followUpRequired: action.followUpNote !== undefined,
+        followUpNote: action.followUpNote ?? null,
+        followUpCompletedAt: action.completed ? at(action.completed.hoursAfterCreated) : null,
+        followUpCompletedById: action.completed ? userIds.get(action.completed.by)! : null,
+        attachmentNotes: action.attachmentNotes ?? null,
+        voidedAt: action.voided ? new Date(actionAt.getTime() + HOUR_MS) : null,
+        voidedById: action.voided ? userIds.get(action.voided.by)! : null,
+        voidReason: action.voided?.reason ?? null,
+      }
+      await prisma.actionTaken.upsert({ where: { clientRequestId }, update: data, create: { clientRequestId, ...data } })
+    }
   }
 
   console.log(
-    `Seeded ${categories.length} categories, ${relatedSystems.length} related systems, ${users.length} users, ${tickets.length} tickets`,
+    `Seeded ${categories.length} categories, ${relatedSystems.length} related systems, ${users.length} users, ${tickets.length} tickets, ${tickets.flatMap((ticket) => ticket.actions ?? []).length} actions`,
   )
 }
 

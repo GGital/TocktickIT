@@ -4,11 +4,14 @@ import PriorityBadge, { type Priority } from '../components/PriorityBadge'
 import StatusBadge, { type TicketStatus } from '../components/StatusBadge'
 import Button from '../components/Button'
 import Callout from '../components/Callout'
+import DrilldownNotice from '../components/DrilldownNotice'
 import EmptyState from '../components/EmptyState'
 import Pagination from '../components/Pagination'
 import SelectField from '../components/SelectField'
 import { SkeletonCard, SkeletonRows } from '../components/Skeleton'
 import { apiFetch } from '../lib/apiClient'
+import { STATUS_LABELS, TICKET_STATUSES } from '../lib/ticketLabels'
+import { formatBangkokDate } from '../lib/formatBangkok'
 
 type Reference = { id: number; name: string }
 
@@ -47,13 +50,6 @@ const SORT_OPTIONS = [
 
 const FILTER_KEYS = ['search', 'categoryId', 'relatedSystemId', 'requestedPriority', 'status']
 
-const bangkokDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', {
-    timeZone: 'Asia/Bangkok',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
 
 /** My Tickets (ui-spec §6). Every query runs server-side; the URL holds the state
  * so a filtered view can be reloaded, shared, and screenshotted (BR-34). */
@@ -70,6 +66,7 @@ export default function MyTickets() {
   const [reloadToken, setReloadToken] = useState(0)
 
   const query = searchParams.toString()
+  const statuses = searchParams.getAll('status') as TicketStatus[]
   const hasCriteria = FILTER_KEYS.some((key) => searchParams.get(key))
   useEffect(() => {
     Promise.all([apiFetch<Reference[]>('/categories'), apiFetch<Reference[]>('/related-systems')])
@@ -110,12 +107,13 @@ export default function MyTickets() {
   }, [searchInput]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Any change to search, a filter, or the page size returns to page 1 (BR-41, AC-38). */
-  function update(changes: Record<string, string>, keepPage = false) {
+  function update(changes: Record<string, string | string[]>, keepPage = false) {
     const next = new URLSearchParams(searchParams)
 
+    // An array is a repeatable parameter: status may appear once per chosen value (Lab 4 FR-23).
     for (const [key, value] of Object.entries(changes)) {
-      if (value) next.set(key, value)
-      else next.delete(key)
+      next.delete(key)
+      for (const item of Array.isArray(value) ? value : [value]) if (item) next.append(key, item)
     }
 
     // Reset is explicit rather than implied by omission, so the request the server
@@ -140,6 +138,8 @@ export default function MyTickets() {
         <h1 className="mb-0">My Tickets</h1>
         <Button onClick={() => navigate('/tickets/new')}>Create Ticket</Button>
       </div>
+
+      <DrilldownNotice onClear={clearFilters} />
 
       {/* Nothing to filter when the requester owns no tickets at all (BR-42). */}
       {!isEmpty && (
@@ -194,16 +194,28 @@ export default function MyTickets() {
                 }))}
               />
             </div>
-            <div className="col-md-3">
-              <SelectField
-                id="status"
-                label="Current Status"
-                placeholder="All"
-                disabled={firstLoad}
-                value={searchParams.get('status') ?? ''}
-                onChange={(event) => update({ status: event.target.value })}
-                options={[{ value: 'NEW', label: 'NEW' }]}
-              />
+            {/* A chip per status, pressed when its status is in the URL; none pressed means all (ui-spec §8). */}
+            <div className="col-12 zen-field">
+              <span className="zen-label" id="status-label">
+                Current Status
+              </span>
+              <div role="group" aria-labelledby="status-label" className="d-flex flex-wrap gap-2">
+                {TICKET_STATUSES.map((status) => {
+                  const pressed = statuses.includes(status)
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      className={`zen-chip ${pressed ? 'zen-chip-pressed' : ''}`.trim()}
+                      aria-pressed={pressed}
+                      disabled={firstLoad}
+                      onClick={() => update({ status: pressed ? statuses.filter((item) => item !== status) : [...statuses, status] })}
+                    >
+                      {STATUS_LABELS[status]}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
             <div className="col-md-4">
               <SelectField
@@ -319,8 +331,8 @@ export default function MyTickets() {
                     <td>
                       <StatusBadge value={ticket.status} />
                     </td>
-                    <td>{bangkokDate(ticket.createdAt)}</td>
-                    <td className="d-none d-lg-table-cell">{bangkokDate(ticket.updatedAt)}</td>
+                    <td>{formatBangkokDate(ticket.createdAt)}</td>
+                    <td className="d-none d-lg-table-cell">{formatBangkokDate(ticket.updatedAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -346,7 +358,7 @@ export default function MyTickets() {
                     {ticket.category.name} · {ticket.relatedSystem.name}
                   </p>
                   <p className="zen-help mb-0">
-                    {bangkokDate(ticket.createdAt)}
+                    {formatBangkokDate(ticket.createdAt)}
                     {ticket.attachmentCount > 0 && <> · 📎 {ticket.attachmentCount}</>}
                   </p>
                 </Link>

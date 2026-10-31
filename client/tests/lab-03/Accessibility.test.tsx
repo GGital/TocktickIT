@@ -19,9 +19,10 @@ const renderForbidden = (role: 'REQUESTER' | 'IT_STAFF' | 'ADMINISTRATOR') =>
 
 describe('UI-35 the shared forbidden state (AC-21, ui-spec §2.5)', () => {
   it.each([
-    ['REQUESTER', 'Requester', '/tickets'],
-    ['IT_STAFF', 'IT Staff', '/staff/tickets'],
-    ['ADMINISTRATOR', 'Administrator', '/staff/tickets'],
+    // Lab 4 BR-79: each role's home is its Dashboard.
+  ['REQUESTER', 'Requester', '/dashboard'],
+    ['IT_STAFF', 'IT Staff', '/staff/dashboard'],
+    ['ADMINISTRATOR', 'Administrator', '/staff/dashboard'],
   ] as const)('for a %s: one heading, the role named, and one action back home', (role, label, home) => {
     const { container } = renderForbidden(role)
 

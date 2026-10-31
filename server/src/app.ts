@@ -9,8 +9,18 @@ import {
   requireRole,
   resolveSession,
 } from './auth.js'
+import {
+  completeFollowUp,
+  createAction,
+  listRequesterActions,
+  listStaffActions,
+  updateAction,
+  voidAction,
+} from './actions.js'
 import { createUser, listUsers, setInitialPassword, updateUser } from './adminUsers.js'
+import { requesterDashboard, staffDashboard } from './dashboard.js'
 import { sendError } from './errors.js'
+import { health } from './health.js'
 import { prisma } from './prisma.js'
 import {
   downloadAttachment,
@@ -46,9 +56,8 @@ app.use('/api', (_req, res, next) => {
   next()
 })
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'TokTickIT API' })
-})
+// Public, before the session stack: reachability says nothing about any user (BR-84).
+app.get('/api/health', health(prisma))
 
 // Login is the only route reachable without a session (api-spec §3.1).
 app.post('/api/auth/login', login)
@@ -59,6 +68,7 @@ app.post('/api/auth/login', login)
 app.use('/api', resolveSession, requireAuth, requirePasswordChangeComplete)
 app.use('/api/staff', requireRole('IT_STAFF', 'ADMINISTRATOR'))
 app.use('/api/admin', requireRole('ADMINISTRATOR'))
+app.use('/api/dashboard', requireRole('REQUESTER'))
 
 app.post('/api/auth/logout', logout)
 app.get('/api/auth/me', currentUser)
@@ -99,6 +109,13 @@ app.get('/api/tickets/:id', getTicket)
 app.get('/api/tickets/:id/comments', listComments)
 app.post('/api/tickets/:id/comments', postComment)
 
+// Actions Taken, read-only and non-voided, on the caller's own Ticket (api-spec §3.1, BR-42).
+app.get('/api/tickets/:id/actions', listRequesterActions)
+
+// Role dashboards (api-spec §3.13, §3.14): each prefix guard above admits exactly the roles it serves (AC-36).
+app.get('/api/dashboard/requester', requesterDashboard)
+app.get('/api/staff/dashboard', staffDashboard)
+
 // --- Staff routes: the /api/staff role guard above has already refused a Requester (BR-23, A-16). ---
 app.get('/api/staff/tickets', listQueue)
 app.get('/api/staff/tickets/:id', getStaffTicket)
@@ -108,6 +125,12 @@ app.patch('/api/staff/tickets/:id/status', updateStatus)
 app.get('/api/staff/assignees', listAssignees)
 app.get('/api/staff/tickets/:id/internal-notes', listInternalNotes)
 app.post('/api/staff/tickets/:id/internal-notes', postInternalNote)
+// Actions Taken (api-spec §3.2 – §3.6). Voided, never deleted: there is deliberately no DELETE route (BR-21).
+app.get('/api/staff/tickets/:id/actions', listStaffActions)
+app.post('/api/staff/tickets/:id/actions', createAction)
+app.patch('/api/staff/tickets/:id/actions/:actionId', updateAction)
+app.post('/api/staff/tickets/:id/actions/:actionId/complete-follow-up', completeFollowUp)
+app.post('/api/staff/tickets/:id/actions/:actionId/void', voidAction)
 
 // --- Administrator routes: the /api/admin role guard above has already refused every other role (BR-22). There is
 // deliberately no DELETE: deactivation is the only removal mechanism (BR-53). ---

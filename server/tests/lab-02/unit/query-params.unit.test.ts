@@ -8,7 +8,7 @@ describe('UNIT-09 query defaults (BR-38, BR-39)', () => {
       categoryId: undefined,
       relatedSystemId: undefined,
       requestedPriority: undefined,
-      status: undefined,
+      statuses: undefined, // Lab 4 FR-23: status is now a repeatable set
       sortBy: 'createdAt',
       sortOrder: 'desc',
       page: 1,
@@ -37,7 +37,7 @@ describe('UNIT-09 query defaults (BR-38, BR-39)', () => {
       categoryId: 2,
       relatedSystemId: 7,
       requestedPriority: 'URGENT',
-      status: 'NEW',
+      statuses: ['NEW'],
       sortBy: 'ticketNumber',
       sortOrder: 'asc',
       page: 3,
@@ -54,7 +54,8 @@ describe('UNIT-10 unsupported values are rejected, never coerced (BR-39, AC-39)'
     [{ sortBy: 'secret' }, 'sortBy'],
     [{ sortOrder: 'sideways' }, 'sortOrder'],
     [{ requestedPriority: 'CRITICAL' }, 'requestedPriority'],
-    [{ status: 'CLOSED' }, 'status'],
+    // Lab 4 FR-23 accepts all eight statuses, so an unknown one stands in for the Lab 2 "CLOSED".
+    [{ status: 'NONSENSE' }, 'status'],
     [{ categoryId: '-1' }, 'categoryId'],
     [{ relatedSystemId: 'two' }, 'relatedSystemId'],
     // A repeated parameter arrives as an array and is not valid input either.
