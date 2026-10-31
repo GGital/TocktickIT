@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { expect, type APIRequestContext, type Page } from '@playwright/test'
@@ -87,9 +88,29 @@ export async function createUserReady(
 /** Staff operations through the API, to set a Ticket up before the screen under test opens it. */
 export async function staffPatch(request: APIRequestContext, ticketId: number, action: 'assignment' | 'priority' | 'status', body: object) {
   await signInAs(request, 'staff')
-  const response = await request.patch(`${API}/staff/tickets/${ticketId}/${action}`, { data: body })
+  // Lab 4 BR-78: every staff write carries the Ticket's current version.
+  const { version } = await (await request.get(`${API}/staff/tickets/${ticketId}`)).json()
+  const response = await request.patch(`${API}/staff/tickets/${ticketId}/${action}`, { data: { ...body, expectedVersion: version } })
   expect(response.status(), await response.text()).toBe(200)
   return response.json()
+}
+
+/**
+ * Lab 4 BR-35: a Ticket resolves only with recorded work, so a Lab 3 fixture that resolves records one action first.
+ * `actionAt` is now, never earlier than the Ticket it belongs to (Lab 4 BR-06).
+ */
+export async function recordAction(request: APIRequestContext, ticketId: number) {
+  await signInAs(request, 'staff')
+  const response = await request.post(`${API}/staff/tickets/${ticketId}/actions`, {
+    data: {
+      clientRequestId: randomUUID(),
+      actionAt: new Date().toISOString(),
+      description: 'Checked the configuration and applied the documented fix.',
+      result: 'Working again after the change.',
+      followUpRequired: false,
+    },
+  })
+  expect(response.status(), await response.text()).toBe(201)
 }
 
 /** Posts a Public Comment or an Internal Note through the API as the given account. */

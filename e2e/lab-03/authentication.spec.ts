@@ -65,11 +65,14 @@ test.describe('E2E-01 sign in, work, sign out (AC-01, AC-05, AC-06)', () => {
 
     await signInThroughUi(page, ACCOUNTS.requester.email, PASSWORD)
 
-    await expect(page).toHaveURL(/\/tickets$/)
-    await expect(page.getByRole('heading', { name: 'My Tickets' })).toBeVisible()
+    // Lab 4 BR-79: a Requester's home is the Dashboard.
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
     await expect(page.getByText(`Signed in as ${ACCOUNTS.requester.fullName}`)).toBeVisible()
 
     // Work: open a Ticket from the list.
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'My Tickets' }).click()
+    await expect(page.getByRole('heading', { name: 'My Tickets' })).toBeVisible()
     await page.getByLabel('Search', { exact: true }).fill(tag)
     await page.getByRole('link', { name: ticket.ticketNumber }).first().click()
     await expect(page.getByRole('heading', { name: ticket.ticketNumber })).toBeVisible()
@@ -118,8 +121,9 @@ test.describe('E2E-03 the mandatory first password change (AC-10, AC-13)', () =>
     await page.getByLabel('Confirm new password').fill(NEW_PASSWORD)
     await page.getByRole('button', { name: 'Save new password' }).click()
 
-    await expect(page).toHaveURL(/\/tickets$/)
-    await expect(page.getByRole('heading', { name: 'My Tickets' })).toBeVisible()
+    // Lab 4 BR-79: a Requester's home is the Dashboard.
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Log out' }).click()
     await expect(page).toHaveURL(/\/login$/)
@@ -128,7 +132,7 @@ test.describe('E2E-03 the mandatory first password change (AC-10, AC-13)', () =>
     await expect(page.getByRole('alert')).toContainText(INVALID)
 
     await signInThroughUi(page, ACCOUNTS.firstLogin.email, NEW_PASSWORD)
-    await expect(page).toHaveURL(/\/tickets$/)
+    await expect(page).toHaveURL(/\/dashboard$/)
 
     // Leave the dedicated account armed for the next run.
     await rearmFirstLogin(request)

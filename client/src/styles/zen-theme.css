@@ -32,6 +32,7 @@
   --zen-radius-control: 8px;
   --zen-control-height: 42px;
   --zen-shadow: 0 1px 2px rgba(28, 43, 36, 0.06);
+  --zen-shadow-raised: 0 4px 12px rgba(28, 43, 36, 0.12);
 
   /* --- Bootstrap mapping (ui-spec §1.1) --- */
   --bs-primary: var(--zen-primary);
@@ -392,9 +393,12 @@ label:has(+ input[type="file"]:focus-visible) {
 .zen-queue td, .zen-queue th { padding: 12px 10px; }
 .zen-queue-summary { max-width: 14rem; }
 @media (max-width: 991.98px) {
-  .zen-queue td, .zen-queue th { padding: 10px 6px; }
+  /* 4 px a side: six columns at their narrowest (an Administrator owner, a Cancelled badge) still fit 820 px. */
+  .zen-queue td, .zen-queue th { padding: 10px 4px; }
   .zen-queue-summary { max-width: 7rem; }
 }
+/* The Lab 4 follow-up badge shares the narrow Summary column, so it may wrap rather than widen the table. */
+.zen-queue-summary .zen-badge { max-width: 100%; white-space: normal; }
 .zen-queue-row:hover td { background-color: var(--zen-pale); }
 /* The flag sub-row belongs to the Ticket above it, so the divider sits under the pair, not between them. */
 .zen-queue tbody tr.zen-queue-row:has(+ .zen-flag-row) td { border-bottom-width: 0; }
@@ -508,4 +512,114 @@ label:has(+ input[type="file"]:focus-visible) {
 @media (max-width: 991.98px) {
   .zen-tickets td, .zen-tickets th { padding: 10px 8px; }
   .zen-tickets .zen-filename { max-width: 9rem; }
+}
+
+/* --- Actions Taken (Lab 4 ui-spec §1.2, §6.2, §6.6, §7) --- */
+.zen-badge-followup-outstanding { background-color: color-mix(in srgb, var(--zen-warning) 12%, transparent); color: var(--zen-warning); }
+.zen-badge-followup-completed { background-color: var(--zen-pale); color: var(--zen-success); }
+.zen-badge-followup-none { background-color: var(--zen-readonly-bg); color: var(--zen-text); }
+.zen-badge-voided { background-color: var(--zen-readonly-bg); color: color-mix(in srgb, var(--zen-text) 70%, transparent); }
+.zen-edited { font-size: 0.875rem; color: color-mix(in srgb, var(--zen-text) 70%, transparent); }
+
+.zen-action-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Three lines, then "Show more" (ui-spec §6.2, §10). */
+.zen-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.zen-ellipsis { display: block; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.zen-actions-table { width: 100%; border-collapse: collapse; }
+.zen-actions-table th, .zen-actions-table td { padding: 12px 10px; border-top: 1px solid var(--zen-border); vertical-align: top; text-align: left; }
+.zen-actions-table thead th { border-top: 0; font-size: 0.875rem; color: var(--zen-text-muted); }
+.zen-action-when { white-space: nowrap; }
+.zen-action-voided td { color: color-mix(in srgb, var(--zen-text) 70%, transparent); }
+.zen-action-voided summary { cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.zen-voided-values dt { font-size: 0.875rem; color: var(--zen-text-muted); }
+.zen-voided-values dd, .zen-stale-values dd { overflow-wrap: anywhere; }
+.zen-stale-values dt { font-size: 0.875rem; }
+
+/* The saved row: a short pale highlight, dropped for reduced motion (ui-spec §6.3). */
+.zen-row-highlight { background-color: var(--zen-pale); transition: background-color 2s ease-out; }
+@media (prefers-reduced-motion: reduce) { .zen-row-highlight { transition: none; } }
+
+.zen-row-menu { position: relative; display: inline-block; }
+.zen-row-menu-trigger { min-width: 44px; min-height: 44px; }
+.zen-row-menu-list {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  min-width: 12rem;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background-color: var(--zen-surface);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-control);
+  box-shadow: var(--zen-shadow);
+}
+.zen-row-menu-list [role="menuitem"] { display: block; width: 100%; min-height: 44px; padding: 8px 16px; text-align: left; background: none; border: 0; color: var(--zen-text); }
+.zen-row-menu-list [role="menuitem"]:hover,
+.zen-row-menu-list [role="menuitem"]:focus { background-color: var(--zen-pale); }
+.zen-row-menu-list [role="menuitem"]:focus-visible,
+.zen-row-menu-trigger:focus-visible,
+.zen-action-voided summary:focus-visible { outline: 3px solid var(--zen-focus-ring); outline-offset: 1px; }
+
+.zen-action-card { border-top: 1px solid var(--zen-border); padding: 12px 0; }
+.zen-action-card:first-child { border-top: 0; padding-top: 0; }
+
+.zen-dialog-action { max-width: 640px; }
+/* Tablet only: on mobile this dialog is full-screen like every other (ui-spec §10), so the rule must not reach it. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .zen-dialog-action { width: 90%; }
+}
+
+/* Tablet and mobile: each row becomes a card; one markup, so nothing is duplicated for assistive technology (§6.6). */
+@media (max-width: 991.98px) {
+  .zen-actions-table thead { display: none; }
+  .zen-actions-table, .zen-actions-table tbody, .zen-actions-table tr, .zen-actions-table td { display: block; width: 100%; }
+  .zen-actions-table tr { border-top: 1px solid var(--zen-border); padding: 12px 0; }
+  .zen-actions-table td { border-top: 0; padding: 4px 0; }
+  .zen-actions-table td[data-label="Result"]::before { content: "Result: "; font-weight: 600; }
+  .zen-actions-table td[data-label="Performed by"]::before { content: "By "; }
+  .zen-ellipsis { max-width: 100%; }
+}
+@media (max-width: 767.98px) {
+  .zen-actions-record { width: 100%; }
+  .zen-row-menu, .zen-row-menu-trigger { display: block; width: 100%; }
+  .zen-row-menu-list { left: 0; right: 0; }
+}
+
+/* --- Lab 4 dashboards (ui-spec §2.1 – §2.3, §4, §5) --- */
+/* The whole card is one link: it keeps text colour, raises one shadow step on hover, and takes the focus ring. */
+.zen-metric { display: flex; flex-direction: column; height: 100%; color: var(--zen-text); text-decoration: none; transition: box-shadow 0.15s ease; }
+.zen-metric:hover { box-shadow: var(--zen-shadow-raised); color: var(--zen-text); }
+.zen-metric:focus-visible { outline: 3px solid var(--zen-focus-ring); outline-offset: 2px; }
+/* Emphasis for the two "someone is needed now" cards when non-zero; the label still says it in words (AC-52). */
+.zen-metric-attention { border-left-color: var(--zen-warning); border-left-width: 4px; }
+.zen-metric-label { font-size: 1rem; font-weight: 600; color: var(--zen-text); margin-bottom: 4px; }
+.zen-metric-number { font-weight: 700; line-height: 1.2; color: var(--zen-primary); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+.zen-metric-zero { color: var(--zen-text); }
+.zen-metric-more { margin-top: auto; text-align: right; color: var(--zen-secondary); font-weight: 600; }
+.zen-metric-count { font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Tablet: a card grid of exactly three — the Requester's cards and their skeleton — sits two and one, so the third
+   takes the whole row (ui-spec §4.2). The staff grids hold six and four, which pair up. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .row-cols-md-2 > :nth-child(3):last-child { width: 100%; }
+}
+
+.zen-breakdown-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 0; border-top: 1px solid var(--zen-border); color: var(--zen-text); text-decoration: none; }
+li:first-child > .zen-breakdown-row { border-top: 0; }
+.zen-breakdown-row:hover { background-color: var(--zen-pale); color: var(--zen-text); }
+
+.zen-dashboard-row { border-top: 1px solid var(--zen-border); padding: 10px 0; }
+.zen-dashboard-row:first-child { border-top: 0; padding-top: 0; }
+.zen-dashboard-summary { min-width: 0; flex: 1 1 12rem; }
+
+/* My Tickets status chips (ui-spec §8): pressed state shown by fill and by aria-pressed, not colour alone. */
+.zen-chip { min-height: 44px; padding: 6px 14px; border: 1px solid var(--zen-border); border-radius: 999px; background-color: var(--zen-surface); color: var(--zen-text); }
+.zen-chip:hover { background-color: var(--zen-pale); }
+.zen-chip:focus-visible { outline: 3px solid var(--zen-focus-ring); outline-offset: 1px; }
+.zen-chip-pressed { background-color: var(--zen-pale); border-color: var(--zen-secondary); color: var(--zen-primary); font-weight: 600; }
+.zen-chip-pressed::before { content: "✓ "; }
+
+@media (max-width: 767.98px) {
+  .zen-dashboard-action { width: 100%; }
 }

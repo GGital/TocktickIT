@@ -168,9 +168,9 @@ describe('API-21 Requester calls assignment, priority, and status (AC-40, BR-32,
     const before = await ticketRow()
 
     for (const [route, body] of [
-      ['PATCH /api/staff/tickets/:id/assignment', { assigneeId: requesterA.id }],
-      ['PATCH /api/staff/tickets/:id/priority', { itPriority: 'URGENT' }],
-      ['PATCH /api/staff/tickets/:id/status', { status: 'RESOLVED' }],
+      ['PATCH /api/staff/tickets/:id/assignment', { assigneeId: requesterA.id, expectedVersion: 1 }],
+      ['PATCH /api/staff/tickets/:id/priority', { itPriority: 'URGENT', expectedVersion: 1 }],
+      ['PATCH /api/staff/tickets/:id/status', { status: 'RESOLVED', expectedVersion: 1 }],
     ] as const) {
       expectBare403(await call(route, { cookie: cookie['requester-a'], body }), 'FORBIDDEN')
     }
@@ -269,12 +269,13 @@ describe('API-28 IT Staff and Administrator pass the staff role guard (A-01, BR-
       },
     })
 
+    // Lab 4 BR-78: each write advances the new Ticket's version by one, from 1.
     for (const [route, body] of [
       ['GET /api/staff/tickets/:id', undefined],
       ['GET /api/staff/assignees', undefined],
-      ['PATCH /api/staff/tickets/:id/assignment', { assigneeId: 'me' }],
-      ['PATCH /api/staff/tickets/:id/priority', { itPriority: 'HIGH' }],
-      ['PATCH /api/staff/tickets/:id/status', { status: 'IN_PROGRESS' }],
+      ['PATCH /api/staff/tickets/:id/assignment', { assigneeId: 'me', expectedVersion: 1 }],
+      ['PATCH /api/staff/tickets/:id/priority', { itPriority: 'HIGH', expectedVersion: 2 }],
+      ['PATCH /api/staff/tickets/:id/status', { status: 'IN_PROGRESS', expectedVersion: 3 }],
     ] as const) {
       const res = await call(route, { cookie: cookie[key], id: own.id, body })
       expect(res.status, `${key} ${route}`).toBe(200)

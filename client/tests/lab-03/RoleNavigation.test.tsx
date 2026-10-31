@@ -61,7 +61,8 @@ describe('UI-11 Requester navigation (AC-15, FR-11)', () => {
   it('renders My Tickets and Create Ticket only; the staff and admin links are not in the DOM', async () => {
     const nav = await renderAs('REQUESTER', '/tickets')
 
-    expect(linkNames(nav)).toEqual(['My Tickets', 'Create Ticket'])
+    // Lab 4 FR-24: Dashboard is first for every role.
+    expect(linkNames(nav)).toEqual(['Dashboard', 'My Tickets', 'Create Ticket'])
     // Not disabled, not CSS-hidden: absent (ui-spec §2.2).
     expect(document.querySelector('a[href="/staff/tickets"]')).toBeNull()
     expect(document.querySelector('a[href="/admin/users"]')).toBeNull()
@@ -74,7 +75,7 @@ describe('UI-12 IT Staff navigation (AC-15)', () => {
   it('renders Ticket Queue and nothing else', async () => {
     const nav = await renderAs('IT_STAFF', '/staff/tickets')
 
-    expect(linkNames(nav)).toEqual(['Ticket Queue'])
+    expect(linkNames(nav)).toEqual(['Dashboard', 'Ticket Queue'])
     expect(document.querySelector('a[href="/admin/users"]')).toBeNull()
     expect(document.querySelector('a[href="/tickets/new"]')).toBeNull()
   })
@@ -84,16 +85,17 @@ describe('UI-13 Administrator navigation (AC-15, A-01)', () => {
   it('renders Ticket Queue and User Management', async () => {
     const nav = await renderAs('ADMINISTRATOR', '/staff/tickets')
 
-    expect(linkNames(nav)).toEqual(['Ticket Queue', 'User Management'])
+    expect(linkNames(nav)).toEqual(['Dashboard', 'Ticket Queue', 'User Management'])
     expect(document.querySelector('a[href="/tickets/new"]')).toBeNull()
   })
 })
 
 describe('UI-14 the identity cluster (FR-11, ui-spec §3)', () => {
   it.each([
-    ['REQUESTER', 'Requester', '/tickets'],
-    ['IT_STAFF', 'IT Staff', '/staff/tickets'],
-    ['ADMINISTRATOR', 'Administrator', '/staff/tickets'],
+    // Lab 4 BR-79: the wordmark goes to the role's Dashboard.
+    ['REQUESTER', 'Requester', '/dashboard'],
+    ['IT_STAFF', 'IT Staff', '/staff/dashboard'],
+    ['ADMINISTRATOR', 'Administrator', '/staff/dashboard'],
   ] as const)('shows the name and the %s role badge, and the wordmark goes home', async (role, label, home) => {
     await renderAs(role, home)
     const banner = screen.getByRole('banner')

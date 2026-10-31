@@ -8,6 +8,8 @@ import ChangePassword from './screens/ChangePassword'
 import CreateTicket from './screens/CreateTicket'
 import Login from './screens/Login'
 import MyTickets from './screens/MyTickets'
+import RequesterDashboard from './screens/RequesterDashboard'
+import StaffDashboard from './screens/StaffDashboard'
 import StaffTicketDetail from './screens/StaffTicketDetail'
 import TicketDetail from './screens/TicketDetail'
 import TicketQueue from './screens/TicketQueue'
@@ -46,6 +48,24 @@ export default function AppRoutes() {
           }
         >
           <Route path="/" element={<HomeRedirect />} />
+
+          {/* Each role's home (BR-79). The API refuses the other role's dashboard regardless (AC-36). */}
+          <Route
+            path="/dashboard"
+            element={
+              <RequireRole roles={['REQUESTER']}>
+                <RequesterDashboard />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/staff/dashboard"
+            element={
+              <RequireRole roles={['IT_STAFF', 'ADMINISTRATOR']}>
+                <StaffDashboard />
+              </RequireRole>
+            }
+          />
 
           {/* Own Tickets are readable by every role (matrix); creating one is a Requester operation. */}
           <Route path="/tickets" element={<MyTickets />} />

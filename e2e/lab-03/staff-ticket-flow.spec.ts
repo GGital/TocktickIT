@@ -7,6 +7,7 @@ import {
   getReferenceData,
   runTag,
   signInAs,
+  recordAction,
   staffPatch,
 } from './helpers'
 
@@ -104,6 +105,11 @@ test.describe('E2E-05 claim, prioritise, advance, and resolve (AC-36, AC-39, AC-
 
     await page.getByLabel('Status', { exact: true }).selectOption('IN_PROGRESS')
     await page.getByRole('button', { name: 'Save status' }).click()
+    await expect(badges(page)).toContainText('In Progress')
+
+    // Lab 4 BR-35: a Ticket resolves only with recorded work, so one action is recorded and the page re-read.
+    await recordAction(request, ticket.id)
+    await page.reload()
     await expect(badges(page)).toContainText('In Progress')
 
     await page.getByLabel('Status', { exact: true }).selectOption('RESOLVED')

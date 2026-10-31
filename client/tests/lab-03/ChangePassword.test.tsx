@@ -166,8 +166,9 @@ describe('UI-09 a successful change (AC-13, AC-14, BR-06)', () => {
     renderAt()
     await fill({ current: CURRENT, next: NEW_PASSWORD, confirmation: NEW_PASSWORD })
 
-    expect(await screen.findByRole('heading', { name: 'My Tickets' })).toBeInTheDocument()
-    expect(screen.getByTestId('location')).toHaveTextContent(/^\/tickets$/)
+    // Lab 4 BR-79: the home route is the Dashboard.
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/dashboard$/)
     expect(screen.getByText(/You have been signed out on your other devices./).closest('[role="status"]')).not.toBeNull()
 
     // The gate lifted because GET /api/auth/me said so after the change, not because of local state.
@@ -228,6 +229,6 @@ describe('UI-10 mandatory mode (AC-10, BR-15, BR-17)', () => {
     await screen.findByRole('heading', { name: 'Choose a new password' })
 
     expect(screen.queryByText(/uses a password that was issued to you/)).not.toBeInTheDocument()
-    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/tickets')
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/dashboard')
   })
 })

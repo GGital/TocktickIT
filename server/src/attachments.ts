@@ -168,8 +168,9 @@ export async function uploadAttachment(req: Request, res: Response) {
         select: attachmentSelect,
       })
 
-      // An attachment change is the one thing that moves a ticket's Last Updated (BR-07).
-      await tx.ticket.update({ where: { id: ticketId }, data: { updatedAt: new Date() } })
+      // An attachment change moves Last Updated (BR-07) and, being visible to the Requester, public activity (BR-45).
+      const now = new Date()
+      await tx.ticket.update({ where: { id: ticketId }, data: { updatedAt: now, publicActivityAt: now } })
       return created
     })
 
@@ -267,7 +268,8 @@ export async function removeAttachment(req: Request, res: Response) {
       select: attachmentSelect,
     })
 
-    await tx.ticket.update({ where: { id: attachment.ticketId }, data: { updatedAt: new Date() } })
+    const now = new Date()
+    await tx.ticket.update({ where: { id: attachment.ticketId }, data: { updatedAt: now, publicActivityAt: now } })
     return updated
   })
 

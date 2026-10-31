@@ -16,5 +16,7 @@ export default defineConfig({
     globals: true,
     setupFiles: './tests/setup.ts',
     include: ['tests/**/*.test.{ts,tsx}'],
+    // userEvent typing in jsdom runs past the 5 s default when every file runs in parallel; alone, each takes 1–3 s.
+    testTimeout: 15_000,
   },
 })

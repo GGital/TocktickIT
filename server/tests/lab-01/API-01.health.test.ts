@@ -7,6 +7,7 @@ describe('API-01 GET /api/health', () => {
     const res = await request(app).get('/api/health')
 
     expect(res.status).toBe(200)
-    expect(res.body).toEqual({ status: 'ok', service: 'TokTickIT API' })
+    // Lab 4 api-spec §3.12 adds the database probe result to the same body.
+    expect(res.body).toEqual({ status: 'ok', service: 'TokTickIT API', database: 'ok' })
   })
 })

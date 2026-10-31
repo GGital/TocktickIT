@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import AppRoutes from '../../src/AppRoutes'
-import { isAuthMe, isCommentThread, signedInRequester } from '../helpers/auth'
+import { isActionList, isAuthMe, isCommentThread, signedInRequester } from '../helpers/auth'
 
 // One file, two modes: staging attachments before a ticket exists (Create Ticket,
 // ui-spec §5.5) and managing them on an existing ticket (Ticket Detail, §7.2).
@@ -180,7 +180,7 @@ const ticketWith = (attachments: ReturnType<typeof attachment>[]) => ({
 function stubApi(attachments: ReturnType<typeof attachment>[]) {
   const fetchMock = vi.fn((url: string) => {
     if (isAuthMe(url)) return Promise.resolve(ok(signedInRequester))
-    if (isCommentThread(url)) return Promise.resolve(ok([]))
+    if (isCommentThread(url) || isActionList(url)) return Promise.resolve(ok([]))
     if (/^\/api\/tickets\/\d+$/.test(url)) return Promise.resolve(ok(ticketWith(attachments)))
     return Promise.resolve(ok({}))
   })

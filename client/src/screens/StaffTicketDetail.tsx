@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import ActionsTakenPanel from '../components/ActionsTakenPanel'
 import Badge from '../components/Badge'
 import Button from '../components/Button'
 import Callout from '../components/Callout'
@@ -11,12 +12,15 @@ import PriorityBadge, { type Priority } from '../components/PriorityBadge'
 import RadioGroup from '../components/RadioGroup'
 import SelectField from '../components/SelectField'
 import { SkeletonCard } from '../components/Skeleton'
+import StaleCallout from '../components/StaleCallout'
+import { describedBy } from '../components/fieldIds'
 import StatusBadge, { ResolutionFlagBadge } from '../components/StatusBadge'
 import type { Attachment } from '../components/AttachmentList'
 import { ApiError, apiFetch } from '../lib/apiClient'
 import { useCurrentUser } from '../lib/auth'
 import type { Role } from '../lib/roles'
-import { permittedTargets, PRIORITIES, STATUS_LABELS, type TicketStatus } from '../lib/ticketLabels'
+import { PRIORITIES, STATUS_LABELS, type TicketStatus } from '../lib/ticketLabels'
+import { formatBangkok } from '../lib/formatBangkok'
 
 type Person = { id: number; fullName: string }
 
@@ -37,10 +41,16 @@ type StaffTicket = {
   createdAt: string
   updatedAt: string
   attachments: Attachment[]
+  // Lab 4 additions (api-spec §2.3).
+  version: number
+  resolvedAt: string | null
+  actionSummary: { total: number; voided: number; outstandingFollowUps: number }
+  allowedTransitions: TicketStatus[]
+  resolutionBlockers: Blocker[]
 }
 
-const bangkokTime = (iso: string) =>
-  new Date(iso).toLocaleString('en-GB', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' })
+type Blocker = 'UNASSIGNED' | 'NO_ACTIONS' | 'OUTSTANDING_FOLLOW_UPS'
+
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 const PRIORITY_LABELS: Record<Priority, string> = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', URGENT: 'Urgent' }
@@ -52,6 +62,40 @@ const FAILURES: Record<Control, string> = {
   owner: 'The ticket owner could not be changed. Please try again.',
   priority: 'The IT priority could not be saved. Please try again.',
   status: 'The status could not be changed. Please try again.',
+}
+
+const STALE = 'This ticket changed since you opened it. The latest status and owner are shown below — review them and choose again.'
+const BLOCKERS_ID = 'resolution-blockers'
+
+/** One blocker in words (ui-spec §2.7). */
+function blockerText(blocker: Blocker, outstanding: number) {
+  if (blocker === 'UNASSIGNED') return 'Assign an owner first.'
+  if (blocker === 'NO_ACTIONS') return 'No action has been recorded.'
+  // A save-time refusal can arrive before the summary has caught up, so the count is at least one.
+  const count = Math.max(1, outstanding)
+  return count === 1 ? '1 follow-up is still outstanding.' : `${count} follow-ups are still outstanding.`
+}
+
+/**
+ * Why Resolve is not offered, with the way to fix it (ui-spec §2.7). Renders nothing when the gate passes. On load it
+ * is part of the page, a status; only a save the API just refused is announced as an alert.
+ */
+function ResolutionBlockers({ blockers, outstanding, refused }: { blockers: Blocker[]; outstanding: number; refused: boolean }) {
+  if (blockers.length === 0) return null
+  return (
+    <div id={BLOCKERS_ID} className="mb-3">
+      <Callout variant="warning" title="Resolve is not available yet" role={refused ? 'alert' : 'status'}>
+        <ul className="mb-2">
+          {blockers.map((blocker) => (
+            <li key={blocker}>{blockerText(blocker, outstanding)}</li>
+          ))}
+        </ul>
+        <a className="btn btn-secondary" href="#actions">
+          Go to Actions Taken
+        </a>
+      </Callout>
+    </div>
+  )
 }
 
 function Saving({ show }: { show: boolean }) {
@@ -75,6 +119,10 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
   const [confirming, setConfirming] = useState(false)
   const [notice, setNotice] = useState<{ variant: 'warning' | 'error'; text: string } | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  /** What the user tried when the write came back stale; shown until they act again (ui-spec §2.6). */
+  const [tried, setTried] = useState<string | null>(null)
+  /** Blockers from a save-time RESOLUTION_BLOCKED, until the Ticket moves on. */
+  const [savedBlockers, setSavedBlockers] = useState<Blocker[] | null>(null)
 
   useEffect(() => {
     apiFetch<Person[]>('/staff/assignees')
@@ -82,22 +130,55 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
       .catch(() => setAssignees([]))
   }, [])
 
-  /** Sends one operation; the response is the updated Ticket, so badges and controls refresh from one source. */
-  async function send(control: Control, action: string, body: object, done: string, conflict: (code: string) => string | null) {
+  useEffect(() => setSavedBlockers(null), [ticket.version])
+
+  // The confirmation hands focus back to Save status, which is disabled while saving, so the browser drops it to
+  // the page. Once the save settles it goes back there, or to the heading when no further status exists (AC-51).
+  const refocus = useRef(false)
+  useEffect(() => {
+    if (busy !== null || !refocus.current) return
+    refocus.current = false
+    if (document.activeElement !== document.body) return
+    const save = document.getElementById('saveStatus') as HTMLButtonElement | null
+    ;(save && !save.disabled ? save : document.getElementById('operations-heading'))?.focus()
+  }, [busy])
+
+  /**
+   * Sends one operation with the version the user is looking at (BR-28); the response is the updated Ticket, so
+   * badges and controls refresh from one source. A stale answer is never resent: the user chooses again (BR-30).
+   */
+  async function send(
+    control: Control,
+    action: string,
+    body: object,
+    done: string,
+    attempt: string,
+    conflict: (code: string) => string | null,
+  ) {
     setBusy(control)
     setNotice(null)
+    setTried(null)
+    setSavedBlockers(null)
     try {
       onUpdated(
         await apiFetch<StaffTicket>(`/staff/tickets/${ticket.id}/${action}`, {
           method: 'PATCH',
           headers: JSON_HEADERS,
-          body: JSON.stringify(body),
+          body: JSON.stringify({ ...body, expectedVersion: ticket.version }),
         }),
       )
       setAnnouncement(done)
     } catch (error) {
-      const text = error instanceof ApiError ? conflict(error.code) : null
-      setNotice(text ? { variant: 'warning', text } : { variant: 'error', text: FAILURES[control] })
+      if (error instanceof ApiError && error.code === 'STALE_TICKET') {
+        setTried(attempt)
+        onStale()
+      } else if (error instanceof ApiError && error.code === 'RESOLUTION_BLOCKED') {
+        setSavedBlockers((error.blockers ?? []) as Blocker[])
+        onStale()
+      } else {
+        const text = error instanceof ApiError ? conflict(error.code) : null
+        setNotice(text ? { variant: 'warning', text } : { variant: 'error', text: FAILURES[control] })
+      }
     } finally {
       // Clearing the pending value is the reset: each control falls back to the Ticket's stored value.
       setBusy(null)
@@ -106,14 +187,21 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
     }
   }
 
+  function ownerAttempt(assigneeId: number | 'me' | null) {
+    if (assigneeId === null) return 'Unassigned'
+    const id = assigneeId === 'me' ? me.id : assigneeId
+    return `owner ${assignees.find((person) => person.id === id)?.fullName ?? me.fullName}`
+  }
+
   const assign = (assigneeId: number | 'me' | null, done: string) =>
-    send('owner', 'assignment', { assigneeId }, done, (code) =>
+    send('owner', 'assignment', { assigneeId }, done, ownerAttempt(assigneeId), (code) =>
       code === 'INVALID_ASSIGNEE' ? 'That person cannot own a ticket.' : null,
     )
 
   async function saveStatus(to: TicketStatus) {
     setConfirming(false)
-    await send('status', 'status', { status: to }, `Status changed to ${STATUS_LABELS[to]}.`, (code) => {
+    refocus.current = true
+    await send('status', 'status', { status: to }, `Status changed to ${STATUS_LABELS[to]}.`, STATUS_LABELS[to], (code) => {
       if (code !== 'INVALID_STATUS_TRANSITION') return null
       // Someone else may have changed the Ticket; reload so the select offers what is permitted now.
       onStale()
@@ -128,21 +216,42 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
   if (owner && assignees.length > 0 && !assignees.some((person) => person.id === owner.id)) {
     ownerOptions.push({ value: String(owner.id), label: `${owner.fullName} (no longer eligible)` })
   }
-  const targets = permittedTargets(ticket.status, owner !== null)
+  // The API decides what is offered (BR-40); the client never recomputes the matrix or the gate.
+  const targets = ticket.allowedTransitions
+  const blockers = savedBlockers ?? ticket.resolutionBlockers
   const verb = nextStatus ? CONFIRM_VERBS[nextStatus] : undefined
+  const recorded = ticket.actionSummary.total - ticket.actionSummary.voided
+  const statusHelper =
+    targets.length === 0
+      ? `${STATUS_LABELS[ticket.status]} is final; no further status change is possible.`
+      : 'Only permitted next statuses are listed.'
 
   return (
     <>
+      {tried && (
+        <div className="mb-3">
+          <StaleCallout message={STALE}>
+            <p className="mb-0">You tried: {tried}</p>
+          </StaleCallout>
+        </div>
+      )}
       {notice && (
         <div className="mb-3">
           <Callout variant={notice.variant}>{notice.text}</Callout>
         </div>
       )}
       <section className="zen-card" aria-labelledby="operations-heading">
-        <h2 id="operations-heading">Operations</h2>
+        <h2 id="operations-heading" tabIndex={-1}>
+          Operations
+        </h2>
         <p role="status" className="visually-hidden">
           {announcement}
         </p>
+        {ticket.requesterResolvedFlaggedAt && (
+          <div className="mb-3">
+            <Callout variant="success">The Requester says this problem appears resolved. Review Actions Taken first.</Callout>
+          </div>
+        )}
 
         <SelectField
           id="ticketOwner"
@@ -186,28 +295,31 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
           }
           onChange={(value) => {
             setPendingPriority(value as Priority)
-            void send('priority', 'priority', { itPriority: value }, 'IT Priority saved.', () => null)
+            const label = PRIORITY_LABELS[value as Priority]
+            void send('priority', 'priority', { itPriority: value }, 'IT Priority saved.', `IT Priority ${label}`, () => null)
           }}
         />
 
+        {/* The current status is listed, selected and disabled, ahead of what may follow it (ui-spec §6.4). */}
         <SelectField
           id="nextStatus"
           label="Status"
-          placeholder={`${STATUS_LABELS[ticket.status]} (current)`}
-          options={targets.map((value) => ({ value, label: STATUS_LABELS[value] }))}
+          options={[
+            { value: '', label: `${STATUS_LABELS[ticket.status]} (current)`, disabled: true },
+            ...targets.map((value) => ({ value, label: STATUS_LABELS[value] })),
+          ]}
           value={nextStatus}
           disabled={targets.length === 0 || busy === 'status'}
-          helper={
-            targets.length === 0
-              ? `${STATUS_LABELS[ticket.status]} is final; no further status change is possible.`
-              : 'Only permitted next statuses are listed.'
-          }
+          helper={statusHelper}
+          aria-describedby={[describedBy('nextStatus', statusHelper), blockers.length > 0 ? BLOCKERS_ID : null].filter(Boolean).join(' ')}
           onChange={(event) => setNextStatus(event.target.value as TicketStatus | '')}
         />
+        <ResolutionBlockers blockers={blockers} outstanding={ticket.actionSummary.outstandingFollowUps} refused={savedBlockers !== null} />
         <div className="d-flex flex-wrap align-items-center gap-2">
           {/* Enabled even before a status is chosen: disabling it when the dialog resets the select would drop the
               focus the dialog hands back to it (ui-spec §2.4). With nothing chosen it moves focus to the select. */}
           <Button
+            id="saveStatus"
             variant="secondary"
             disabled={targets.length === 0}
             busy={busy === 'status'}
@@ -237,6 +349,8 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
       >
         <p className="mb-0">
           The status will change from {STATUS_LABELS[ticket.status]} to {nextStatus && STATUS_LABELS[nextStatus]}.
+          {/* Resolve states the work it rests on; the gate guarantees no follow-up is outstanding (ui-spec §6.4). */}
+          {nextStatus === 'RESOLVED' && ` ${recorded} action${recorded === 1 ? '' : 's'} recorded, no follow-ups outstanding.`}
         </p>
       </ConfirmDialog>
     </>
@@ -247,12 +361,13 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
 function Information({ ticket }: { ticket: StaffTicket }) {
   const rows: [string, ReactNode, string?][] = [
     ['Ticket Number', ticket.ticketNumber, 'zen-mono'],
-    ['Ticket Date', bangkokTime(ticket.createdAt)],
+    ['Ticket Date', formatBangkok(ticket.createdAt)],
     ['Requester', ticket.requester.department ? `${ticket.requester.fullName} — ${ticket.requester.department}` : ticket.requester.fullName],
     ['Category', ticket.category.name],
     ['Related System', ticket.relatedSystem.name],
     ['Requested Priority', <PriorityBadge key="requested" kind="requested" value={ticket.requestedPriority} />],
-    ['Last updated', bangkokTime(ticket.updatedAt)],
+    ['Last updated', formatBangkok(ticket.updatedAt)],
+    ['Resolved at', ticket.resolvedAt ? formatBangkok(ticket.resolvedAt) : '—'],
     ['Summary', ticket.summary],
     ['Description', ticket.description, 'zen-description'],
   ]
@@ -284,7 +399,7 @@ function Information({ ticket }: { ticket: StaffTicket }) {
               <span className="zen-filename text-truncate" title={attachment.originalFilename}>
                 {attachment.originalFilename}
               </span>
-              <span className="zen-help mt-0">{bangkokTime(attachment.uploadedAt)}</span>
+              <span className="zen-help mt-0">{formatBangkok(attachment.uploadedAt)}</span>
               {attachment.isRemoved && <Badge tone="removed">Removed</Badge>}
             </li>
           ))}
@@ -374,7 +489,7 @@ export default function StaffTicketDetail() {
         </div>
       </div>
       {ticket.requesterResolvedFlaggedAt && (
-        <p className="zen-help mb-3">Requester reported it resolved {bangkokTime(ticket.requesterResolvedFlaggedAt)}</p>
+        <p className="zen-help mb-3">Requester reported it resolved {formatBangkok(ticket.requesterResolvedFlaggedAt)}</p>
       )}
 
       {/* Operations come first in the document, so tablet and mobile show them under the badges and above the
@@ -387,6 +502,9 @@ export default function StaffTicketDetail() {
           <Information ticket={ticket} />
         </div>
       </div>
+
+      {/* The work record sits between the ticket and the conversations (ui-spec §6.1). */}
+      <ActionsTakenPanel ticket={ticket} onChanged={() => loadTicket(true)} />
 
       <Conversation
         ticketId={ticket.id}

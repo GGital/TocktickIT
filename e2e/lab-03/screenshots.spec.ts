@@ -16,6 +16,7 @@ import {
   runTag,
   signInAs,
   signInThroughUi,
+  recordAction,
   staffPatch,
   type AccountName,
   type ViewportName,
@@ -210,7 +211,10 @@ test.describe('staff ticket detail screenshots', () => {
       requestedPriority: 'HIGH',
     })
     await postMessage(request, 'requester', ticket.id, 'comment', 'The VPN drops every ten minutes, usually during video calls.')
-    if (!options.unassigned) await staffPatch(request, ticket.id, 'assignment', { assigneeId: 'me' })
+    if (!options.unassigned) {
+      await staffPatch(request, ticket.id, 'assignment', { assigneeId: 'me' })
+      await recordAction(request, ticket.id)
+    }
     await postMessage(request, 'staff', ticket.id, 'comment', 'We have replaced your VPN profile. Please try again and tell us if it still drops.')
     await postMessage(request, 'staff', ticket.id, 'note', 'Vendor case 118822 opened for the gateway firmware.')
     await postMessage(request, 'staff', ticket.id, 'note', 'Rollback to firmware 4.2 scheduled for Friday night.')
@@ -255,11 +259,12 @@ test.describe('staff ticket detail screenshots', () => {
   }))
 
   state('staff-ticket-detail', 'invalid-transition', null, withFixture({}, async (page, ticketId) => {
-    // Another staff member cancels the Ticket behind this screen, so the next save meets a real 409.
+    // Another staff member cancels the Ticket behind this screen, so the next save meets a real 409. Since Lab 4
+    // that save is judged against the version the screen holds first, so the 409 is STALE_TICKET (BR-28).
     await staffPatch(page.context().request, ticketId, 'status', { status: 'CANCELLED' })
     await page.getByLabel('Status', { exact: true }).selectOption('IN_PROGRESS')
     await page.getByRole('button', { name: 'Save status' }).click()
-    await expect(page.getByText('This ticket cannot move from Open to In Progress.')).toBeVisible()
+    await expect(page.getByText(/This ticket changed since you opened it/)).toBeVisible()
   }))
 
   state('staff-ticket-detail', 'public-comment', null, withFixture({}, async (page) => {

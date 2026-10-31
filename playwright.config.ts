@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * End-to-end configuration for Lab 2 and Lab 3 (Lab 2 tests.md §2.9, Lab 3 tests.md §2.11, §2.12).
+ * End-to-end configuration for Labs 2 – 4 (Lab 2 tests.md §2.9, Lab 3 tests.md §2.11, §2.12, Lab 4 tests.md §2.13, §2.14).
  *
  * Both servers are started by Playwright itself so `npm run e2e` needs nothing
  * running beforehand except PostgreSQL: the API on :3000 and the Vite dev server
@@ -37,6 +37,7 @@ export default defineConfig({
   projects: [
     { name: 'lab-02', testDir: './e2e/lab-02', outputDir: './artifacts/lab-02/playwright-output', use: desktop },
     { name: 'lab-03', testDir: './e2e/lab-03', outputDir: './artifacts/lab-03/playwright-output', use: desktop },
+    { name: 'lab-04', testDir: './e2e/lab-04', outputDir: './artifacts/lab-04/playwright-output', use: desktop },
   ],
 
   webServer: [

@@ -77,6 +77,10 @@ model User {
   removedAttachments  Attachment[]    @relation("AttachmentRemovedBy")
   sessions            Session[]
   messages            TicketMessage[]
+  performedActions    ActionTaken[]   @relation("ActionPerformedBy")
+  editedActions       ActionTaken[]   @relation("ActionLastEditedBy")
+  completedFollowUps  ActionTaken[]   @relation("ActionFollowUpCompletedBy")
+  voidedActions       ActionTaken[]   @relation("ActionVoidedBy")
 
   @@index([role, isActive])
 }
@@ -110,6 +114,12 @@ model Ticket {
   assigneeId                 Int?
   // Null means not flagged by the Requester (BR-46).
   requesterResolvedFlaggedAt DateTime?
+  // Optimistic concurrency: workflow writes and every Action Taken write bump it (BR-27 – BR-29).
+  version                    Int               @default(1)
+  // Set on every transition into RESOLVED, kept through CLOSED, cleared on REOPENED (BR-38).
+  resolvedAt                 DateTime?
+  // Last Requester-visible change only; Internal Notes never touch it (BR-45).
+  publicActivityAt           DateTime          @default(now())
   createdAt                  DateTime          @default(now())
   updatedAt                  DateTime          @updatedAt
 
@@ -119,6 +129,7 @@ model Ticket {
   relatedSystem RelatedSystem   @relation(fields: [relatedSystemId], references: [id], onDelete: Restrict)
   attachments   Attachment[]
   messages      TicketMessage[]
+  actions       ActionTaken[]
 
   @@index([requesterId, createdAt])
   @@index([requesterId, categoryId])
@@ -126,6 +137,49 @@ model Ticket {
   @@index([requesterId, requestedPriority])
   @@index([status, itPriority, createdAt])
   @@index([assigneeId, status])
+  @@index([requesterId, status])
+  @@index([requesterId, publicActivityAt])
+  @@index([resolvedAt])
+  @@index([updatedAt])
+  @@index([createdAt])
+}
+
+// A unit of work recorded against one Ticket; voided, never deleted (spec §7.1, BR-20, BR-21).
+// The follow-up pairing, completion, and void all-or-nothing rules are CHECK constraints in the migration.
+model ActionTaken {
+  id                    Int       @id @default(autoincrement())
+  ticketId              Int
+  // Client-generated; a repeated create returns the original (BR-24).
+  clientRequestId       String    @unique @db.Uuid
+  actionAt              DateTime
+  description           String    @db.Text
+  result                String    @db.VarChar(1000)
+  followUpRequired      Boolean
+  // Non-null exactly when followUpRequired (BR-10).
+  followUpNote          String?   @db.VarChar(1000)
+  followUpCompletedAt   DateTime?
+  followUpCompletedById Int?
+  attachmentNotes       String?   @db.VarChar(500)
+  // The authenticated user at creation; immutable (BR-03).
+  performedById         Int
+  lastEditedById        Int?
+  // Null voidedAt means valid; voidedById and voidReason are set with it (BR-20).
+  voidedAt              DateTime?
+  voidedById            Int?
+  voidReason            String?   @db.VarChar(500)
+  version               Int       @default(1)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  ticket              Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  performedBy         User   @relation("ActionPerformedBy", fields: [performedById], references: [id], onDelete: Restrict)
+  lastEditedBy        User?  @relation("ActionLastEditedBy", fields: [lastEditedById], references: [id], onDelete: Restrict)
+  followUpCompletedBy User?  @relation("ActionFollowUpCompletedBy", fields: [followUpCompletedById], references: [id], onDelete: Restrict)
+  voidedBy            User?  @relation("ActionVoidedBy", fields: [voidedById], references: [id], onDelete: Restrict)
+
+  @@index([ticketId, actionAt, id])
+  @@index([ticketId, voidedAt, followUpRequired, followUpCompletedAt])
+  @@index([performedById, createdAt])
 }
 
 model Attachment {

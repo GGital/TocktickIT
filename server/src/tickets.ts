@@ -82,6 +82,8 @@ const ticketDetail = {
   requesterResolvedFlaggedAt: true,
   assignee: { select: { id: true, fullName: true } },
   status: true,
+  // Lab 4 (api-spec §2.3): the one workflow field a Requester sees.
+  resolvedAt: true,
   createdAt: true,
   updatedAt: true,
   category: { select: { id: true, name: true } },
@@ -182,6 +184,7 @@ const ticketSummary = {
   summary: true,
   requestedPriority: true,
   status: true,
+  resolvedAt: true,
   createdAt: true,
   updatedAt: true,
   category: { select: { id: true, name: true } },
@@ -209,7 +212,7 @@ export async function listTickets(req: Request, res: Response) {
     ...(query.categoryId ? { categoryId: query.categoryId } : {}),
     ...(query.relatedSystemId ? { relatedSystemId: query.relatedSystemId } : {}),
     ...(query.requestedPriority ? { requestedPriority: query.requestedPriority } : {}),
-    ...(query.status ? { status: query.status } : {}),
+    ...(query.statuses ? { status: { in: query.statuses } } : {}),
     // Filters and search combine with AND; the OR only spreads the term across
     // the three searchable columns (BR-35, BR-36).
     ...(query.search

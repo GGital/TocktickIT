@@ -25,3 +25,25 @@ export function SkeletonCard({ lines = 3, label = 'Loading…' }: { lines?: numb
     </div>
   )
 }
+
+/** A dashboard's skeleton in its final layout, so nothing shifts when the numbers arrive (ui-spec §4.3, §5.4). */
+export function DashboardSkeleton({ cards, lists }: { cards: number; lists: number }) {
+  return (
+    <>
+      <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 mb-4">
+        {Array.from({ length: cards }, (_, index) => (
+          <div key={index} className="col">
+            <SkeletonCard lines={3} label="Loading dashboard…" />
+          </div>
+        ))}
+      </div>
+      <div className="row g-3">
+        {Array.from({ length: lists }, (_, index) => (
+          <div key={index} className="col-lg-6">
+            <SkeletonCard lines={5} label="Loading dashboard…" />
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
