@@ -112,6 +112,28 @@ test('RESP-02 the dashboard grid has 3 / 2 / 1 columns at desktop / tablet / mob
   }
 })
 
+test('RESP-02 on tablet the Requester dashboard’s third card spans both columns (ui-spec §4.2)', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: VIEWPORTS.tablet })
+  const page = await context.newPage()
+  await signInAs(page, 'requester')
+  await page.goto('/dashboard')
+  await dashboardReady(page, 'Open tickets')
+  const [first, second, third] = await page.locator('section[aria-labelledby="requester-cards"] li').evaluateAll((cards) =>
+    cards.map((card) => card.getBoundingClientRect()),
+  )
+  expect(Math.round(first.top)).toBe(Math.round(second.top))
+  expect(third.top).toBeGreaterThan(first.top)
+  // Full row: from the first card's left edge to the second card's right edge.
+  expect(Math.round(third.width)).toBe(Math.round(second.right - first.left))
+
+  // The loading skeleton keeps the same shape, so nothing jumps when the numbers arrive.
+  await page.route('**/api/dashboard/requester', () => new Promise(() => undefined))
+  await page.reload()
+  const [one, two, three] = await page.locator('.row-cols-md-2 > .col').evaluateAll((cards) => cards.map((card) => card.getBoundingClientRect()))
+  expect(Math.round(three.width)).toBe(Math.round(two.right - one.left))
+  await context.close()
+})
+
 test('RESP-03 Actions Taken is a table at desktop and cards at tablet and mobile', async ({ browser }) => {
   for (const viewport of NAMES) {
     const context = await browser.newContext({ viewport: VIEWPORTS[viewport] })

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderAt, requesterUser, response, stubApi } from '../helpers/actions'
+import { renderAt, requesterUser, response, staffUser, stubApi } from '../helpers/actions'
 
 /**
  * Lab 4 hardening (FR-29, BR-82, AC-45): a second submit while the first is in flight sends nothing. A disabled
@@ -65,5 +65,32 @@ describe('AC-45 rapid repeated submits produce one write', () => {
 
     await submitTwice(form.querySelector('form')!)
     expect(api.calls('POST', '/api/admin/users')).toHaveLength(1)
+  })
+})
+
+describe('a filter chosen while the search is still settling is kept (BR-81, ui-spec §7.4)', () => {
+  it('sends the search and the Owner filter together, instead of the search wiping the filter', async () => {
+    const requested: string[] = []
+    const empty = { data: [], meta: { page: 1, pageSize: 20, totalItems: 0, totalPages: 0, sortBy: 'itPriority', sortOrder: 'desc' } }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        requested.push(url)
+        const path = url.split('?')[0]
+        const body = path === '/api/auth/me' ? staffUser : path === '/api/staff/tickets' ? empty : []
+        return Promise.resolve(response(200, body))
+      }),
+    )
+    renderAt('/staff/tickets')
+    const owner = await screen.findByLabelText('Owner')
+
+    // The search waits 300 ms before it applies; the Owner change lands inside that window.
+    fireEvent.change(screen.getByLabelText('Search', { selector: 'input' }), { target: { value: 'printer' } })
+    fireEvent.change(owner, { target: { value: 'unassigned' } })
+
+    await waitFor(() => expect(requested.some((url) => url.includes('search=printer'))).toBe(true))
+    const lists = requested.filter((url) => url.startsWith('/api/staff/tickets?') && !url.includes('pageSize=10'))
+    expect(lists.at(-1)).toContain('assignee=unassigned')
+    expect(lists.at(-1)).toContain('search=printer')
   })
 })

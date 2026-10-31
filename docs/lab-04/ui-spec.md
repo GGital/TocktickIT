@@ -434,52 +434,109 @@ New screens: `RequesterDashboard.tsx`, `StaffDashboard.tsx`. Removed: any placeh
 
 ## 13. Visual and accessibility inspection checklist
 
-To be completed against the screenshots in §14, opened one by one — not from memory. Each item names the file that
-proves it (paths relative to `artifacts/lab-04/screenshots/`); 🔍 marks a property a still image cannot show,
-proven instead by the named automated test.
+Completed on 30 October 2026 against the screenshots in §14. Each state was opened at desktop, tablet, and mobile
+side by side and read, not ticked from memory. Each item names the file that proves it; paths are relative to
+`artifacts/lab-04/screenshots/`, and `*` means all three viewports. 🔍 marks a property a still image cannot show,
+proven instead by the named automated test. The screenshots come from a clean clone of `lab4-staging` plus this
+Pull Request's changes, run against a freshly migrated and seeded database (`tests.md` §6.5).
 
 **Design consistency**
-- [ ] Every Lab 4 screen uses only Zen Green tokens; no colour literal added — 🔍 STYLE-01
-- [ ] Metric cards share one size, radius, shadow, and type scale across both dashboards
-- [ ] Dashboard, Ticket Detail, and Lab 2–3 screens read as one product (header, spacing, buttons)
-- [ ] No temporary, duplicate, or placeholder element remains on any screen — 🔍 E2E-12
+- [x] Every Lab 4 screen uses only Zen Green tokens; no colour literal added — `staff-dashboard/loaded.*`,
+  `actions-taken/list-multiple.*`, `ticket-workflow/resolved.*`; 🔍 STYLE-01 (no literal outside the `:root` block,
+  every `var(--…)` defined, and no literal or inline style in any Lab 4 component or screen)
+- [x] Metric cards share one size, radius, shadow, and type scale across both dashboards —
+  `staff-dashboard/loaded.desktop.png`, `requester-dashboard/loaded.desktop.png`: the same white `zen-card`, label
+  above a bold green number, definition, then "View list →"; 🔍 STYLE-02, STYLE-06
+- [x] Dashboard, Ticket Detail, and Lab 2–3 screens read as one product — `staff-dashboard/drill-down.*` (the Lab 3
+  Queue under the dashboard's shell), `requester-dashboard/drill-down.*` (Lab 2 My Tickets), `actions-taken/list-multiple.*`
+  (Lab 3 detail with the Lab 4 panel): one header, one card style, the same buttons and badges
+- [x] No temporary, duplicate, or placeholder element remains on any screen — every §14 file; 🔍 E2E-12 (walks every
+  role and fails on placeholder text, a console error, or a `404`)
 
 **Dashboards**
-- [ ] Every card shows label, number, definition, and "View list" — `staff-dashboard/loaded.*`, `requester-dashboard/loaded.*`
-- [ ] Zero renders as `0`, not blank — `staff-dashboard/all-zero.*`, `requester-dashboard/all-zero.*`
-- [ ] Warning border appears only on attention cards with count > 0
-- [ ] All 8 statuses and all 4 IT Priorities listed, zero included — `staff-dashboard/loaded.*`
-- [ ] Administrator Accounts group present only for the Administrator — `staff-dashboard/administrator.*`
-- [ ] Drill-down lands with filters visible in the controls — `staff-dashboard/drill-down.*`, `requester-dashboard/drill-down.*`
-- [ ] Selected metrics match database queries — 🔍 API-43 – API-44, API-51 – API-53 (screenshot of the matching query output in the submission)
+- [x] Every card shows label, number, definition, and "View list" — `staff-dashboard/loaded.*`, `requester-dashboard/loaded.*`
+- [x] Zero renders as `0`, not blank — `staff-dashboard/all-zero.*`, `requester-dashboard/all-zero.*`; each zero card
+  keeps its link (🔍 E2E-11)
+- [x] Warning border appears only on attention cards with count > 0 — `staff-dashboard/loaded.desktop.png`
+  (Unassigned tickets and Urgent and active carry it at a non-zero count; the four other cards never do), `staff-dashboard/all-zero.desktop.png`
+  (neither does at 0); 🔍 STYLE-05
+- [x] All 8 statuses and all 4 IT Priorities listed, zero included — `staff-dashboard/loaded.*`,
+  `staff-dashboard/all-zero.*` (every row present at 0)
+- [x] Administrator Accounts group present only for the Administrator — `staff-dashboard/administrator.*` has it,
+  `staff-dashboard/loaded.*` (IT Staff) does not; 🔍 E2E-10
+- [x] Drill-down lands with filters visible in the controls — `staff-dashboard/drill-down.*` ("Showing: Unassigned
+  tickets", Status (5), Owner Unassigned), `requester-dashboard/drill-down.*` ("Showing: Open tickets", five pressed
+  status chips). On mobile the Queue's filters fold behind "Filters (2)" (D-06)
+- [x] Selected metrics match database queries — `../evidence/staff-dashboard.desktop.png` and
+  `../evidence/requester-dashboard.desktop.png`, each beside its SQL and output in `docs/lab-04/dashboard-evidence.md`;
+  🔍 API-43 – API-44, API-51 – API-53, E2E-09, E2E-10
 
 **Actions Taken**
-- [ ] Different actions by different staff on one Ticket are visible — `actions-taken/list-multiple.*`
-- [ ] "Visible to the Requester" label permanently shown in the form — `actions-taken/create.*`
-- [ ] Follow-up note appears only when "Yes" and is marked required — `actions-taken/follow-up-required.*`
-- [ ] Validation messages sit under their fields and in the summary — `actions-taken/validation.*`
-- [ ] Performed by and Created render read-only, visually distinct from editable fields — `actions-taken/edit.*`
-- [ ] Voided row is clearly voided by text — `actions-taken/voided.*`
-- [ ] Stale edit shows both versions and two explicit choices — `actions-taken/stale.*`
-- [ ] Not-actionable reason line replaces Record action — `actions-taken/not-actionable.*`
-- [ ] Requester sees read-only list without voided items — `actions-taken/requester-view.*`
+- [x] Different actions by different staff on one Ticket are visible — `actions-taken/list-multiple.*` ("You" and
+  "Malee Srisuk", one edited, one voided)
+- [x] "Visible to the Requester" label permanently shown in the form — `actions-taken/create.*`,
+  `actions-taken/edit.*`, `actions-taken/stale.mobile.png`: the info callout heads every Record and Edit dialog
+- [x] Follow-up note appears only when "Yes" and is marked required — `actions-taken/create.*` (No, no note field),
+  `actions-taken/follow-up-required.*` (Yes, "Follow-up note *" and "A follow-up note will be required."); 🔍 A11Y-03
+- [x] Validation messages sit under their fields and in the summary — `actions-taken/validation.tablet.png`,
+  `actions-taken/validation.mobile.png` ("3 fields need attention" with a link to each, and the message under each
+  field); the desktop capture is scrolled past the summary (D-08)
+- [x] Performed by and Created render read-only, visually distinct from editable fields — `actions-taken/edit.tablet.png`,
+  `actions-taken/stale.desktop.png` (grey value strips, not inputs); 🔍 STYLE-03
+- [x] Voided row is clearly voided by text — `actions-taken/voided.*`: "VOIDED · date · You · 'Belongs to the printer
+  ticket.'", opening to the voided values and "Voided by"
+- [x] Stale edit shows both versions and two explicit choices — `actions-taken/stale.*`: "Someone else saved this
+  action while you were editing.", the latest saved values beside the form's own, Keep my changes / Discard my
+  changes. The callout was out of view on desktop and tablet (D-03, fixed)
+- [x] Not-actionable reason line replaces Record action — `actions-taken/not-actionable.*` ("Reopen this ticket to
+  record more work."); the row menu no longer appears on such a Ticket (D-04, fixed)
+- [x] Requester sees read-only list without voided items — `actions-taken/requester-view.*`: two actions of three,
+  "Edited" marker, no button in the list; 🔍 E2E-04
 
 **Ticket workflow**
-- [ ] Status select lists only allowed transitions — `ticket-workflow/allowed-transitions.*`
-- [ ] Blockers callout names each blocker in words — `ticket-workflow/resolution-blocked.*`
-- [ ] Resolve confirmation states the action count — `ticket-workflow/resolve-confirm.*`
-- [ ] Summary badge and Resolved at refresh after save — `ticket-workflow/resolved.*`
-- [ ] Requester flag callout visible in the workflow panel — `ticket-workflow/requester-flagged.*`
+- [x] Status select lists only allowed transitions — `ticket-workflow/allowed-transitions.*` shows the select with
+  "Only permitted next statuses are listed."; a closed native select cannot show its options, so 🔍 UI-22 and E2E-05
+  prove the list
+- [x] Blockers callout names each blocker in words — `ticket-workflow/resolution-blocked.*` ("Resolve is not available
+  yet · 1 follow-up is still outstanding." with Go to Actions Taken), `actions-taken/empty.*` ("No action has been
+  recorded."); 🔍 UI-23, which also proves it is a status on load and an alert after a refused save (D-01)
+- [x] Resolve confirmation states the action count — `ticket-workflow/resolve-confirm.*`: "1 action recorded, no
+  follow-ups outstanding."
+- [x] Summary badge and Resolved at refresh after save — `ticket-workflow/resolved.*`: Resolved badge, "Resolved at 30
+  Oct 2026 …", and "Reopen this ticket to record more work." in place of Record action
+- [x] Requester flag callout visible in the workflow panel — `ticket-workflow/requester-flagged.*` ("The Requester says
+  this problem appears resolved. Review Actions Taken first.")
+- [x] Stale status change explains itself — `ticket-workflow/stale-ticket.*` ("This ticket changed since you opened
+  it … You tried: In Progress"), and `ticket-workflow/reopened.*` shows Record action back after Reopen
 
 **Responsive and accessibility**
-- [ ] No horizontal page scroll, clipping, or overlap at all three viewports — 🔍 RESP-01
-- [ ] Keyboard focus visible on cards, row menu, dialog fields, conditional field — 🔍 STYLE-07, A11Y-01 – A11Y-04
-- [ ] Dialogs are full-screen on mobile with actions reachable above the keyboard — `actions-taken/create.mobile.png`
-- [ ] Badges distinguishable in greyscale — `actions-taken/greyscale.desktop.png`; 🔍 STYLE-04
+- [x] No horizontal page scroll, clipping, or overlap at all three viewports — every §14 file; 🔍 RESP-01, and the
+  screenshot spec itself fails on sideways scroll before each capture
+- [x] Keyboard focus visible on cards, row menu, dialog fields, conditional field — 🔍 STYLE-07, A11Y-01 – A11Y-04,
+  E2E-14 (dashboard card to Resolve by keyboard alone, with a ring checked at every stop)
+- [x] Dialogs are full-screen on mobile with actions reachable above the keyboard — `actions-taken/create.mobile.png`,
+  `actions-taken/void-dialog.mobile.png`, `actions-taken/complete-follow-up.mobile.png`; 🔍 RESP-04
+- [x] Badges distinguishable in greyscale — `actions-taken/greyscale.desktop.png`: "Follow-up outstanding", "No
+  follow-up", "Voided", and "Edited by …" all read by their words; 🔍 STYLE-04
+- [x] On tablet the Requester's third card spans the row, loading and loaded alike — `requester-dashboard/loaded.tablet.png`,
+  `requester-dashboard/loading.tablet.png`; 🔍 RESP-02 (D-02, fixed)
 
 ### 13.1 Deviations found during this pass
 
-To be recorded during the visual pass: `D-nn`, description, evidence file, verdict (Fixed / Accepted with reason).
+Mirrored into `tests.md` §4.2. D-01 and D-02 were requested in review (PR #97, PR #98) and never done; this pass
+found them again.
+
+| # | Deviation | Where | Impact | Verdict |
+|---|---|---|---|---|
+| D-01 | The resolution-blockers banner was `role="alert"` even on load, so a screen reader interrupted the page as soon as it opened | `ticket-workflow/resolution-blocked.*` (role not visible in a still); PR #97 review | Noisy for screen-reader users; nothing visual | **Fixed.** A status on load, an alert only after a save the API refused. UI-23 asserts both and failed before the change |
+| D-02 | On tablet the Requester's third card took half the row, leaving an empty column beside it; its loading skeleton did the same | `requester-dashboard/loaded.tablet.png`, `requester-dashboard/loading.tablet.png`; ui-spec §4.2; PR #98 review | Uneven grid, and the layout would jump when the numbers arrive | **Fixed.** A card grid of exactly three spans its third card at tablet width. RESP-02 measures both states and failed at 356 of 712 px before the change |
+| D-03 | After a stale save, the "Someone else saved this action" callout appeared at the top of the dialog while the dialog stayed scrolled down at Save, so on desktop and tablet nothing visible changed | `actions-taken/stale.desktop.png`, `actions-taken/stale.tablet.png` (before: the capture of run 1 in `tests.md` §6.5) | A sighted user could press Save again without seeing why it failed | **Fixed.** A refusal or notice scrolls itself into view. E2E-03 now requires the callout in the viewport and failed before the change |
+| D-04 | A Ticket that refuses work (resolved, closed, cancelled, or unowned) still offered Edit, Void, and Mark done on every row, and every one of them is refused by the API | `actions-taken/not-actionable.*`, `ticket-workflow/resolved.*` | A user could fill in an edit only to be told "Reopen this ticket to record more work." | **Fixed.** The row menu is omitted wherever the reason line is shown. UI-19 asserts it for NEW, unowned OPEN, and RESOLVED and failed before the change. `canEdit` keeps its api-spec §2.1 meaning |
+| D-05 | `staff-dashboard/all-zero` is staged: the real dashboard response with every count zeroed | `staff-dashboard/all-zero.*` | None on behaviour; the image is staged | **Accepted.** A service desk with no Tickets cannot exist on shared data. The Requester's all-zero state is a real new account (`requester-dashboard/all-zero.*`), and E2E-11 checks a new IT Staff member's personal zeros for real |
+| D-06 | On mobile the Queue drill-down's filters fold behind "Filters (2)" rather than showing in the controls | `staff-dashboard/drill-down.mobile.png` | The applied filters are one tap away; the count and the "Showing" line say they are applied | **Accepted.** That is the Lab 3 mobile Queue (Lab 3 ui-spec §7.3), unchanged by Lab 4 |
+| D-07 | Long badges wrap inside narrow table columns at desktop: "Follow-up outstanding", "No follow-up", and the Lab 2 "Requested: High" in My Tickets | `actions-taken/list-multiple.desktop.png`, `ticket-workflow/resolved.desktop.png`, `requester-dashboard/drill-down.desktop.png` | Cosmetic; every badge stays whole and readable | **Accepted.** The tables fit their cards (RESP-01); keeping badges on one line would cost the Description column its width |
+| D-08 | At 1280×800 the Record and Edit dialogs are taller than the window and scroll inside, with actions not pinned, so some desktop captures show the form scrolled | `actions-taken/follow-up-required.desktop.png`, `actions-taken/validation.desktop.png` | None on behaviour; Save is reached by scrolling, as on any long form | **Accepted.** ui-spec §10 pins the actions on mobile, where the keyboard takes the space (RESP-04); the tablet and mobile captures show each whole state |
+| D-09 | In the Ticket Queue, a filter chosen within 300 ms of typing in Search was dropped: the delayed search applied the URL as it had been when the typing happened. Found when Lab 3 AC-67 failed once in the final full run, then 4 times in 8 when repeated | `staff-dashboard/drill-down.*` (the Queue); Lab 3 `e2e/lab-03/staff-ticket-flow.spec.ts` AC-67 | A user who typed a search and quickly picked a filter lost the filter without notice | **Fixed.** The delayed search now applies through the latest render's `update`. A new test in `Hardening.test.tsx` sends a search and an Owner filter inside that window and failed before the change; AC-67 then passed 8 times in 8 |
 
 ---
 

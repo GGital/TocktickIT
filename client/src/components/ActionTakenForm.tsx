@@ -113,6 +113,12 @@ export default function ActionTakenForm({ ticketId, ticketCreatedAt, action, me,
   const [notice, setNotice] = useState<Notice | null>(null)
   const [stale, setStale] = useState<ActionTaken | null>(null)
   const [busy, setBusy] = useState(false)
+  const refusalRef = useRef<HTMLDivElement>(null)
+
+  // A refusal is shown at the top of the form while the user is down at Save, so it is brought into view (ui-spec §2.6).
+  useEffect(() => {
+    refusalRef.current?.scrollIntoView?.({ block: 'nearest' })
+  }, [stale, notice])
 
   useEffect(() => {
     const dialog = dialogRef.current!
@@ -233,7 +239,7 @@ export default function ActionTakenForm({ ticketId, ticketCreatedAt, action, me,
         </div>
 
         {stale && (
-          <div className="mb-3">
+          <div ref={refusalRef} className="mb-3">
             <StaleCallout
               message="Someone else saved this action while you were editing."
               actions={
@@ -305,7 +311,7 @@ export default function ActionTakenForm({ ticketId, ticketCreatedAt, action, me,
         )}
 
         {notice && (
-          <div className="mb-3">
+          <div ref={refusalRef} className="mb-3">
             <Callout variant={notice.variant} onRetry={notice.retry ? () => formRef.current?.requestSubmit() : undefined}>
               {notice.text}
             </Callout>

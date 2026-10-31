@@ -76,12 +76,15 @@ function blockerText(blocker: Blocker, outstanding: number) {
   return count === 1 ? '1 follow-up is still outstanding.' : `${count} follow-ups are still outstanding.`
 }
 
-/** Why Resolve is not offered, with the way to fix it (ui-spec §2.7). Renders nothing when the gate passes. */
-function ResolutionBlockers({ blockers, outstanding }: { blockers: Blocker[]; outstanding: number }) {
+/**
+ * Why Resolve is not offered, with the way to fix it (ui-spec §2.7). Renders nothing when the gate passes. On load it
+ * is part of the page, a status; only a save the API just refused is announced as an alert.
+ */
+function ResolutionBlockers({ blockers, outstanding, refused }: { blockers: Blocker[]; outstanding: number; refused: boolean }) {
   if (blockers.length === 0) return null
   return (
     <div id={BLOCKERS_ID} className="mb-3">
-      <Callout variant="warning" title="Resolve is not available yet">
+      <Callout variant="warning" title="Resolve is not available yet" role={refused ? 'alert' : 'status'}>
         <ul className="mb-2">
           {blockers.map((blocker) => (
             <li key={blocker}>{blockerText(blocker, outstanding)}</li>
@@ -311,7 +314,7 @@ function Operations({ ticket, onUpdated, onStale }: { ticket: StaffTicket; onUpd
           aria-describedby={[describedBy('nextStatus', statusHelper), blockers.length > 0 ? BLOCKERS_ID : null].filter(Boolean).join(' ')}
           onChange={(event) => setNextStatus(event.target.value as TicketStatus | '')}
         />
-        <ResolutionBlockers blockers={blockers} outstanding={ticket.actionSummary.outstandingFollowUps} />
+        <ResolutionBlockers blockers={blockers} outstanding={ticket.actionSummary.outstandingFollowUps} refused={savedBlockers !== null} />
         <div className="d-flex flex-wrap align-items-center gap-2">
           {/* Enabled even before a status is chosen: disabling it when the dialog resets the select would drop the
               focus the dialog hands back to it (ui-spec §2.4). With nothing chosen it moves focus to the select. */}

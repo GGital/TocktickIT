@@ -79,6 +79,9 @@ describe('UI-23 the resolution blockers callout (AC-40, ui-spec §2.7)', () => {
       '1 follow-up is still outstanding.',
     ])
     expect(within(callout).getByRole('link', { name: 'Go to Actions Taken' })).toHaveAttribute('href', '#actions')
+    // Present on load, so it is a status, not an alert that interrupts the screen reader (PR #97 review).
+    expect(within(callout).getByRole('status')).toHaveTextContent('Resolve is not available yet')
+    expect(within(callout).queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('pluralises the follow-up count', async () => {
@@ -104,6 +107,8 @@ describe('UI-23 the resolution blockers callout (AC-40, ui-spec §2.7)', () => {
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Resolve ticket' }))
 
     expect(await screen.findByText('Resolve is not available yet')).toBeInTheDocument()
+    // A refusal of what the user just tried is announced at once.
+    expect(screen.getByText('Resolve is not available yet').closest('[role]')).toHaveAttribute('role', 'alert')
     expect(screen.getByText(/follow-up is still outstanding\./)).toBeInTheDocument()
     expect(select).toHaveValue('')
   })

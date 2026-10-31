@@ -19,7 +19,8 @@ import {
 /** The Lab 4 workflow and resolution gate in a real browser (tests.md §2.14, E2E-05 – E2E-08). */
 
 const tag = runTag()
-const blockers = (page: Page) => operations(page).getByRole('alert').filter({ hasText: 'Resolve is not available yet' })
+// A status on load and an alert after a refused save, so it is found by its id rather than its role.
+const blockers = (page: Page) => operations(page).locator('#resolution-blockers')
 const statusOptions = (page: Page) => operations(page).getByLabel('Status', { exact: true }).locator('option').allTextContents()
 
 test.afterAll(async () => {

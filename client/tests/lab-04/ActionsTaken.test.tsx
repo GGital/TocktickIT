@@ -461,6 +461,8 @@ describe('UI-19 a ticket that refuses work hides Record action (AC-06)', () => {
 
     expect(within(panel).queryByRole('button', { name: 'Record action' })).toBeNull()
     expect(within(panel).getByText(reason)).toBeInTheDocument()
+    // The API refuses every action write on such a Ticket, so no row offers Edit, Void, or Mark done (ui-spec §6.2).
+    expect(within(panel).queryAllByRole('button', { name: /^Actions for action recorded/ })).toEqual([])
   })
 })
 

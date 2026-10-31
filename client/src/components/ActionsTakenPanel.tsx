@@ -327,7 +327,8 @@ export default function ActionsTakenPanel({ ticket, onChanged }: ActionsTakenPan
 
               const open = expanded.includes(action.id)
               const long = action.description.length > LONG_TEXT || action.result.length > LONG_TEXT || action.followUpNote !== null
-              const items = menuItems(action)
+              // A Ticket that refuses work refuses every row write too, so the reason line stands alone (A-08).
+              const items = refusal ? [] : menuItems(action)
               return (
                 <tr key={action.id} id={`action-${action.id}`} className={rowClass}>
                   <td data-label="Date/Time" className="zen-action-when">

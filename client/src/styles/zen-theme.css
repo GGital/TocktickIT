@@ -599,6 +599,11 @@ label:has(+ input[type="file"]:focus-visible) {
 .zen-metric-zero { color: var(--zen-text); }
 .zen-metric-more { margin-top: auto; text-align: right; color: var(--zen-secondary); font-weight: 600; }
 .zen-metric-count { font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Tablet: a card grid of exactly three — the Requester's cards and their skeleton — sits two and one, so the third
+   takes the whole row (ui-spec §4.2). The staff grids hold six and four, which pair up. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .row-cols-md-2 > :nth-child(3):last-child { width: 100%; }
+}
 
 .zen-breakdown-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 0; border-top: 1px solid var(--zen-border); color: var(--zen-text); text-decoration: none; }
 li:first-child > .zen-breakdown-row { border-top: 0; }
