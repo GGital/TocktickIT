@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Badge from '../components/Badge'
 import Button from '../components/Button'
@@ -153,7 +153,7 @@ export default function TicketQueue() {
   // Debounced so typing does not issue a request per keystroke (ui-spec §7.4).
   useEffect(() => {
     if (searchInput === (searchParams.get('search') ?? '')) return
-    const timer = setTimeout(() => update({ search: searchInput }), 300)
+    const timer = setTimeout(() => latestUpdate.current({ search: searchInput }), 300)
     return () => clearTimeout(timer)
   }, [searchInput]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -168,6 +168,10 @@ export default function TicketQueue() {
     setRejectedParameter(null)
     setSearchParams(next, { replace: true })
   }
+  // The debounced search fires up to 300 ms after it was scheduled; it must merge into the URL as it is then, or a
+  // filter chosen in between is dropped.
+  const latestUpdate = useRef(update)
+  latestUpdate.current = update
 
   function clearFilters() {
     setSearchInput('')

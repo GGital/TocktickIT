@@ -1,0 +1,97 @@
+{
+  "capturedAt": "2026-10-30T14:31:32.887Z",
+  "staff": {
+    "shown": {
+      "Unassigned tickets": 3,
+      "Assigned to me": 2,
+      "Urgent and active": 2,
+      "Requester says resolved": 1,
+      "My follow-ups": 0,
+      "New today": 1,
+      "By status: NEW": 3,
+      "By status: OPEN": 1,
+      "By status: IN_PROGRESS": 1,
+      "By status: WAITING_FOR_REQUESTER": 1,
+      "By status: RESOLVED": 1,
+      "By status: CLOSED": 1,
+      "By status: REOPENED": 1,
+      "By status: CANCELLED": 1
+    },
+    "counted": {
+      "Unassigned tickets": 3,
+      "Assigned to me": 2,
+      "Urgent and active": 2,
+      "Requester says resolved": 1,
+      "My follow-ups": 0,
+      "New today": 1,
+      "By status: NEW": 3,
+      "By status: OPEN": 1,
+      "By status: IN_PROGRESS": 1,
+      "By status: WAITING_FOR_REQUESTER": 1,
+      "By status: RESOLVED": 1,
+      "By status: CLOSED": 1,
+      "By status: REOPENED": 1,
+      "By status: CANCELLED": 1
+    },
+    "sql": {
+      "Unassigned tickets": "SELECT count(*)::int AS n FROM \"Ticket\" WHERE status IN ('NEW','OPEN','IN_PROGRESS','WAITING_FOR_REQUESTER','REOPENED') AND \"assigneeId\" IS NULL",
+      "Assigned to me": "SELECT count(*)::int AS n FROM \"Ticket\" WHERE status IN ('NEW','OPEN','IN_PROGRESS','WAITING_FOR_REQUESTER','REOPENED') AND \"assigneeId\" = (SELECT id FROM \"User\" WHERE email = 'thanawat.it@toktickit.dev')",
+      "Urgent and active": "SELECT count(*)::int AS n FROM \"Ticket\" WHERE status IN ('NEW','OPEN','IN_PROGRESS','WAITING_FOR_REQUESTER','REOPENED') AND \"itPriority\" = 'URGENT'",
+      "Requester says resolved": "SELECT count(*)::int AS n FROM \"Ticket\" WHERE status IN ('NEW','OPEN','IN_PROGRESS','WAITING_FOR_REQUESTER','REOPENED') AND \"requesterResolvedFlaggedAt\" IS NOT NULL",
+      "My follow-ups": "SELECT count(DISTINCT t.id)::int AS n FROM \"Ticket\" t JOIN \"ActionTaken\" a ON a.\"ticketId\" = t.id WHERE t.status <> 'CANCELLED' AND a.\"performedById\" = (SELECT id FROM \"User\" WHERE email = 'thanawat.it@toktickit.dev') AND a.\"followUpRequired\" AND a.\"followUpCompletedAt\" IS NULL AND a.\"voidedAt\" IS NULL",
+      "New today": "SELECT count(*)::int AS n FROM \"Ticket\" WHERE \"createdAt\" >= (date_trunc('day', now() AT TIME ZONE 'Asia/Bangkok') AT TIME ZONE 'Asia/Bangkok')"
+    }
+  },
+  "requester": {
+    "shown": {
+      "Waiting for you": 1,
+      "Open tickets": 2,
+      "Resolved — please check": 0
+    },
+    "counted": {
+      "Waiting for you": 1,
+      "Open tickets": 2,
+      "Resolved — please check": 0
+    },
+    "sql": {
+      "Waiting for you": "SELECT count(*)::int AS n FROM \"Ticket\" WHERE \"requesterId\" = (SELECT id FROM \"User\" WHERE email = 'napat.s@toktickit.dev') AND status = 'WAITING_FOR_REQUESTER'",
+      "Open tickets": "SELECT count(*)::int AS n FROM \"Ticket\" WHERE \"requesterId\" = (SELECT id FROM \"User\" WHERE email = 'napat.s@toktickit.dev') AND status IN ('NEW','OPEN','IN_PROGRESS','WAITING_FOR_REQUESTER','REOPENED')",
+      "Resolved — please check": "SELECT count(*)::int AS n FROM \"Ticket\" WHERE \"requesterId\" = (SELECT id FROM \"User\" WHERE email = 'napat.s@toktickit.dev') AND status = 'RESOLVED'"
+    }
+  },
+  "byStatusSql": "SELECT status::text AS status, count(*)::int AS n FROM \"Ticket\" GROUP BY status ORDER BY status",
+  "byStatus": [
+    {
+      "status": "CANCELLED",
+      "n": 1
+    },
+    {
+      "status": "CLOSED",
+      "n": 1
+    },
+    {
+      "status": "IN_PROGRESS",
+      "n": 1
+    },
+    {
+      "status": "NEW",
+      "n": 3
+    },
+    {
+      "status": "OPEN",
+      "n": 1
+    },
+    {
+      "status": "REOPENED",
+      "n": 1
+    },
+    {
+      "status": "RESOLVED",
+      "n": 1
+    },
+    {
+      "status": "WAITING_FOR_REQUESTER",
+      "n": 1
+    }
+  ]
+}

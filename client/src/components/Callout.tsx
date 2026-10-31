@@ -15,6 +15,8 @@ type CalloutProps = {
   children: ReactNode
   onRetry?: () => void
   retryLabel?: string
+  /** Overrides the variant's live role, e.g. a warning that is part of the page rather than a reaction to an act. */
+  role?: 'status' | 'alert'
 }
 
 export default function Callout({
@@ -23,11 +25,12 @@ export default function Callout({
   children,
   onRetry,
   retryLabel = 'Try again',
+  role,
 }: CalloutProps) {
-  const { className, role, glyph } = surface[variant]
+  const { className, glyph } = surface[variant]
 
   return (
-    <div className={`zen-callout ${className}`} role={role}>
+    <div className={`zen-callout ${className}`} role={role ?? surface[variant].role}>
       <span aria-hidden="true">{glyph}</span>
       <div>
         {title && <h3 className="mb-1">{title}</h3>}

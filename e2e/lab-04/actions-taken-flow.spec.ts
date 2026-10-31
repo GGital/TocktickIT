@@ -100,6 +100,8 @@ test('E2E-03 two browser contexts edit the same action; the second keeps its cha
   await admin.getByRole('button', { name: 'Save changes' }).click()
   const stale = dialog(admin).getByRole('alert').filter({ hasText: 'Someone else saved this action while you were editing.' })
   await expect(stale).toBeVisible()
+  // The dialog was scrolled down to Save; the warning must come into view, not appear above the fold.
+  await expect(stale.getByText('Someone else saved this action while you were editing.')).toBeInViewport()
   await expect(stale).toContainText('Installed on all five laptops after a restart.')
   await stale.getByRole('button', { name: 'Keep my changes' }).click()
   await expect(dialog(admin)).toBeHidden()
